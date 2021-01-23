@@ -1,472 +1,208 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  
-  
-  <title>Hexo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta property="og:type" content="website">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexo</title><meta name="author" content="makabaka"><meta name="copyright" content="makabaka"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta property="og:type" content="website">
 <meta property="og:title" content="Hexo">
-<meta property="og:url" content="http://example.com/index.html">
+<meta property="og:url" content="http://makabaka-yyds.me/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:locale" content="en_US">
-<meta property="article:author" content="John Doe">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://makabaka-yyds.me/images/tuoxiang.jpg">
+<meta property="article:author" content="makabaka">
 <meta name="twitter:card" content="summary">
-  
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
-  
-  
-    <link rel="shortcut icon" href="/favicon.png">
-  
-  
-    
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+<meta name="twitter:image" content="http://makabaka-yyds.me/images/tuoxiang.jpg"><link rel="shortcut icon" href="/images/wztb.jpg"><link rel="canonical" href="http://makabaka-yyds.me/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
 
-  
-  
-<link rel="stylesheet" href="/css/style.css">
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
 
-  
-    
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
 
-  
-<meta name="generator" content="Hexo 5.3.0"></head>
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
 
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
-      </div>
-    </div>
-  </div>
-</header>
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
 
-      <div class="outer">
-        <section id="main">
-  
-    <article id="post-汇编基础总结" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" class="article-date">
-  <time class="dt-published" datetime="2021-01-21T09:59:05.000Z" itemprop="datePublished">2021-01-21</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/">汇编基础总结</a>
-    </h1>
-  
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: false,
+  isHome: true,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2021-01-23 16:21:12'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
 
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <hr>
-<h1><span id="cpu架构与指令集">CPU架构与指令集</span></h1><p><strong>CPU</strong>：从内存中读取指令，再解码和执行</p>
-<p><strong>指令集</strong>：操作码+特定CPU执行的基本命令；一堆二进制数据；分为CISC与RISC两种</p>
-<p><strong>汇编、指令集之间的关系</strong>：</p>
-<p>​    二进制数据不利于阅读与理解，于是汇编语言诞生，每条汇编指令都有对应的指令</p>
-<h2><span id="cisc与risc对比">CISC与RISC对比</span></h2><p><strong>CISC（x86）</strong>  ：指令长度不固定（1~6字节【32位】）；指令数量相对更多（说白了更讲究）；寻址方式多样；                            通用寄存器更少；</p>
-<p>​                            缺点：反编译会指令错位；</p>
-<p><strong>RISC（ARM）</strong>：指令长度固定（4字节【32位】）；指令数量相对较少需要组合（没那么讲究）；寻址方式单                            一；通用寄存器更多；</p>
-<p>​                            优点：有利于解码和优化，可以实现流水线；</p>
-<p>​                            缺点：平均代码更长，占空间</p>
-<hr>
-<h1><span id="x86x64-汇编基础">x86/x64 汇编基础</span></h1><h2><span id="cpu操作模式">CPU操作模式</span></h2><p><strong>保护模式</strong>：类似虚拟机；所有指令和特性都可用，但只能在分配的内存段使用</p>
-<p><strong>实地址模式</strong>：直接访问硬件及其实际内存地址（类似于直接在cmd里操作。。。。吧？？）</p>
-<p><strong>系统管理模式</strong>：提供电源管理或安全保护特性机制（更个性化？？）</p>
-<h2><span id="语法风格">语法风格</span></h2><p>x86：AT&amp;T风格和Intel风格</p>
-<h2><span id="寄存器与数据类型">寄存器与数据类型</span></h2><h2><span id="寄存器">寄存器</span></h2><table>
-<thead>
-<tr>
-<th>操作数</th>
-<th>可用寄存器名称</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>32位</td>
-<td>EAX、EBX、ECX、EDX、EDI、ESI、EBP、ESP、R8D~R15D</td>
-</tr>
-<tr>
-<td>64位</td>
-<td>RAX、RBX、RCX、RDX、RDI、RSI、RBP、RSP、R8~R15</td>
-</tr>
-</tbody></table>
-<p>注意：64位模式下，操作数还是默认位32位，有8个通用寄存器；当给指令加上REX（寄存器扩展）前缀后，操作数才变为64位，添加8个带标号的通用寄存器（R8~R15）</p>
-<p>64位处理器特点：</p>
-<ol>
-<li>64位与32位有相同的标志位状态；</li>
-<li>64位模式下不能访问通用寄存器的高位字节（如AH、BH、CH、DH）;</li>
-</ol>
-<h2><span id="数据类型">数据类型</span></h2><ul>
-<li><p>整数：1234这种要有后缀表明是什么进制的数；</p>
-<p>​            ABCD这种十六进制要在以字母开头的十六进制数前加0表示，如0ABCDh；</p>
-</li>
-<li><p>浮点数：以十进制表示；以十六进制编码</p>
-</li>
-<li><p>字符串常量：允许字符串常量的嵌套（如 ‘he says “hello”‘）;在内存中以整数字节序列保存</p>
-</li>
-</ul>
-<h2><span id="数据传送与访问">数据传送与访问</span></h2><p><strong>MOV指令</strong>：MOV  EAX,ECX  表示将ECX寄存器的值拷贝进EAX (第一个参数为目的操作数，第二个参数为源操作数)</p>
-<p>​    如果出现小操作数（32）扩展为大操作数（64）的情况，需要对操作数进行全零扩展或符号扩展</p>
-<p><strong>XCHG指令</strong>：交换两个操作数的值（操作数数据类型要相同）</p>
-<p>变量名+偏移量可表示一个直接偏移量操作数（管他有没有看懂概念看例子就完事儿）</p>
-<p>如下表示一个数组</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.data</span><br><span class="line">	testArray BYTE 99h,98h,97h,96h</span><br><span class="line">.code</span><br><span class="line">	MOV al, testArray             ; al&#x3D;99h</span><br><span class="line">	MOV bl, [testArray+1]         ; bl&#x3D;98h</span><br><span class="line">	MOV cl, [testArray+2]         ; cl&#x3D;97h</span><br></pre></td></tr></table></figure>
-<h2><span id="算术运算与逻辑运算">算术运算与逻辑运算</span></h2><p><strong>补码</strong>：计算机底层数据都是以补码形式表示；</p>
-<p>​            两机器数相加的补码=先求补码再相加；</p>
-<p>​            加法运算可将符号位和数值为一起算（符号位有进位则直接舍弃）；</p>
-<p>​            减法运算利用其相反数的加法实现；</p>
-<p><strong>INC指令</strong>：操作数+1</p>
-<p><strong>DEC指令</strong>：操作数-1</p>
-<p><strong>ADD指令</strong>：将长度相同的操作数进行相加</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.data</span><br><span class="line">	testData DWORD 10000h</span><br><span class="line">	testData2 DWORD 20000h</span><br><span class="line">.code</span><br><span class="line">	MOV EAX,testData   ; EAX&#x3D;10000h</span><br><span class="line">	ADD EAX,testData2  ; EAX&#x3D;30000h</span><br></pre></td></tr></table></figure>
-<p><strong>SUB指令</strong>：从目的操作数中减去源操作数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.data</span><br><span class="line">	testData DWORD 20000h</span><br><span class="line">	testData2 DWORD 10000h</span><br><span class="line">.code</span><br><span class="line">	MOV EAX,testData   ; EAX&#x3D;20000h</span><br><span class="line">	ADD EAX,testData2  ; EAX&#x3D;10000h</span><br></pre></td></tr></table></figure>
-<p><strong>NEG指令</strong>：将操作数转换为二进制补码，并将符号位取反</p>
-<h2><span id="跳转指令与循环指令">跳转指令与循环指令</span></h2><p>跳转指令类型：条件跳转和无条件跳转</p>
-<p><strong>JMP指令</strong>：无条件跳转；需要用标号来标识，汇编时会将标号转换位相应的偏移量；标号和 JMP指令要再同一函                  数中，但全局标号不受限制。（和goto语句有点像）</p>
-<p>​                下面程序先给EAX赋值再给EBX赋值</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	JMP labell</span><br><span class="line">	MOV EBX, 0</span><br><span class="line">labell:</span><br><span class="line">	MOV EAX, 0</span><br></pre></td></tr></table></figure>
-<p>​                当在循环结束时用JMP指令跳回循环开始位置可实现无限循环</p>
-<p><strong>LOOP指令</strong>：创建一个循环代码块</p>
-<p>​                     ECX寄存器为循环的计数器，循环一次，ECX值-1</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MOV AX, 0</span><br><span class="line">MOV ECX, 3</span><br><span class="line">L1:</span><br><span class="line">INC AX</span><br><span class="line">LOOP L1</span><br><span class="line">XOR EAX, EBX</span><br></pre></td></tr></table></figure>
-<p>​    LOOP指令分为两步：第一步将ECX -1；第二步将ECX与0比较，如果ECX不为0，跳转到标号地址处（INC                 AX）；如果ECX为0，则不跳转，执行LOOP下一条指令（XOR   EAX，EBX）</p>
-<p>​    如果ECX的初始值为0，那么执行LOOP指令时，ECX -1变为FFFFFFFFh，是个很大的循环，因此在编写x86汇编语言时一般情况不需要显式地改变ECX的值，特别是存在循环嵌套的情况时。（不懂。。）</p>
-<h2><span id="栈与函数调用">栈与函数调用</span></h2><p><strong>栈</strong>：特点：先入后出（可以想象成一个薯片桶）</p>
-<pre><code>   用途：存储局部变量；执行CALL指令调用函数时，保存函数地址以便函数结束时正确返回；传递函数参数</code></pre>
-<p>​       常用指令：</p>
-<p>​            PUSH指令：入栈；对ESP/RSP/SP寄存器的值减去 4（32位）或 8（64位），将操作数写入寄存器中指针                                指向的内存中</p>
-<p>​            POP指令  ：出栈；是PUSH指令的逆操作；先从ESP等寄存器指向的内存中读取数据写入其他内存地址或                                寄存器，再将寄存器的值加上 4（32位）或 8（64位）</p>
-<p>​        <strong>（说白了：PUSH  AX 表示将寄存器AX中的数据送入栈中；POP AX 表示从栈顶取出数据送入AX）</strong></p>
-<p>下方代码通过栈实现EAX与EBX值的交换</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MOV EAX, 1234h</span><br><span class="line">   MOV EBX, 5678h</span><br><span class="line">   PUSH EAX</span><br><span class="line">   PUSH EBX</span><br><span class="line">   POP EAX</span><br><span class="line">   POP EBX</span><br></pre></td></tr></table></figure>
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">2</div></a></div></div></div><hr/></div></div><div class="page" id="body-wrap"><header class="full_page" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Hexo</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="site-info"><h1 id="site-title">Hexo</h1><div id="site-subtitle"><span id="subtitle"></span></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts" id="recent-posts"><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结">     <img class="post_bg" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="汇编基础总结"></a></div><div class="recent-post-info"><a class="article-title" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结">汇编基础总结</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2021-01-21T09:59:05.000Z" title="发表于 2021-01-21 17:59:05">2021-01-21</time></span></div><div class="content">
+CPU架构与指令集CPU：从内存中读取指令，再解码和执行
+指令集：操作码+特定CPU执行的基本命令；一堆二进制数据；分为CISC与RISC两种
+汇编、指令集之间的关系：
+​    二进制数据不利于阅读与理解，于是汇编语言诞生，每条汇编指令都有对应的指令
+CISC与RISC对比CISC（x86）  ：指令长度不固定（1~6字节【32位】）；指令数量相对更多（说白了更讲究）；寻址方式多样；                            通用寄存器更少；
+​                            缺点：反编译会指令错位；
+RISC（ARM）：指令长度固定（4字节【32位】）；指令数量相对较少需要组合（没那么讲究）；寻址方式单                            一；通用寄存器更多；
+​                            优点：有利于解码和优化，可以实现流水线；
+​                            缺点：平均代码更长，占空间
 
+x86/x64 汇编基础CPU操作模式保护模式：类似虚拟机；所有指令和特性都可用， ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客">     <img class="post_bg" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="如何用hexo创建自己的博客"></a></div><div class="recent-post-info"><a class="article-title" href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客">如何用hexo创建自己的博客</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2021-01-20T12:59:28.000Z" title="发表于 2021-01-20 20:59:28">2021-01-20</time></span></div><div class="content">[TOC]
+准备工作 step1: 百度搜索 nodejs 下载LTS版本
+ step2: 下载git 
+ step3: 下载typora
+ tips: 安装过程中不停的点next就完事儿
 
-<h3><span id="使用栈保存函数保存地址">使用栈保存函数保存地址</span></h3><p><strong>CALL指令</strong>：调用子函数；调用时，CALL指令的下一条指令地址将作为返回地址被保存在栈中，当调用函数结束                时，执行RET指令跳转到返回地址</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">...			.code</span><br><span class="line">...			main PROC</span><br><span class="line">0x00008000  MOV EBX, EAX</span><br><span class="line">...			...</span><br><span class="line">0X00008020  CALL testFunc</span><br><span class="line">0x00008025  MOV EAX, EBX</span><br><span class="line">...			...</span><br><span class="line">...			main ENDP</span><br><span class="line">...			...</span><br><span class="line">0x00008A00  testFunc PROC</span><br><span class="line">...			MOV EAX, EDX</span><br><span class="line">...			...</span><br><span class="line">...			RET</span><br><span class="line">...			textFunc ENDP</span><br></pre></td></tr></table></figure>
-<p>注：proc是定义子程序的伪指令，位置在子程序的开始处，它和endp分别表示子程序定义的开始和结束两者必须成对出现。</p>
-<p>当CALL指令执行时，下一条指令地址（0x00008025）被压入栈中，被调用函数testFunc地址0x00008A00被加载进EIP寄存器（EIP寄存器存放  下一个CPU指令存放的内存地址）</p>
-<p>   执行RET指令时，ESP指向的数据弹出至EIP；ESP数值增加指向栈中上一个值</p>
-<h3><span id="使用栈传递函数参数">使用栈传递函数参数</span></h3><p>cdecl约定：</p>
-<p>​            假设函数 func 有三个参数 agr1、agr2、agr3 ，在cdecl约定下通常为：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">push arg3</span><br><span class="line">push arg2</span><br><span class="line">push arg1</span><br><span class="line">call func</span><br></pre></td></tr></table></figure>
-<p>（只知道这么多了。。。）</p>
-<h3><span id="使用栈存储变量">使用栈存储变量</span></h3><p>涉及到了PUSHFD和POPFD，但讲的很少就没怎么看懂</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" data-id="ckk8h6qrw0002bwuwgrgge5nt" data-title="汇编基础总结" class="article-share-link">Share</a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PWN/" rel="tag">PWN</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-my-first-blog" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2021/01/20/my-first-blog/" class="article-date">
-  <time class="dt-published" datetime="2021-01-20T12:59:28.000Z" itemprop="datePublished">2021-01-20</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2021/01/20/my-first-blog/">如何用hexo创建自己的博客</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>[TOC]</p>
-<h1><span id="准备工作">准备工作</span></h1><p> <strong>step1</strong>: 百度搜索 nodejs 下载LTS版本</p>
-<p> <strong>step2</strong>: 下载git </p>
-<p> <strong>step3</strong>: 下载typora</p>
-<p> tips: 安装过程中不停的点next就完事儿</p>
-<hr>
-<h1><span id="正式搭建">正式搭建</span></h1><h2><span id="本地搭建">本地搭建</span></h2><p> <strong>step1</strong>: win+R后输入cmd进入窗口</p>
-<p> <strong>step2</strong>: 查看nude的版本以判断是否安装成功</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nude -v</span><br></pre></td></tr></table></figure>
-<p>查看npm的版本</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm -v</span><br></pre></td></tr></table></figure>
-<p> <strong>step3</strong>: 将镜像源npm换成cnpm</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g cnpm --registry&#x3D;https:&#x2F;&#x2F;registry.npm.taobao.org</span><br></pre></td></tr></table></figure>
-<p> <strong>step4</strong>：安装hexo框架</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cnpm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-<p> <strong>step5</strong>：在盘中创建新文件夹 (下方指令是在D盘中创建了一个名为blog的文件夹)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir D:\blog</span><br></pre></td></tr></table></figure>
-<p> <strong>step6</strong>：进入blog文件夹</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D：</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd D:\blog</span><br></pre></td></tr></table></figure>
-<p> <strong>step7</strong>：用hexo生成blog</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init</span><br></pre></td></tr></table></figure>
-<p> <strong>step8</strong>：启动blog</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<p>此时本地博客已经搭建成功</p>
-<p>打开浏览器输入 localhost:4000 可进入查看</p>
-<p><img src="/images/1.png" alt="1"></p>
-<p> <strong>step9</strong>：ctrl+c断开链接</p>
-<p> <strong>step10</strong>：创建博客文章</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo n &quot;文件名&quot;</span><br></pre></td></tr></table></figure>
-<p><strong>step11</strong>：根据提示找到自己的文件并打开</p>
-<p><img src="/images/2.png" alt="2"></p>
-<p><img src="/images/3.png" alt="3"></p>
-<p><img src="/images/4.png" alt="4"></p>
-<p><strong>step12</strong>：在文件中写入想写的东西</p>
-<p><img src="/images/5.png" alt="5"></p>
-<p>写完后保存退出就vans</p>
-<p>注：在tags：后输入一定要有一个空格！正文也是空一格再写！！！</p>
-<p><strong>step13</strong>：清除缓存文件 db.json 和已生成的静态文件 public </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br></pre></td></tr></table></figure>
-<p> <strong>step14</strong>：生成网站静态文件到默认设置的 public 文件夹</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo g</span><br></pre></td></tr></table></figure>
-<p> <strong>step15</strong>：再次启动blog</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<p>再次打开浏览器输入 localhost:4000 可进入查看</p>
-<p><img src="/images/6.png" alt="6"></p>
-<h2><span id="打通远端">打通远端</span></h2><p> <strong>step1</strong>：进入GitHub并注册自己的账号</p>
-<p> <strong>step2</strong>：新建仓库</p>
-<p><img src="/images/7.png" alt="7"></p>
-<p>注意：repository name这自己owner是啥就取啥名再加上 .github.io</p>
-<p>(我这已经创建过了所以不能再重复创建)</p>
-<p><img src="/images/9.png" alt="9"></p>
-<p>最后点下方的create repository</p>
-<p> <strong>step3</strong>：安装git的部署插件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save hexo-deployer-git</span><br></pre></td></tr></table></figure>
-<p> <strong>step4</strong>：修改_config.yml文件内容</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">notepad _config.yml</span><br></pre></td></tr></table></figure>
-<p>找到# Deployment配置并修改</p>
-<p>注：type后的引号要删去 且冒号后都有一个空格</p>
-<p><img src="/images/10.png" alt="10"></p>
-<p>repo网址可在新建的仓库中找到，如下</p>
-<p><img src="/images/11.png" alt="11"></p>
-<p>最后保存退出</p>
-<p>step4：部署远端</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
-<p>再次刷新网页即可</p>
-<p><img src="/images/12.png" alt="12"></p>
-<hr>
-<h1><span id="存在的问题">存在的问题</span></h1><ul>
-<li><p>部署远端过程会跳出一个窗口让你输入密码（我再注册发现那玩意儿消失了，可能只会出现一次），那个密码不是你GitHub的账号密码而是personal access tokens中的密码（具体请百度，因为我也不知道我是咋成功的。。。如果有大佬知道还请教教 可怜.jpg）</p>
-</li>
-<li><p>repository name的创建中， .github.io不知道可不可以换成别的，反正换成 .github.io.1后网站就打不开了。。。（我太菜了）</p>
-</li>
-</ul>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2021/01/20/my-first-blog/" data-id="ckk8h6qrv0001bwuw1ghv42ay" data-title="如何用hexo创建自己的博客" class="article-share-link">Share</a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/windows%E7%B3%BB%E7%BB%9F/" rel="tag">windows系统</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-hello-world" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2021/01/20/hello-world/" class="article-date">
-  <time class="dt-published" datetime="2021-01-20T12:49:01.699Z" itemprop="datePublished">2021-01-20</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2021/01/20/hello-world/">Hello World</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2><span id="quick-start">Quick Start</span></h2><h3><span id="create-a-new-post">Create a new post</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3><span id="run-server">Run server</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3><span id="generate-static-files">Generate static files</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3><span id="deploy-to-remote-sites">Deploy to remote sites</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2021/01/20/hello-world/" data-id="ckk8h6qrm0000bwuw3v6igv3q" data-title="Hello World" class="article-share-link">Share</a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-
-
-</section>
-        
-          <aside id="sidebar">
-  
-    
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
-    <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/PWN/" rel="tag">PWN</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/windows%E7%B3%BB%E7%BB%9F/" rel="tag">windows系统</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
-    <div class="widget tagcloud">
-      <a href="/tags/PWN/" style="font-size: 10px;">PWN</a> <a href="/tags/windows%E7%B3%BB%E7%BB%9F/" style="font-size: 10px;">windows系统</a>
-    </div>
-  </div>
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">January 2021</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/">汇编基础总结</a>
-          </li>
-        
-          <li>
-            <a href="/2021/01/20/my-first-blog/">如何用hexo创建自己的博客</a>
-          </li>
-        
-          <li>
-            <a href="/2021/01/20/hello-world/">Hello World</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      
-      &copy; 2021 John Doe<br>
-      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
-</footer>
-
-    </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
-    
-
-
-<script src="/js/jquery-3.4.1.min.js"></script>
-
-
-
-  
-<script src="/fancybox/jquery.fancybox.min.js"></script>
-
-
-
-
-<script src="/js/script.js"></script>
-
-
-
-
-
-  </div>
-</body>
-</html>
+正式搭建本地搭建 step1: win+R后输入cmd进入窗口
+ step2: 查看nude的版本以判断是否安装成功
+1nude -v
+查看npm的版本
+1npm -v
+ step3: 将镜像源npm换成cnpm
+1npm install -g cnpm --registry&#x3D;https:&#x2F;&#x2F;registry.npm.taobao.org
+ step4：安装hexo框架
+1cnpm install -g hexo-cli
+ step5：在盘中创建新文件夹 (下方指令是在D盘中创建了一个名为blog的文件夹)
+1mkdir D:\blog
+ step6：进入blog文件夹
+1D：
+1cd D:\blog
+ step7：用hexo生成blog
+1hexo init
+ step8：启动blog
+1hexo s
+此时本地博客已经搭建成功
+打开浏览器输入 localhost:4 ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2021/01/20/hello-world/" title="Hello World">     <img class="post_bg" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"></a></div><div class="recent-post-info"><a class="article-title" href="/2021/01/20/hello-world/" title="Hello World">Hello World</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2021-01-20T12:49:01.699Z" title="发表于 2021-01-20 20:49:01">2021-01-20</time></span></div><div class="content">Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
+Quick StartCreate a new post1$ hexo new &quot;My New Post&quot;
+More info: Writing
+Run server1$ hexo server
+More info: Server
+Generate static files1$ hexo generate
+More info: Generating
+Deploy to remote sites1$ hexo deploy
+More info: Deployment
+</div></div></div><nav id="pagination"><div class="pagination"><span class="page-number current">1</span></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">makabaka</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">2</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="汇编基础总结"/></a><div class="content"><a class="title" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结">汇编基础总结</a><time datetime="2021-01-21T09:59:05.000Z" title="发表于 2021-01-21 17:59:05">2021-01-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="如何用hexo创建自己的博客"/></a><div class="content"><a class="title" href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客">如何用hexo创建自己的博客</a><time datetime="2021-01-20T12:59:28.000Z" title="发表于 2021-01-20 20:59:28">2021-01-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/20/hello-world/" title="Hello World"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/2021/01/20/hello-world/" title="Hello World">Hello World</a><time datetime="2021-01-20T12:49:01.699Z" title="发表于 2021-01-20 20:49:01">2021-01-20</time></div></div></div></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/PWN/" style="font-size: 1.1em; color: #999">PWN</a> <a href="/tags/windows%E7%B3%BB%E7%BB%9F/" style="font-size: 1.1em; color: #999">windows系统</a></div></div><div class="card-widget card-archives"><div class="item-headline"><i class="fas fa-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2021/01/"><span class="card-archive-list-date">一月 2021</span><span class="card-archive-list-count">3</span></a></li></ul></div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站资讯</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">3</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"></div></div><div class="webinfo-item"><div class="item-name">本站总访问量 :</div><div class="item-count" id="busuanzi_value_site_pv"></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2021-01-23T08:21:12.864Z"></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By makabaka</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
