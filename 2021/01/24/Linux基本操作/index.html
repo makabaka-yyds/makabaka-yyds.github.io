@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Linux基本操作 | Makabaka</title><meta name="keywords" content="Linux PWN"><meta name="author" content="makabaka"><meta name="copyright" content="makabaka"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="原博客：https:&#x2F;&#x2F;blog.csdn.net&#x2F;qq_41923771&#x2F;article&#x2F;details&#x2F;81452529?ops_request_misc&#x3D;%257B%2522request%255Fid%2522%253A%2522161141680816780255224080%2522%252C%2522scm%2522%253A%252220140713.130102334..%252">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux基本操作">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="Makabaka">
+<meta property="og:description" content="原博客：https:&#x2F;&#x2F;blog.csdn.net&#x2F;qq_41923771&#x2F;article&#x2F;details&#x2F;81452529?ops_request_misc&#x3D;%257B%2522request%255Fid%2522%253A%2522161141680816780255224080%2522%252C%2522scm%2522%253A%252220140713.130102334..%252">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg">
+<meta property="article:published_time" content="2021-01-24T10:49:57.000Z">
+<meta property="article:modified_time" content="2021-01-24T15:51:32.705Z">
+<meta property="article:author" content="makabaka">
+<meta property="article:tag" content="Linux PWN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg"><link rel="shortcut icon" href="/images/m.png"><link rel="canonical" href="http://makabaka-yyds.github.io/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-01-24 23:51:32'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a></div></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Makabaka</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Linux基本操作</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-24T10:49:57.000Z" title="发表于 2021-01-24 18:49:57">2021-01-24</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-01-24T15:51:32.705Z" title="更新于 2021-01-24 23:51:32">2021-01-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>原博客：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_41923771/article/details/81452529?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161141680816780255224080%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=161141680816780255224080&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-1-81452529.pc_search_result_before_js&amp;utm_term=linux%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C&amp;spm=1018.2226.3001.4187">https://blog.csdn.net/qq_41923771/article/details/81452529?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161141680816780255224080%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=161141680816780255224080&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-1-81452529.pc_search_result_before_js&amp;utm_term=linux%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C&amp;spm=1018.2226.3001.4187</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/niexinming/article/details/78814422?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161145921616780264011250%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fall.%2522%257D&amp;request_id=161145921616780264011250&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~first_rank_v2~rank_v29-2-78814422.pc_search_result_before_js&amp;utm_term=pwn%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84Linux%E6%93%8D%E4%BD%9C&amp;spm=1018.2226.3001.4187">https://blog.csdn.net/niexinming/article/details/78814422?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161145921616780264011250%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fall.%2522%257D&amp;request_id=161145921616780264011250&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~first_rank_v2~rank_v29-2-78814422.pc_search_result_before_js&amp;utm_term=pwn%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84Linux%E6%93%8D%E4%BD%9C&amp;spm=1018.2226.3001.4187</a></p>
+<h1><span id="什么是linux">什么是Linux</span></h1><p>Linux在操作使用中时通过 输入命令——shell解释——内核处理</p>
+<p>Linux的内核一般包含五大部分：进程管理、存储管理、文件管理、设备管理和网络管理，是一组程序模块，具有访问硬件设备和所有主存空间的权限，是仅有的能够执行特权指令的程序。主要功能是：资源抽象、资源分配、资源共享。（相当于Linux的核心所在）</p>
+<p>shell作用：</p>
+<p>内核是 如何对资源进行合理的分配 和 如何对用户需要作出处理 ，</p>
+<p>1.所有的要执行的进程都要和shell建立连接，shell相当于Linux内核和外界沟通的唯一途径，shell通过分析所有进程的重要性来对各个进程的先后顺序进行合理化分配，从而使得系统更加高效</p>
+<p>2.当客户对内核发出指令时，shell将会将客户所发出的指令进行类似翻译后告诉内核，内核在执行相应的命令</p>
+<p>3.shell在流程中也起到了对内核作保护的作用，将外界指令的安全性进行了处理，内核只需要执行shell传出来的指令即可，增加了工作效率</p>
+<hr>
+<h1><span id="linux常用基础指令">Linux常用基础指令</span></h1><h2><span id="1命令行行提示符含义">1.命令行行提示符含义：</span></h2><p><img src="https://img-blog.csdn.net/20180806141908806?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="a"></p>
+<p>kiosk:                       用户名称（root则表示为超级用户）</p>
+<p>@：                          分隔符</p>
+<p>foundation31：     主机名称</p>
+<p>~:                              当前所在系统目录（输入pwd，可以显示当先目录，～为默认， 如果切换目录则会相应的改                                 变）</p>
+<h2><span id="2超级用户登录">2.超级用户登录</span></h2><p>在命令行输入 su</p>
+<p>再输入密码，登陆成功后命令提示符将会改变为root用户，身份提示符变为#</p>
+<p><img src="https://img-blog.csdn.net/20180806143127448?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="b"></p>
+<h2><span id="3linux系统结构">3.Linux系统结构</span></h2><p><img src="https://img-blog.csdn.net/2018080712321854?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<p>系统目录各个文件夹介绍：</p>
+<p> /bin     ##二进制文件，系统常规命令<br> /boot     ##系统启动分区，系统启动时读取的文件<br> /dev     ##设备文件<br> /etc     ##大多数配置文件<br> /home     ##普通用户的家目录<br> /lib     ##32位函数库<br> /lib64     ##64位库<br> /media     ##手动临时挂载点<br> /mnt     ##手动临时挂载点<br> /opt     ##第三方软件安装位置<br> /proc     ##进程信息及硬件信息<br> /root     ##超级用户家目录<br> /run     ##临时设备的默认挂载点<br> /sbin     ##系统管理命令<br> /srv     ##数据<br> /var     ##数据<br> /sys     ##内核相关信息<br> /tmp     ##临时文件<br> /usr     ##用户相关设定</p>
+<h2><span id="4linux下的文件管理">4.Linux下的文件管理</span></h2><h3><span id="1建立空白文件">1.建立空白文件</span></h3><p>touch file                建立空文件，或修改文件的时间戳<br>touch file1 file2     建立多个文件（file1 file2）</p>
+<p><img src="https://img-blog.csdn.net/20180807123424400?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<h3><span id="2建立文件夹">2：建立文件夹</span></h3><p>mkdir        ##建立单目录<br>mkdir -p   ##建立多层目录</p>
+<p>eg：mkdir -p 123/456/789   在Desktop中创建123文件夹，在123中创建456文件夹，在456中创建789文件夹</p>
+<p>实现了文件夹的多级目录创建</p>
+<p><img src="https://img-blog.csdn.net/20180807123521110?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<h3><span id="3文件夹的删除">3：文件夹的删除</span></h3><p>rm file           删除file文件夹，但是会提示是否删除，选择yes或者no</p>
+<p>rm  -f file      强行删除文件不提示<br>rm  -fr file    删除当前目录下的所有文件,这个命令很危险，应避免使用。<br>                     所删除的文件，一般都不能恢复！</p>
+<p><img src="https://img-blog.csdn.net/20180807123902711?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<h3><span id="4文件的编辑">4:文件的编辑</span></h3><p><strong>step1</strong>:  vim file        进入file文件编译</p>
+<p><img src="https://img-blog.csdn.net/20180807124020324?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<p><strong>step2</strong>: 进入文件后输入&lt; I &gt;进入文件输入模式，可以向文件中输入内容</p>
+<p><img src="https://img-blog.csdn.net/20180807124144112?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxOTIzNzcx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"></p>
+<p><strong>step3</strong>：退出编译模式</p>
+<p>按<esc>退出插入编译模式，进入浏览模式</esc></p>
+<p><strong>step4</strong>：文件的退出</p>
+<p>在浏览模式下输入：</p>
+<p>:q      ##当文件没有做任何修改是可用<br>:q!     ##当文件修改但不行保存修改时可用<br>:wq   ##退出保存（一般用这个）<br>:wq!  ##当文件属于自己或用户为root时可用</p>
+<h3><span id="5文件查看">5.文件查看</span></h3><p>文件查看常用指令</p>
+<p>cat file             输出文件的所有内容</p>
+<p><img src="/images/Linux1.png" alt="Linux1"></p>
+<p><img src="/images/Linux2.png" alt="Linux2"></p>
+<h3><span id="6文件路径">6.文件路径</span></h3><p><strong>相对路径</strong>：（则必须有前提条件，其实在系统底层依然是绝对路径执行，只是用户看到的简略移动）</p>
+<p>   文件相对当前系统位置的一个名称简写<br>   文件名称省略了当前路径的值<br>   只有当前在此目录中时可以使用<br>   文件名称不以/开头<br>   文件名称会自动在字符前加入’pwd’显示的路径</p>
+<p><strong>绝对路径</strong>：</p>
+<p> 是文件在系统中真实的位置<br> 任何时间都可以精确表示一个文件的名称<br> 文件名称以/开头</p>
+<p>pwd           显示当前工作目录<br> cd              切换当前工作目录<br> cd /mnt    切换到/mnt目录中<br> cd -           进入当前目录之前所在目录中</p>
+<p> ls               查看文件夹里的所有文件</p>
+<p><strong>绝对路径和相对路径补充</strong>：</p>
+<p><img src="/images/Linux3.png" alt="Linux3"></p>
+<h2><span id="5常用指令合集">5.常用指令合集</span></h2><p>标准格式：命令名称  [命令参数]  [命令对象]</p>
+<p> ls              列出文件信息</p>
+<p> cd            切换工作目录</p>
+<p>pwd         显示当前目录</p>
+<p>cp             复制</p>
+<p>rm            删除</p>
+<p>nc             建立TCP/UDP链接并监听</p>
+<p>su             切换到超级用户</p>
+<p>touch       创建文件</p>
+<p>mkdir       创建目录</p>
+<hr>
+<h1><span id="linuxamppwn">Linux&amp;PWN</span></h1><h2><span id="pwn是什么">PWN是什么</span></h2><p>在安全领域中指的是通过二进制/系统调用等方式获得目标主机的shell</p>
+<h2><span id="0x01-linux下的pwn常用到的工具">0x01 Linux下的pwn常用到的工具：</span></h2><p> （1）gdb：Linux调试中必要用到的<br> （2）gdb-peda：gdb方便调试的工具，类似的工具有gef，gdbinit，这些工具的安装可以参考：<a target="_blank" rel="noopener" href="http://blog.csdn.net/gatieme/article/details/63254211">http://blog.csdn.net/gatieme/article/details/63254211</a><br> （3）pwntools:写exp和poc的利器<br> （4）checksec：可以很方便的知道elf程序的安全性和程序的运行平台<br> （5）objdump和readelf：可以很快的知道elf程序中的关键信息<br> （6）ida pro ：强大的反编译工具<br> （7）ROPgadget：强大的rop利用工具<br> （8）one_gadget：可以快速的寻找libc中的调用exec(‘bin/sh’)的位置<br> （9）libc-database： 可以通过泄露的libc的某个函数地址查出远程系统是用的哪个libc版本 </p>
+<h2><span id="0x02-检测elf的安全性">0x02 检测elf的安全性</span></h2><p>拿到efl，首先要用checksec来检测elf运行于哪个平台，开启了什么安全措施，如果用gcc的编译后，默认会开启所有的安全措施。 </p>
+<p> 【1】RELRO：RELRO会有Partial RELRO和FULL RELRO，如果开启FULL RELRO，意味着我们<strong>无法修改got表</strong><br> 【2】Stack：如果栈中开启Canary found，那么就<strong>不能用直接用溢出的方法覆盖栈中返回地址</strong>，而且要通过改写指针与局部变量、leak canary、overwrite canary的方法来绕过<br> 【3】NX：NX enabled如果这个保护开启就是意味着<strong>栈中数据没有执行权限</strong>，以前的经常用的call esp或者jmp esp的方法就不能使用，但是可以利用rop这种方法绕过<br> 【4】PIE：PIE enabled如果程序开启这个地址随机化选项就意味着<strong>程序每次运行的时候地址都会变化</strong>，而如果没有开PIE的话那么No PIE (0x400000)，括号内的数据就是程序的基地址 </p>
+<p> 【5】 Arch: 查看操作数</p>
+<p><img src="/images/Linux4.png" alt="Linux4"></p>
+<h2><span id="0x03-调试技巧">0x03 调试技巧</span></h2><p>gdb常用的调试指令：<br> n： 执行一行源代码但不进入函数内部<br> <strong>ni: 执行一行汇编代码但不进入函数内部</strong><br> s： 执行一行源代码而且进入函数内部<br> <strong>si: 执行一行汇编代码而且进入函数内部</strong><br> c: 继续执行到下一个断点<br> *<em>b <em>地址: 下断点</em></em><br> directory+源码所在目录：加载程序源码<br> set follow-fork-mode parent ：只调试主进程<br> stack: 显示栈信息<br> x ： 按十六进制格式显示内存数据，其中x/{字节数}x 以16进制显示指定地址处的数据;{字节数}表示字节数制定（b 单字节；h 双字节；w 四字节；g 八字节；默认为四字节） 【x/40wx表示查看40个地址中的内存数据】</p>
+<p>代码实现：</p>
+<p>程序没有开启地址随机化：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">def debug(addr):</span><br><span class="line">    raw_input(&#39;debug:&#39;)</span><br><span class="line">    gdb.attach(r, &quot;b *&quot; + addr)</span><br></pre></td></tr></table></figure>
+<p>在程序运行时调用这个函数就可以调试了 </p>
+<p><img src="/images/Linux5.png" alt="Linux5"></p>
+<p>程序开启地址随机化：(看不懂。。)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">wordSz &#x3D; 4</span><br><span class="line">hwordSz &#x3D; 2</span><br><span class="line">bits &#x3D; 32</span><br><span class="line">PIE &#x3D; 0</span><br><span class="line">mypid&#x3D;0</span><br><span class="line">def leak(address, size):</span><br><span class="line">   with open(&#39;&#x2F;proc&#x2F;%s&#x2F;mem&#39; % mypid) as mem:</span><br><span class="line">      mem.seek(address)</span><br><span class="line">      return mem.read(size)</span><br><span class="line"></span><br><span class="line">def findModuleBase(pid, mem):</span><br><span class="line">   name &#x3D; os.readlink(&#39;&#x2F;proc&#x2F;%s&#x2F;exe&#39; % pid)</span><br><span class="line">   with open(&#39;&#x2F;proc&#x2F;%s&#x2F;maps&#39; % pid) as maps:</span><br><span class="line">      for line in maps:</span><br><span class="line">         if name in line:</span><br><span class="line">            addr &#x3D; int(line.split(&#39;-&#39;)[0], 16)</span><br><span class="line">            mem.seek(addr)</span><br><span class="line">            if mem.read(4) &#x3D;&#x3D; &quot;\x7fELF&quot;:</span><br><span class="line">               bitFormat &#x3D; u8(leak(addr + 4, 1))</span><br><span class="line">               if bitFormat &#x3D;&#x3D; 2:</span><br><span class="line">                  global wordSz</span><br><span class="line">                  global hwordSz</span><br><span class="line">                  global bits</span><br><span class="line">                  wordSz &#x3D; 8</span><br><span class="line">                  hwordSz &#x3D; 4</span><br><span class="line">                  bits &#x3D; 64</span><br><span class="line">               return addr</span><br><span class="line">   log.failure(&quot;Module&#39;s base address not found.&quot;)</span><br><span class="line">   sys.exit(1)</span><br><span class="line"></span><br><span class="line">def debug(addr &#x3D; 0):</span><br><span class="line">    global mypid</span><br><span class="line">    mypid &#x3D; proc.pidof(r)[0]</span><br><span class="line">    raw_input(&#39;debug:&#39;)</span><br><span class="line">    with open(&#39;&#x2F;proc&#x2F;%s&#x2F;mem&#39; % mypid) as mem:</span><br><span class="line">        moduleBase &#x3D; findModuleBase(mypid, mem)</span><br><span class="line">        gdb.attach(r, &quot;set follow-fork-mode parent\nb *&quot; + hex(moduleBase+addr))</span><br></pre></td></tr></table></figure>
+<p>由于开启地址随机化之后ida pro打开程序后，显示的是程序的偏移地址，而不是实际的地址，当程序加载后程序的程序的实际地址是：基地址+偏移地址，调用debug函数的时候只要把偏移地址传递进去就好</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">makabaka</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://makabaka-yyds.github.io/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/">http://makabaka-yyds.github.io/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://makabaka-yyds.github.io" target="_blank">Makabaka</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux-PWN/">Linux PWN</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/"><img class="next-cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">汇编基础总结</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">makabaka</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">什么是Linux</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">Linux常用基础指令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.1.</span> <span class="toc-text">1.命令行行提示符含义：</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.2.</span> <span class="toc-text">2.超级用户登录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.3.</span> <span class="toc-text">3.Linux系统结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.4.</span> <span class="toc-text">4.Linux下的文件管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.1.</span> <span class="toc-text">1.建立空白文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.2.</span> <span class="toc-text">2：建立文件夹</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.3.</span> <span class="toc-text">3：文件夹的删除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.4.</span> <span class="toc-text">4:文件的编辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.5.</span> <span class="toc-text">5.文件查看</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.4.6.</span> <span class="toc-text">6.文件路径</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.5.</span> <span class="toc-text">5.常用指令合集</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">Linux&amp;PWN</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">3.1.</span> <span class="toc-text">PWN是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">3.2.</span> <span class="toc-text">0x01 Linux下的pwn常用到的工具：</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">3.3.</span> <span class="toc-text">0x02 检测elf的安全性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">3.4.</span> <span class="toc-text">0x03 调试技巧</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/" title="Linux基本操作"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Linux基本操作"/></a><div class="content"><a class="title" href="/2021/01/24/Linux%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/" title="Linux基本操作">Linux基本操作</a><time datetime="2021-01-24T10:49:57.000Z" title="发表于 2021-01-24 18:49:57">2021-01-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="汇编基础总结"/></a><div class="content"><a class="title" href="/2021/01/21/%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80%E6%80%BB%E7%BB%93/" title="汇编基础总结">汇编基础总结</a><time datetime="2021-01-21T09:59:05.000Z" title="发表于 2021-01-21 17:59:05">2021-01-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="如何用hexo创建自己的博客"/></a><div class="content"><a class="title" href="/2021/01/20/my-first-blog/" title="如何用hexo创建自己的博客">如何用hexo创建自己的博客</a><time datetime="2021-01-20T12:59:28.000Z" title="发表于 2021-01-20 20:59:28">2021-01-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/20/hello-world/" title="Hello World"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/2021/01/20/hello-world/" title="Hello World">Hello World</a><time datetime="2021-01-20T12:49:01.699Z" title="发表于 2021-01-20 20:49:01">2021-01-20</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By makabaka</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
