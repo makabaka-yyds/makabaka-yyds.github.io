@@ -7,7 +7,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg">
 <meta property="article:published_time" content="2021-01-27T05:51:31.000Z">
-<meta property="article:modified_time" content="2021-01-27T07:22:20.737Z">
+<meta property="article:modified_time" content="2021-01-27T12:35:01.602Z">
 <meta property="article:author" content="makabaka">
 <meta property="article:tag" content="PWN">
 <meta name="twitter:card" content="summary">
@@ -100,7 +100,7 @@ const getScript = url => new Promise((resolve, reject) => {
   isHome: false,
   isHighlightShrink: false,
   isToc: true,
-  postUpdate: '2021-01-27 15:22:20'
+  postUpdate: '2021-01-27 20:35:01'
 }</script><noscript><style type="text/css">
   #nav {
     opacity: 1
@@ -165,14 +165,14 @@ if (asideStatus !== undefined) {
    } else {
      document.documentElement.classList.remove('hide-aside')
    }
-}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a></div></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Makabaka</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">攻防世界cgpwn2</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-27T05:51:31.000Z" title="发表于 2021-01-27 13:51:31">2021-01-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-01-27T07:22:20.737Z" title="更新于 2021-01-27 15:22:20">2021-01-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>原博客：<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-254855.htm">https://bbs.pediy.com/thread-254855.htm</a></p>
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a></div></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Makabaka</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">攻防世界cgpwn2</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-27T05:51:31.000Z" title="发表于 2021-01-27 13:51:31">2021-01-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-01-27T12:35:01.602Z" title="更新于 2021-01-27 20:35:01">2021-01-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>原博客：<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-254855.htm">https://bbs.pediy.com/thread-254855.htm</a></p>
 <p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/anweilx/p/12631129.html">https://www.cnblogs.com/anweilx/p/12631129.html</a></p>
-<h1><span id="0x01-查壳">0x01 查壳</span></h1><p><img src="https://img2020.cnblogs.com/blog/1753051/202004/1753051-20200404114614183-269101643.png"></p>
-<h1><span id="0x02-丢进ida">0x02 丢进IDA</span></h1><p><img src="https://img2020.cnblogs.com/blog/1753051/202004/1753051-20200404114644438-2039932281.png"></p>
+<h1><span id="0x01-查壳">0x01 查壳</span></h1><p><img src="/images/cgpwn3.png" alt="cgpwn3"></p>
+<h1><span id="0x02-丢进ida">0x02 丢进IDA</span></h1><p><img src="/images/cgpwn2.png" alt="cgpwn2"></p>
 <p>进入hello函数：</p>
-<p><img src="https://img-blog.csdnimg.cn/20191022203021389.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzNDMwMjYx,size_16,color_FFFFFF,t_70"></p>
+<p><img src="/images/cgpwn4.png" alt="cgpwn4"></p>
 <p>发现gets函数存在栈溢出</p>
-<p><img src="https://bbs.pediy.com/upload/attach/201910/779730_97K664D5WKBKNZK.png"></p>
+<p><img src="/images/cgpwn5.png" alt="cgpwn5"></p>
 <ul>
 <li>name在bss段中，地址固定不变</li>
 <li>可以利用fgets函数向name中写东西</li>
@@ -181,16 +181,16 @@ if (asideStatus !== undefined) {
 <h1><span id="0x03-分析">0x03 分析</span></h1><p><strong>存在栈溢出，又知道system的函数，理论上来讲直接调用system去执行”/bin/sh”就可以了。但是题目没有给出”/bin/sh”。怎么办呢？我们自己构造然后传入进去就可以了。</strong></p>
 <p>通过栈溢出漏洞，调用system函数，同时在name中写入“/bin/sh”，把参数地址设置为name的首地址，就可以getshell了</p>
 <h1><span id="0x04-信息采集">0x04 信息采集</span></h1><p>system地址</p>
-<p><img src="https://img2020.cnblogs.com/blog/1753051/202004/1753051-20200404114836273-563885550.png"></p>
+<p><img src="/images/cgpwn6.png" alt="cgpwn6"></p>
 <p>name地址</p>
-<p><img src="https://img2020.cnblogs.com/blog/1753051/202004/1753051-20200404114912621-1481304578.png"></p>
+<p><img src="/images/cgpwn7.png" alt="cgpwn7"></p>
 <h1><span id="0x05-编写脚本">0x05 编写脚本</span></h1><p>‘aaaa’是system的返回地址（随意即可，只要可以保证程序正常运行就行。）</p>
 <p><img src="/images/cgpwn1.png" alt="cgpwn1"></p>
 <h1><span id="0x06-收获">0x06 收获</span></h1><ol>
 <li><p>找system地址方法</p>
 <p>直接在IDA里找</p>
 <p>调试</p>
-<p><img src="https://img2020.cnblogs.com/blog/1753051/202004/1753051-20200404114836273-563885550.png"></p>
+<p><img src="/images/cgpwn6.png" alt="cgpwn6"></p>
 <p>在脚本中用函数找（详情见编写脚本）</p>
 </li>
 <li><p>关于system（/bin/sh）</p>
