@@ -1093,9 +1093,7 @@ article .content h2:before {
   font-weight: bold;
   font-size: 1.2rem;
 }
-article .content img {
-  margin: auto;
-}
+article .content img,
 article .content video {
   display: block;
   margin: auto;
@@ -1639,4 +1637,7 @@ code {
 }
 .highlight .line {
   height: 22px;
+}
+img {
+  margin: right;
 }
