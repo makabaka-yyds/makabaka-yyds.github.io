@@ -1096,7 +1096,7 @@ article .content h2:before {
 article .content img,
 article .content video {
   display: block;
-  margin: auto;
+  margin: left;
   max-width: 100%;
   height: auto;
 }
@@ -1637,7 +1637,4 @@ code {
 }
 .highlight .line {
   height: 22px;
-}
-img {
-  margin: right;
 }
