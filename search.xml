@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>堆利用之house of force</title>
+      <link href="/2021/11/01/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-force/"/>
+      <url>/2021/11/01/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-force/</url>
+      
+        <content type="html"><![CDATA[<p>house of force 是一种堆的利用手法，可以实现内存地址的读写。</p><h2><span id="top-chunk-的分割机制">top chunk 的分割机制</span></h2><p>top chunk 是堆内存管理器的后备空间，当各 bin 中没有 chunk 可以提供时，top chunk 会分割出一个 chunk 给用户，下面给出分割过程的源码。</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">victim = av-&gt;top;</span><br><span class="line">size   = chunksize(victim);</span><br><span class="line"><span class="keyword">if</span> ((<span class="keyword">unsigned</span> <span class="keyword">long</span>) (size) &gt;= (<span class="keyword">unsigned</span> <span class="keyword">long</span>) (nb + MINSIZE)) </span><br><span class="line">&#123;</span><br><span class="line">    remainder_size = size - nb;</span><br><span class="line">    remainder      = chunk_at_offset(victim, nb);</span><br><span class="line">    av-&gt;top        = remainder;</span><br><span class="line">    set_head(victim, nb | PREV_INUSE |</span><br><span class="line">            (av != &amp;main_arena ? NON_MAIN_ARENA : <span class="number">0</span>));</span><br><span class="line">    set_head(remainder, remainder_size | PREV_INUSE);</span><br><span class="line"></span><br><span class="line">    check_malloced_chunk(av, victim, nb);</span><br><span class="line">    <span class="keyword">void</span> *p = chunk2mem(victim);</span><br><span class="line">    alloc_perturb(p, bytes);</span><br><span class="line">    <span class="keyword">return</span> p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><ol><li>首先是 libc 会检查用户申请的大小，top chunk 给不给得起；</li><li>如果给得起，就在 top chunk 的 head 处，<strong>以用户申请大小所匹配的 chunk 大小为偏移量，将 top chunk 的位置推到新的位置</strong>，而原来的 top chunk head 处就作为新的堆块被分配给用户了；</li></ol><p>如果我们能控制 top chunk 在这个过程中偏移到任意位置，也就是说，如果我们能控制用户申请的大小为任意值，我们就能将top chunk劫持到任意内存地址，然后就可以控制目标内存。</p><hr><p><strong>简言之</strong></p><ol><li>溢出已经分配的 chunk，覆盖到 top chunk 的 size 位；</li><li>算出 top chunk 与目标地址的距离，将 top chunk 位置推到目标地址</li></ol><h2><span id="溢出-top-chunk">溢出 top chunk</span></h2><p>当我们 malloc 一个堆块，此堆块的下一个就是 top chunk 时，当我们输入的数据大小能够超过申请的大小，就能堆溢出到 top chunk，当我们将 top chunk 的 size 字段改得非常大时就可以通过检查了，一般我们会传入 -1 ，因为 ptmalloc 的源码中对于 size 使用 unsigned long 进行强转抓换，负数用补码表示，将 -1 当成无符号数为 0xffffffffffffffff ，已经非常大了，用于绕过 if ((unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)) 验证。</p><h2><span id="例题">例题</span></h2><p>buu 上的 bcloud_bctf_2016</p><p>程序开的保护如下</p><p><img src="https://api.lemonprefect.cn/image/hdslb/archive/house-of-force/1635751369496160/0bc4ec261d145b38518a3d6da6e1f2f8604df736.png"></p><hr><p>参考链接</p><p><a href="https://blog.csdn.net/haibiandaxia/article/details/108260537">https://blog.csdn.net/haibiandaxia/article/details/108260537</a></p><p><a href="https://blog.csdn.net/seaaseesa/article/details/105588058">https://blog.csdn.net/seaaseesa/article/details/105588058</a></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 知识点 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> PWN </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>凡是过往，皆为序章</title>
       <link href="/2021/10/30/%E5%87%A1%E6%98%AF%E8%BF%87%E5%BE%80%EF%BC%8C%E7%9A%86%E4%B8%BA%E5%BA%8F%E7%AB%A0/"/>
       <url>/2021/10/30/%E5%87%A1%E6%98%AF%E8%BF%87%E5%BE%80%EF%BC%8C%E7%9A%86%E4%B8%BA%E5%BA%8F%E7%AB%A0/</url>
