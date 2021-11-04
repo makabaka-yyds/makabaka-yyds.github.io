@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
     <meta name="description" content="头秃，看了好几天，感觉还是没有讲清楚，tcl，等以后有更好的理解时再来改改  利用情景：没有 free 函数 不能释放堆空间，就很难泄露出我们想要的地址，但是 house of orange 可以解决此类问题，house of orange 由 地址泄露 + FSOP 两部分组成。 地址泄露当我们申请一块内存时，malloc 函数会检查各种 bin 是否满足，都不满足条件之后会检查 top chu">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Xu4n">
+<meta property="og:title" content="堆利用之house of orange">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/index.html">
 <meta property="og:site_name" content="Xu4n">
 <meta property="og:description" content="头秃，看了好几天，感觉还是没有讲清楚，tcl，等以后有更好的理解时再来改改  利用情景：没有 free 函数 不能释放堆空间，就很难泄露出我们想要的地址，但是 house of orange 可以解决此类问题，house of orange 由 地址泄露 + FSOP 两部分组成。 地址泄露当我们申请一块内存时，malloc 函数会检查各种 bin 是否满足，都不满足条件之后会检查 top chu">
@@ -19,7 +19,7 @@
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/house-of-orange/1635948632210341/fcebe0fcfe89eab79ecd203ccc435bc1d3be2247.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/house-of-orange/1636029724161854/b01359122b636844c4c2ffd4f6fda3769284bfed.png">
 <meta property="article:published_time" content="2021-11-03T05:37:12.000Z">
-<meta property="article:modified_time" content="2021-11-04T13:53:50.888Z">
+<meta property="article:modified_time" content="2021-11-04T13:55:45.032Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="PWN">
 <meta name="twitter:card" content="summary">
@@ -43,7 +43,7 @@
       
     
     <!-- title -->
-    <title>Xu4n</title>
+    <title>堆利用之house of orange</title>
     <!-- styles -->
     
 <link rel="stylesheet" href="/css/style.css">
@@ -102,16 +102,16 @@
     <div id="share" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&text="><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&is_video=false&description="><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&name=&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&t="><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&text=堆利用之house of orange"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&is_video=false&description=堆利用之house of orange"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之house of orange&body=Check out this article: http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&name=堆利用之house of orange&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&t=堆利用之house of orange"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -128,7 +128,7 @@
   <header>
     
     <h1 class="posttitle" itemprop="name headline">
-        
+        堆利用之house of orange
     </h1>
 
 
@@ -142,7 +142,7 @@
       
         <time datetime="2021-11-03T05:37:12.000Z" itemprop="datePublished">2021-11-03</time>
         
-        (Updated: <time datetime="2021-11-04T13:53:50.888Z" itemprop="dateModified">2021-11-04</time>)
+        (Updated: <time datetime="2021-11-04T13:55:45.032Z" itemprop="dateModified">2021-11-04</time>)
         
       
     </div>
@@ -274,16 +274,16 @@
     <div id="share-footer" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&text="><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&is_video=false&description="><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title="><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&name=&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&t="><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&text=堆利用之house of orange"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&is_video=false&description=堆利用之house of orange"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之house of orange&body=Check out this article: http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&title=堆利用之house of orange"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&name=堆利用之house of orange&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/03/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Bhouse-of-orange/&t=堆利用之house of orange"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
