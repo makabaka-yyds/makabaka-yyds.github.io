@@ -744,7 +744,7 @@ body {
   color: #2bbc8a;
 }
 #header-post #menu {
-  display: none;
+  visibility: hidden;
   margin-right: 2rem;
 }
 #header-post #nav {
@@ -812,13 +812,13 @@ body {
   text-align: right;
 }
 #header-post #toc a:hover {
-  color: #d480aa;
+  color: #d61676;
 }
 #header-post #toc .toc-level-1 > .toc-link {
   display: none;
 }
 #header-post #toc .toc-level-2 {
-  color: #c9cacc;
+  color: #d89519;
   font-size: 0.8rem;
 }
 #header-post #toc .toc-level-2:before {
@@ -826,11 +826,11 @@ body {
   content: "#";
 }
 #header-post #toc .toc-level-3 {
-  color: #908d8d;
+  color: #06e6e6;
   font-size: 0.7rem;
 }
 #header-post #toc .toc-level-4 {
-  color: #747070;
+  color: #081ab6;
   font-size: 0.4rem;
 }
 #header-post #toc .toc-level-5 {
@@ -1096,7 +1096,7 @@ article .content h2:before {
 article .content img,
 article .content video {
   display: block;
-  margin: left;
+  margin: auto;
   max-width: 100%;
   height: auto;
 }
