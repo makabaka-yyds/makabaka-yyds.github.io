@@ -110,7 +110,7 @@
 
     </div>
     <div id="toc">
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">CPU架构与指令集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">1.1.</span> <span class="toc-text">CISC与RISC对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">x86&#x2F;x64 汇编基础</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.1.</span> <span class="toc-text">CPU操作模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.2.</span> <span class="toc-text">语法风格</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.3.</span> <span class="toc-text">寄存器与数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.4.</span> <span class="toc-text">寄存器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.5.</span> <span class="toc-text">数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.6.</span> <span class="toc-text">数据传送与访问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.7.</span> <span class="toc-text">算术运算与逻辑运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.8.</span> <span class="toc-text">跳转指令与循环指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.9.</span> <span class="toc-text">栈与函数调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.1.</span> <span class="toc-text">使用栈保存函数保存地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.2.</span> <span class="toc-text">使用栈传递函数参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.3.</span> <span class="toc-text">使用栈存储变量</span></a></li></ol></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CPU%E6%9E%B6%E6%9E%84%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="toc-number">1.</span> <span class="toc-text">CPU架构与指令集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CISC%E4%B8%8ERISC%E5%AF%B9%E6%AF%94"><span class="toc-number">1.1.</span> <span class="toc-text">CISC与RISC对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#x86-x64-%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80"><span class="toc-number">2.</span> <span class="toc-text">x86&#x2F;x64 汇编基础</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.1.</span> <span class="toc-text">CPU操作模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95%E9%A3%8E%E6%A0%BC"><span class="toc-number">2.2.</span> <span class="toc-text">语法风格</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.3.</span> <span class="toc-text">寄存器与数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8"><span class="toc-number">2.4.</span> <span class="toc-text">寄存器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.5.</span> <span class="toc-text">数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%81%E4%B8%8E%E8%AE%BF%E9%97%AE"><span class="toc-number">2.6.</span> <span class="toc-text">数据传送与访问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E4%B8%8E%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="toc-number">2.7.</span> <span class="toc-text">算术运算与逻辑运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4%E4%B8%8E%E5%BE%AA%E7%8E%AF%E6%8C%87%E4%BB%A4"><span class="toc-number">2.8.</span> <span class="toc-text">跳转指令与循环指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%88%E4%B8%8E%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8"><span class="toc-number">2.9.</span> <span class="toc-text">栈与函数调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E4%BF%9D%E5%AD%98%E5%87%BD%E6%95%B0%E4%BF%9D%E5%AD%98%E5%9C%B0%E5%9D%80"><span class="toc-number">2.9.1.</span> <span class="toc-text">使用栈保存函数保存地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E4%BC%A0%E9%80%92%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0"><span class="toc-number">2.9.2.</span> <span class="toc-text">使用栈传递函数参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E5%AD%98%E5%82%A8%E5%8F%98%E9%87%8F"><span class="toc-number">2.9.3.</span> <span class="toc-text">使用栈存储变量</span></a></li></ol></li></ol></li></ol>
     </div>
   </span>
 </div>
@@ -162,21 +162,21 @@
 
   <div class="content" itemprop="articleBody">
     <hr>
-<h1><span id="cpu架构与指令集">CPU架构与指令集</span></h1><p><strong>CPU</strong>：从内存中读取指令，再解码和执行</p>
+<h1 id="CPU架构与指令集"><a href="#CPU架构与指令集" class="headerlink" title="CPU架构与指令集"></a>CPU架构与指令集</h1><p><strong>CPU</strong>：从内存中读取指令，再解码和执行</p>
 <p><strong>指令集</strong>：操作码+特定CPU执行的基本命令；一堆二进制数据；分为CISC与RISC两种</p>
 <p><strong>汇编、指令集之间的关系</strong>：</p>
 <p>​    二进制数据不利于阅读与理解，于是汇编语言诞生，每条汇编指令都有对应的指令</p>
-<h2><span id="cisc与risc对比">CISC与RISC对比</span></h2><p><strong>CISC（x86）</strong>  ：指令长度不固定（1~6字节【32位】）；指令数量相对更多（说白了更讲究）；寻址方式多样；                            通用寄存器更少；</p>
+<h2 id="CISC与RISC对比"><a href="#CISC与RISC对比" class="headerlink" title="CISC与RISC对比"></a>CISC与RISC对比</h2><p><strong>CISC（x86）</strong>  ：指令长度不固定（1~6字节【32位】）；指令数量相对更多（说白了更讲究）；寻址方式多样；                            通用寄存器更少；</p>
 <p>​                            缺点：反编译会指令错位；</p>
 <p><strong>RISC（ARM）</strong>：指令长度固定（4字节【32位】）；指令数量相对较少需要组合（没那么讲究）；寻址方式单                            一；通用寄存器更多；</p>
 <p>​                            优点：有利于解码和优化，可以实现流水线；</p>
 <p>​                            缺点：平均代码更长，占空间</p>
 <hr>
-<h1><span id="x86x64-汇编基础">x86/x64 汇编基础</span></h1><h2><span id="cpu操作模式">CPU操作模式</span></h2><p><strong>保护模式</strong>：类似虚拟机；所有指令和特性都可用，但只能在分配的内存段使用</p>
+<h1 id="x86-x64-汇编基础"><a href="#x86-x64-汇编基础" class="headerlink" title="x86/x64 汇编基础"></a>x86/x64 汇编基础</h1><h2 id="CPU操作模式"><a href="#CPU操作模式" class="headerlink" title="CPU操作模式"></a>CPU操作模式</h2><p><strong>保护模式</strong>：类似虚拟机；所有指令和特性都可用，但只能在分配的内存段使用</p>
 <p><strong>实地址模式</strong>：直接访问硬件及其实际内存地址（类似于直接在cmd里操作。。。。吧？？）</p>
 <p><strong>系统管理模式</strong>：提供电源管理或安全保护特性机制（更个性化？？）</p>
-<h2><span id="语法风格">语法风格</span></h2><p>x86：AT&amp;T风格和Intel风格</p>
-<h2><span id="寄存器与数据类型">寄存器与数据类型</span></h2><h2><span id="寄存器">寄存器</span></h2><table>
+<h2 id="语法风格"><a href="#语法风格" class="headerlink" title="语法风格"></a>语法风格</h2><p>x86：AT&amp;T风格和Intel风格</p>
+<h2 id="寄存器与数据类型"><a href="#寄存器与数据类型" class="headerlink" title="寄存器与数据类型"></a>寄存器与数据类型</h2><h2 id="寄存器"><a href="#寄存器" class="headerlink" title="寄存器"></a>寄存器</h2><table>
 <thead>
 <tr>
 <th>操作数</th>
@@ -198,7 +198,7 @@
 <li>64位与32位有相同的标志位状态；</li>
 <li>64位模式下不能访问通用寄存器的高位字节（如AH、BH、CH、DH）;</li>
 </ol>
-<h2><span id="数据类型">数据类型</span></h2><ul>
+<h2 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h2><ul>
 <li><p>整数：1234这种要有后缀表明是什么进制的数；</p>
 <p>​            ABCD这种十六进制要在以字母开头的十六进制数前加0表示，如0ABCDh；</p>
 </li>
@@ -207,13 +207,13 @@
 <li><p>字符串常量：允许字符串常量的嵌套（如 ‘he says “hello”‘）;在内存中以整数字节序列保存</p>
 </li>
 </ul>
-<h2><span id="数据传送与访问">数据传送与访问</span></h2><p><strong>MOV指令</strong>：MOV  EAX,ECX  表示将ECX寄存器的值拷贝进EAX (第一个参数为目的操作数，第二个参数为源操作数)</p>
+<h2 id="数据传送与访问"><a href="#数据传送与访问" class="headerlink" title="数据传送与访问"></a>数据传送与访问</h2><p><strong>MOV指令</strong>：MOV  EAX,ECX  表示将ECX寄存器的值拷贝进EAX (第一个参数为目的操作数，第二个参数为源操作数)</p>
 <p>​    如果出现小操作数（32）扩展为大操作数（64）的情况，需要对操作数进行全零扩展或符号扩展</p>
 <p><strong>XCHG指令</strong>：交换两个操作数的值（操作数数据类型要相同）</p>
 <p>变量名+偏移量可表示一个直接偏移量操作数（管他有没有看懂概念看例子就完事儿）</p>
 <p>如下表示一个数组</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.data</span><br><span class="line">	testArray BYTE 99h,98h,97h,96h</span><br><span class="line">.code</span><br><span class="line">	MOV al, testArray             ; al&#x3D;99h</span><br><span class="line">	MOV bl, [testArray+1]         ; bl&#x3D;98h</span><br><span class="line">	MOV cl, [testArray+2]         ; cl&#x3D;97h</span><br></pre></td></tr></table></figure>
-<h2><span id="算术运算与逻辑运算">算术运算与逻辑运算</span></h2><p><strong>补码</strong>：计算机底层数据都是以补码形式表示；</p>
+<h2 id="算术运算与逻辑运算"><a href="#算术运算与逻辑运算" class="headerlink" title="算术运算与逻辑运算"></a>算术运算与逻辑运算</h2><p><strong>补码</strong>：计算机底层数据都是以补码形式表示；</p>
 <p>​            两机器数相加的补码=先求补码再相加；</p>
 <p>​            加法运算可将符号位和数值为一起算（符号位有进位则直接舍弃）；</p>
 <p>​            减法运算利用其相反数的加法实现；</p>
@@ -224,7 +224,7 @@
 <p><strong>SUB指令</strong>：从目的操作数中减去源操作数</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.data</span><br><span class="line">	testData DWORD 20000h</span><br><span class="line">	testData2 DWORD 10000h</span><br><span class="line">.code</span><br><span class="line">	MOV EAX,testData   ; EAX&#x3D;20000h</span><br><span class="line">	ADD EAX,testData2  ; EAX&#x3D;10000h</span><br></pre></td></tr></table></figure>
 <p><strong>NEG指令</strong>：将操作数转换为二进制补码，并将符号位取反</p>
-<h2><span id="跳转指令与循环指令">跳转指令与循环指令</span></h2><p>跳转指令类型：条件跳转和无条件跳转</p>
+<h2 id="跳转指令与循环指令"><a href="#跳转指令与循环指令" class="headerlink" title="跳转指令与循环指令"></a>跳转指令与循环指令</h2><p>跳转指令类型：条件跳转和无条件跳转</p>
 <p><strong>JMP指令</strong>：无条件跳转；需要用标号来标识，汇编时会将标号转换位相应的偏移量；标号和 JMP指令要再同一函                  数中，但全局标号不受限制。（和goto语句有点像）</p>
 <p>​                下面程序先给EAX赋值再给EBX赋值</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	JMP labell</span><br><span class="line">	MOV EBX, 0</span><br><span class="line">labell:</span><br><span class="line">	MOV EAX, 0</span><br></pre></td></tr></table></figure>
@@ -234,7 +234,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MOV AX, 0</span><br><span class="line">MOV ECX, 3</span><br><span class="line">L1:</span><br><span class="line">INC AX</span><br><span class="line">LOOP L1</span><br><span class="line">XOR EAX, EBX</span><br></pre></td></tr></table></figure>
 <p>​    LOOP指令分为两步：第一步将ECX -1；第二步将ECX与0比较，如果ECX不为0，跳转到标号地址处（INC                 AX）；如果ECX为0，则不跳转，执行LOOP下一条指令（XOR   EAX，EBX）</p>
 <p>​    如果ECX的初始值为0，那么执行LOOP指令时，ECX -1变为FFFFFFFFh，是个很大的循环，因此在编写x86汇编语言时一般情况不需要显式地改变ECX的值，特别是存在循环嵌套的情况时。（不懂。。）</p>
-<h2><span id="栈与函数调用">栈与函数调用</span></h2><p><strong>栈</strong>：特点：先入后出（可以想象成一个薯片桶）</p>
+<h2 id="栈与函数调用"><a href="#栈与函数调用" class="headerlink" title="栈与函数调用"></a>栈与函数调用</h2><p><strong>栈</strong>：特点：先入后出（可以想象成一个薯片桶）</p>
 <pre><code>   用途：存储局部变量；执行CALL指令调用函数时，保存函数地址以便函数结束时正确返回；传递函数参数</code></pre>
 <p>​       常用指令：</p>
 <p>​            PUSH指令：入栈；对ESP/RSP/SP寄存器的值减去 4（32位）或 8（64位），将操作数写入寄存器中指针                                指向的内存中</p>
@@ -244,16 +244,16 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MOV EAX, 1234h</span><br><span class="line">   MOV EBX, 5678h</span><br><span class="line">   PUSH EAX</span><br><span class="line">   PUSH EBX</span><br><span class="line">   POP EAX</span><br><span class="line">   POP EBX</span><br></pre></td></tr></table></figure>
 
 
-<h3><span id="使用栈保存函数保存地址">使用栈保存函数保存地址</span></h3><p><strong>CALL指令</strong>：调用子函数；调用时，CALL指令的下一条指令地址将作为返回地址被保存在栈中，当调用函数结束                时，执行RET指令跳转到返回地址</p>
+<h3 id="使用栈保存函数保存地址"><a href="#使用栈保存函数保存地址" class="headerlink" title="使用栈保存函数保存地址"></a>使用栈保存函数保存地址</h3><p><strong>CALL指令</strong>：调用子函数；调用时，CALL指令的下一条指令地址将作为返回地址被保存在栈中，当调用函数结束                时，执行RET指令跳转到返回地址</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">...			.code</span><br><span class="line">...			main PROC</span><br><span class="line">0x00008000  MOV EBX, EAX</span><br><span class="line">...			...</span><br><span class="line">0X00008020  CALL testFunc</span><br><span class="line">0x00008025  MOV EAX, EBX</span><br><span class="line">...			...</span><br><span class="line">...			main ENDP</span><br><span class="line">...			...</span><br><span class="line">0x00008A00  testFunc PROC</span><br><span class="line">...			MOV EAX, EDX</span><br><span class="line">...			...</span><br><span class="line">...			RET</span><br><span class="line">...			textFunc ENDP</span><br></pre></td></tr></table></figure>
 <p>注：proc是定义子程序的伪指令，位置在子程序的开始处，它和endp分别表示子程序定义的开始和结束两者必须成对出现。</p>
 <p>当CALL指令执行时，下一条指令地址（0x00008025）被压入栈中，被调用函数testFunc地址0x00008A00被加载进EIP寄存器（EIP寄存器存放  下一个CPU指令存放的内存地址）</p>
 <p>   执行RET指令时，ESP指向的数据弹出至EIP；ESP数值增加指向栈中上一个值</p>
-<h3><span id="使用栈传递函数参数">使用栈传递函数参数</span></h3><p>cdecl约定：</p>
+<h3 id="使用栈传递函数参数"><a href="#使用栈传递函数参数" class="headerlink" title="使用栈传递函数参数"></a>使用栈传递函数参数</h3><p>cdecl约定：</p>
 <p>​            假设函数 func 有三个参数 agr1、agr2、agr3 ，在cdecl约定下通常为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">push arg3</span><br><span class="line">push arg2</span><br><span class="line">push arg1</span><br><span class="line">call func</span><br></pre></td></tr></table></figure>
 <p>（只知道这么多了。。。）</p>
-<h3><span id="使用栈存储变量">使用栈存储变量</span></h3><p>涉及到了PUSHFD和POPFD，但讲的很少就没怎么看懂</p>
+<h3 id="使用栈存储变量"><a href="#使用栈存储变量" class="headerlink" title="使用栈存储变量"></a>使用栈存储变量</h3><p>涉及到了PUSHFD和POPFD，但讲的很少就没怎么看懂</p>
 
   </div>
 </article>
@@ -285,7 +285,7 @@
     </div>
 
     <div id="toc-footer" style="display: none">
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">CPU架构与指令集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">1.1.</span> <span class="toc-text">CISC与RISC对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">x86&#x2F;x64 汇编基础</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.1.</span> <span class="toc-text">CPU操作模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.2.</span> <span class="toc-text">语法风格</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.3.</span> <span class="toc-text">寄存器与数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.4.</span> <span class="toc-text">寄存器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.5.</span> <span class="toc-text">数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.6.</span> <span class="toc-text">数据传送与访问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.7.</span> <span class="toc-text">算术运算与逻辑运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.8.</span> <span class="toc-text">跳转指令与循环指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-number">2.9.</span> <span class="toc-text">栈与函数调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.1.</span> <span class="toc-text">使用栈保存函数保存地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.2.</span> <span class="toc-text">使用栈传递函数参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link"><span class="toc-number">2.9.3.</span> <span class="toc-text">使用栈存储变量</span></a></li></ol></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CPU%E6%9E%B6%E6%9E%84%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="toc-number">1.</span> <span class="toc-text">CPU架构与指令集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CISC%E4%B8%8ERISC%E5%AF%B9%E6%AF%94"><span class="toc-number">1.1.</span> <span class="toc-text">CISC与RISC对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#x86-x64-%E6%B1%87%E7%BC%96%E5%9F%BA%E7%A1%80"><span class="toc-number">2.</span> <span class="toc-text">x86&#x2F;x64 汇编基础</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.1.</span> <span class="toc-text">CPU操作模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95%E9%A3%8E%E6%A0%BC"><span class="toc-number">2.2.</span> <span class="toc-text">语法风格</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.3.</span> <span class="toc-text">寄存器与数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8"><span class="toc-number">2.4.</span> <span class="toc-text">寄存器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.5.</span> <span class="toc-text">数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%81%E4%B8%8E%E8%AE%BF%E9%97%AE"><span class="toc-number">2.6.</span> <span class="toc-text">数据传送与访问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E4%B8%8E%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="toc-number">2.7.</span> <span class="toc-text">算术运算与逻辑运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4%E4%B8%8E%E5%BE%AA%E7%8E%AF%E6%8C%87%E4%BB%A4"><span class="toc-number">2.8.</span> <span class="toc-text">跳转指令与循环指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%88%E4%B8%8E%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8"><span class="toc-number">2.9.</span> <span class="toc-text">栈与函数调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E4%BF%9D%E5%AD%98%E5%87%BD%E6%95%B0%E4%BF%9D%E5%AD%98%E5%9C%B0%E5%9D%80"><span class="toc-number">2.9.1.</span> <span class="toc-text">使用栈保存函数保存地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E4%BC%A0%E9%80%92%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0"><span class="toc-number">2.9.2.</span> <span class="toc-text">使用栈传递函数参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%A0%88%E5%AD%98%E5%82%A8%E5%8F%98%E9%87%8F"><span class="toc-number">2.9.3.</span> <span class="toc-text">使用栈存储变量</span></a></li></ol></li></ol></li></ol>
     </div>
 
     <div id="share-footer" style="display: none">
