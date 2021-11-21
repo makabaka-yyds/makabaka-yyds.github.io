@@ -812,13 +812,13 @@ body {
   text-align: right;
 }
 #header-post #toc a:hover {
-  color: #d480aa;
+  color: #f00;
 }
 #header-post #toc .toc-level-1 > .toc-link {
   display: none;
 }
 #header-post #toc .toc-level-2 {
-  color: #c9cacc;
+  color: #ff0;
   font-size: 0.8rem;
 }
 #header-post #toc .toc-level-2:before {
@@ -826,7 +826,7 @@ body {
   content: "#";
 }
 #header-post #toc .toc-level-3 {
-  color: #908d8d;
+  color: #0f0;
   font-size: 0.7rem;
 }
 #header-post #toc .toc-level-4 {

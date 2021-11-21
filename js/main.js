@@ -1,7 +1,7 @@
 /**
  * Sets up Justified Gallery.
  */
-if (!!$.prototype.justifiedGallery) {
+ if (!!$.prototype.justifiedGallery) {
   var options = {
     rowHeight: 140,
     margins: 4,
@@ -33,7 +33,7 @@ $(document).ready(function() {
      * Display the menu on hi-res laptops and desktops.
      */
     if ($(document).width() >= 1440) {
-      menu.show();
+      menu.css("visibility", "visible");
       menuIcon.addClass("active");
     }
 
@@ -41,11 +41,11 @@ $(document).ready(function() {
      * Display the menu if the menu icon is clicked.
      */
     menuIcon.click(function() {
-      if (menu.is(":hidden")) {
-        menu.show();
+      if (menu.css("visibility") === "hidden") {
+        menu.css("visibility", "visible");
         menuIcon.addClass("active");
       } else {
-        menu.hide();
+        menu.css("visibility", "hidden");
         menuIcon.removeClass("active");
       }
       return false;
