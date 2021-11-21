@@ -812,13 +812,13 @@ body {
   text-align: right;
 }
 #header-post #toc a:hover {
-  color: #d61676;
+  color: #d480aa;
 }
 #header-post #toc .toc-level-1 > .toc-link {
   display: none;
 }
 #header-post #toc .toc-level-2 {
-  color: #d89519;
+  color: #c9cacc;
   font-size: 0.8rem;
 }
 #header-post #toc .toc-level-2:before {
@@ -826,18 +826,20 @@ body {
   content: "#";
 }
 #header-post #toc .toc-level-3 {
-  color: #06e6e6;
+  color: #908d8d;
   font-size: 0.7rem;
 }
 #header-post #toc .toc-level-4 {
-  color: #081ab6;
+  color: #0ff;
   font-size: 0.4rem;
 }
 #header-post #toc .toc-level-5 {
-  display: none;
+  color: #00f;
+  font-size: 0.3rem;
 }
 #header-post #toc .toc-level-6 {
-  display: none;
+  color: #8b00ff;
+  font-size: 0.2rem;
 }
 #header-post #toc .toc-number {
   display: none;
@@ -1096,7 +1098,7 @@ article .content h2:before {
 article .content img,
 article .content video {
   display: block;
-  margin: auto;
+  margin: left;
   max-width: 100%;
   height: auto;
 }
