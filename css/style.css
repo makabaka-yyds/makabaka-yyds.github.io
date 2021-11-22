@@ -818,7 +818,7 @@ body {
   display: none;
 }
 #header-post #toc .toc-level-2 {
-  color: #c9cacc;
+  color: #d6e9ca /* 白绿 */;
   font-size: 0.8rem;
 }
 #header-post #toc .toc-level-2:before {
@@ -826,19 +826,19 @@ body {
   content: "#";
 }
 #header-post #toc .toc-level-3 {
-  color: #908d8d;
+  color: #93ca76 /* 淡萌黄 */;
   font-size: 0.7rem;
 }
 #header-post #toc .toc-level-4 {
-  color: #000;
+  color: #93b881 /* 柳染 */;
   font-size: 0.4rem;
 }
 #header-post #toc .toc-level-5 {
-  color: #000;
+  color: #9ba88d /* 青白橡 */;
   font-size: 0.3rem;
 }
 #header-post #toc .toc-level-6 {
-  color: #000;
+  color: #769164 /* 老竹色 */;
   font-size: 0.2rem;
 }
 #header-post #toc .toc-number {
