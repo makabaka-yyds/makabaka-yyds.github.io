@@ -6,15 +6,26 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta property="og:type" content="article">
+    <meta name="description" content="项目网址 https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 GDB 调试程序  环境与搭建Ubuntu 20(推荐使用) 安装 Xpdf首先需要下载一些额外工具(即 make 和 gcc) 1$ sudo apt install build-essential 为此项目创建一个文件 12$ cd">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Fuzzing101-exe1">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2022/02/19/Fuzzing101-exe1/index.html">
 <meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="项目网址 https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 GDB 调试程序  环境与搭建Ubuntu 20(推荐使用) 安装 Xpdf首先需要下载一些额外工具(即 make 和 gcc) 1$ sudo apt install build-essential 为此项目创建一个文件 12$ cd">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519406513814/70b99174a47b19aabcc260624c5fa775e992521f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519642625054/e989abbf9d025fb5ffa28526e539ef599f7b4ced.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519938839698/405c9b131d94efe67367c342df1b3e3eb836d7fe.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645520492903765/e1c60c005f12c7373184943465b1aac0ed3e3b07.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521014969591/59e6faac75b3911da2e3566a83a3f2b1e7a421c5.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521247526414/2b904e58c3173a8651c7c1d31ccb34d82b4b9519.png">
 <meta property="article:published_time" content="2022-02-19T05:34:33.000Z">
-<meta property="article:modified_time" content="2022-02-19T05:34:33.841Z">
+<meta property="article:modified_time" content="2022-02-22T09:29:16.093Z">
 <meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta property="article:tag" content="fuzz">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519406513814/70b99174a47b19aabcc260624c5fa775e992521f.png">
     
     
       
@@ -79,7 +90,7 @@
       <ul>
         
         
-        <li><a class="icon" aria-label="下一篇" href="/2022/02/12/AFL-Fuzz%E5%88%9D%E6%8E%A2/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="下一篇" href="/2022/02/11/HGAME%E9%83%A8%E5%88%86wp/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
         
         <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
         <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
@@ -107,7 +118,7 @@
 
     </div>
     <div id="toc">
-      
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%BD%91%E5%9D%80"><span class="toc-number">1.</span> <span class="toc-text">项目网址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
     </div>
   </span>
 </div>
@@ -133,22 +144,106 @@
       
         <time datetime="2022-02-19T05:34:33.000Z" itemprop="datePublished">2022-02-19</time>
         
-        (Updated: <time datetime="2022-02-19T05:34:33.841Z" itemprop="dateModified">2022-02-19</time>)
+        (Updated: <time datetime="2022-02-22T09:29:16.093Z" itemprop="dateModified">2022-02-22</time>)
         
       
     </div>
 
 
       
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E7%9F%A5%E8%AF%86%E7%82%B9/">知识点</a>
+    </div>
+
 
       
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>, <a class="tag-link-link" href="/tags/fuzz/" rel="tag">fuzz</a>
+    </div>
+
 
     </div>
   </header>
   
 
   <div class="content" itemprop="articleBody">
-    
+    <h2 id="项目网址"><a href="#项目网址" class="headerlink" title="项目网址"></a>项目网址</h2><p> <a target="_blank" rel="noopener" href="https://github.com/antonio-morales/Fuzzing101">https://github.com/antonio-morales/Fuzzing101</a> </p>
+<h2 id="将会学到的知识"><a href="#将会学到的知识" class="headerlink" title="将会学到的知识"></a>将会学到的知识</h2><ul>
+<li>对程序进行插桩</li>
+<li>AFL-FUZZ 的使用</li>
+<li>GDB 调试程序</li>
+</ul>
+<h2 id="环境与搭建"><a href="#环境与搭建" class="headerlink" title="环境与搭建"></a>环境与搭建</h2><p>Ubuntu 20(推荐使用)</p>
+<h3 id="安装-Xpdf"><a href="#安装-Xpdf" class="headerlink" title="安装 Xpdf"></a>安装 Xpdf</h3><p>首先需要下载一些额外工具(即 make 和 gcc)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo apt install build-essential</span><br></pre></td></tr></table></figure>
+<p>为此项目创建一个文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cd $HOME</span><br><span class="line">$ mkdir fuzzing_xpdf &amp;&amp; cd fuzzing_xpdf&#x2F;</span><br></pre></td></tr></table></figure>
+<p>下载 Xpdf 3.02：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ wget https:&#x2F;&#x2F;dl.xpdfreader.com&#x2F;old&#x2F;xpdf-3.02.tar.gz</span><br><span class="line">$ tar -xvzf xpdf-3.02.tar.gz</span><br></pre></td></tr></table></figure>
+<p>构建 Xpdf：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cd xpdf-3.02</span><br><span class="line">$ sudo apt update &amp;&amp; sudo apt install -y build-essential gcc</span><br><span class="line">$ .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;&quot;</span><br><span class="line">$ make</span><br><span class="line">$ make install</span><br></pre></td></tr></table></figure>
+<p>下载一些 PDF 示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cd $HOME&#x2F;fuzzing_xpdf</span><br><span class="line">$ mkdir pdf_examples &amp;&amp; cd pdf_examples</span><br><span class="line">$ wget https:&#x2F;&#x2F;github.com&#x2F;mozilla&#x2F;pdf.js-sample-files&#x2F;raw&#x2F;master&#x2F;helloworld.pdf #注意</span><br><span class="line">$ wget http:&#x2F;&#x2F;www.africau.edu&#x2F;images&#x2F;default&#x2F;sample.pdf</span><br><span class="line">$ wget https:&#x2F;&#x2F;www.melbpc.org.au&#x2F;wp-content&#x2F;uploads&#x2F;2017&#x2F;10&#x2F;small-example-pdf-file.pdf</span><br></pre></td></tr></table></figure>
+<p>要注意的是，其中的 <code>helloworld.pdf</code>链接对于 wget 已经失效，但是直接在浏览器上下载还是可以的，所以可以在本机下好后再拖入虚拟机。</p>
+<p>现在，可以使用以下命令测试 pdfinfo 二进制文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ $HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;bin&#x2F;pdfinfo -box -meta $HOME&#x2F;fuzzing_xpdf&#x2F;pdf_examples&#x2F;helloworld.pdf</span><br></pre></td></tr></table></figure>
+<p>将会看到如下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">gyx@ubuntu:~&#x2F;fuzzing_xpdf$ $HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;bin&#x2F;pdfinfo -box -meta $HOME&#x2F;fuzzing_xpdf&#x2F;pdf_examples&#x2F;helloworld.pdf</span><br><span class="line">Tagged:         no</span><br><span class="line">Pages:          1</span><br><span class="line">Encrypted:      no</span><br><span class="line">Page size:      200 x 200 pts</span><br><span class="line">MediaBox:           0.00     0.00   200.00   200.00</span><br><span class="line">CropBox:            0.00     0.00   200.00   200.00</span><br><span class="line">BleedBox:           0.00     0.00   200.00   200.00</span><br><span class="line">TrimBox:            0.00     0.00   200.00   200.00</span><br><span class="line">ArtBox:             0.00     0.00   200.00   200.00</span><br><span class="line">File size:      678 bytes</span><br><span class="line">Optimized:      no</span><br><span class="line">PDF version:    1.7</span><br></pre></td></tr></table></figure>
+<h3 id="安装-AFL"><a href="#安装-AFL" class="headerlink" title="安装 AFL++"></a>安装 AFL++</h3><p>将会用到 AFL++ 的最新版</p>
+<p>安装依赖项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ sudo apt-get update</span><br><span class="line">$ sudo apt-get install -y build-essential python3-dev automake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools</span><br><span class="line">$ sudo apt-get install -y lld-11 llvm-11 llvm-11-dev clang-11 || sudo apt-get install -y lld llvm llvm-dev clang </span><br><span class="line">$ sudo apt-get install -y gcc-$(gcc --version|head -n1|sed &#39;s&#x2F;.* &#x2F;&#x2F;&#39;|sed &#39;s&#x2F;\..*&#x2F;&#x2F;&#39;)-plugin-dev libstdc++-$(gcc --version|head -n1|sed &#39;s&#x2F;.* &#x2F;&#x2F;&#39;|sed &#39;s&#x2F;\..*&#x2F;&#x2F;&#39;)-dev</span><br></pre></td></tr></table></figure>
+<p>构建 AFL++</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cd $HOME</span><br><span class="line">$ git clone https:&#x2F;&#x2F;github.com&#x2F;AFLplusplus&#x2F;AFLplusplus &amp;&amp; cd AFLplusplus</span><br><span class="line">$ export LLVM_CONFIG&#x3D;&quot;llvm-config-11&quot;</span><br><span class="line">$ make distrib</span><br><span class="line">$ sudo make install</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，国内下载 github 相对较慢，所以可以通过<code>git clone git://github.com/AFLplusplus/AFLplusplus &amp;&amp; cd AFLplusplus</code>更快速的下载。<code>make distrib</code>这一项，安装过程中可能会出现 qemu_mode、frida 和 unicorn 安装失败，或者 unicorn mode 未工作的情况。这里列举一下每一项的作用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">all：只是主要的 AFL++ 二进制文件</span><br><span class="line">binary-only：仅二进制模糊测试的所有内容：qemu_mode、unicorn_mode、libdislocator、libtokencap、radamsa</span><br><span class="line">source-only：源代码模糊测试的所有内容：llvm_mode、libdislocator、libtokencap、radamsa</span><br><span class="line">distrib：一切（仅用于二进制和源代码模糊测试）</span><br><span class="line">install：安装您使用上面的构建选项编译的所有内容</span><br><span class="line">clean：清洁一切。对于 qemu_mode 和 unicorn_mode 这意味着它也会删除所有下载</span><br><span class="line">code-format：格式化代码，请在提交之前执行此操作并发送 PR！</span><br><span class="line">tests：运行测试用例以确保所有功能仍然正常工作</span><br><span class="line">help: 显示这些构建选项</span><br></pre></td></tr></table></figure>
+<p>llvm_mode 等功能现在暂时还用不上，所以也可以换成 <code>make all</code>指令</p>
+<p>键入<code>afl-fuzz</code>即可查看是否安装成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">gyx@ubuntu:~&#x2F;fuzzing_xpdf$ afl-fuzz</span><br><span class="line">afl-fuzz++4.01a based on afl by Michal Zalewski and a large online community</span><br><span class="line"></span><br><span class="line">afl-fuzz [ options ] -- &#x2F;path&#x2F;to&#x2F;fuzzed_app [ ... ]</span><br><span class="line"></span><br><span class="line">Required parameters:</span><br><span class="line">  -i dir        - input directory with test cases</span><br><span class="line">  -o dir        - output directory for fuzzer findings</span><br><span class="line"></span><br><span class="line">Execution control settings:</span><br><span class="line">  -p schedule   - power schedules compute a seed&#39;s performance score:</span><br><span class="line">                  fast(default), explore, exploit, seek, rare, mmopt, coe, lin</span><br><span class="line">                  quad -- see docs&#x2F;FAQ.md for more information</span><br><span class="line">  -f file       - location read by the fuzzed program (default: stdin or @@)</span><br><span class="line">  -t msec       - timeout for each run (auto-scaled, default 1000 ms). Add a &#39;+&#39;</span><br><span class="line">                  to auto-calculate the timeout, the value being the maximum.</span><br><span class="line">  -m megs       - memory limit for child process (0 MB, 0 &#x3D; no limit [default])</span><br><span class="line">  -O            - use binary-only instrumentation (FRIDA mode)</span><br><span class="line">  -Q            - use binary-only instrumentation (QEMU mode)</span><br><span class="line">  -U            - use unicorn-based instrumentation (Unicorn mode)</span><br><span class="line">  -W            - use qemu-based instrumentation with Wine (Wine mode)</span><br><span class="line">  -X            - use VM fuzzing (NYX mode - standalone mode)</span><br><span class="line">  -Y            - use VM fuzzing (NYX mode - multiple instances mode)</span><br><span class="line"></span><br><span class="line">Mutator settings:</span><br><span class="line">  -g minlength  - set min length of generated fuzz input (default: 1)</span><br><span class="line">  -G maxlength  - set max length of generated fuzz input (default: 1048576)</span><br><span class="line">  -D            - enable deterministic fuzzing (once per queue entry)</span><br><span class="line">  -L minutes    - use MOpt(imize) mode and set the time limit for entering the</span><br><span class="line">                  pacemaker mode (minutes of no new finds). 0 &#x3D; immediately,</span><br><span class="line">                  -1 &#x3D; immediately and together with normal mutation.</span><br><span class="line">                  See docs&#x2F;README.MOpt.md</span><br><span class="line">  -c program    - enable CmpLog by specifying a binary compiled for it.</span><br><span class="line">                  if using QEMU, just use -c 0.</span><br><span class="line">  -l cmplog_opts - CmpLog configuration values (e.g. &quot;2AT&quot;):</span><br><span class="line">                  1&#x3D;small files, 2&#x3D;larger files (default), 3&#x3D;all files,</span><br><span class="line">                  A&#x3D;arithmetic solving, T&#x3D;transformational solving.</span><br><span class="line"></span><br><span class="line">Fuzzing behavior settings:</span><br><span class="line">  -Z            - sequential queue selection instead of weighted random</span><br><span class="line">  -N            - do not unlink the fuzzing input file (for devices etc.)</span><br><span class="line">  -n            - fuzz without instrumentation (non-instrumented mode)</span><br><span class="line">  -x dict_file  - fuzzer dictionary (see README.md, specify up to 4 times)</span><br><span class="line"></span><br><span class="line">Test settings:</span><br><span class="line">  -s seed       - use a fixed seed for the RNG</span><br><span class="line">  -V seconds    - fuzz for a specified time then terminate</span><br><span class="line">  -E execs      - fuzz for an approx. no. of total executions then terminate</span><br><span class="line">                  Note: not precise and can have several more executions.</span><br><span class="line"></span><br><span class="line">Other stuff:</span><br><span class="line">  -M&#x2F;-S id      - distributed mode (see docs&#x2F;parallel_fuzzing.md)</span><br><span class="line">                  -M auto-sets -D, -Z (use -d to disable -D) and no trimming</span><br><span class="line">  -F path       - sync to a foreign fuzzer queue directory (requires -M, can</span><br><span class="line">                  be specified up to 32 times)</span><br><span class="line">  -T text       - text banner to show on the screen</span><br><span class="line">  -I command    - execute this command&#x2F;script when a new crash is found</span><br><span class="line">  -C            - crash exploration mode (the peruvian rabbit thing)</span><br><span class="line">  -b cpu_id     - bind the fuzzing process to the specified CPU core (0-...)</span><br><span class="line">  -e ext        - file extension for the fuzz test input file (if needed)</span><br><span class="line"></span><br><span class="line">To view also the supported environment variables of afl-fuzz please use &quot;-hh&quot;.</span><br><span class="line"></span><br><span class="line">Compiled with Python 3.8.10 module support, see docs&#x2F;custom_mutator.md</span><br><span class="line">Compiled without AFL_PERSISTENT_RECORD support.</span><br><span class="line">Compiled with shmat support.</span><br><span class="line">For additional help please consult &#x2F;usr&#x2F;local&#x2F;share&#x2F;doc&#x2F;afl&#x2F;README.md :)</span><br></pre></td></tr></table></figure>
+<h2 id="插桩与运行"><a href="#插桩与运行" class="headerlink" title="插桩与运行"></a>插桩与运行</h2><p>用 AFL 的编译器编译代码</p>
+<p>首先要清理所有之前编译的目标文件和可执行文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ rm -r $HOME&#x2F;fuzzing_xpdf&#x2F;install</span><br><span class="line">$ cd $HOME&#x2F;fuzzing_xpdf&#x2F;xpdf-3.02&#x2F;</span><br><span class="line">$ make clean</span><br></pre></td></tr></table></figure>
+<p>接着使用 afl-clang-fast 编译器构建 Xpdf</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ export LLVM_CONFIG&#x3D;&quot;llvm-config-11&quot;</span><br><span class="line">$ CC&#x3D;$HOME&#x2F;AFLplusplus&#x2F;afl-clang-fast CXX&#x3D;$HOME&#x2F;AFLplusplus&#x2F;afl-clang-fast++ .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;&quot;</span><br><span class="line">$ make</span><br><span class="line">$ make install</span><br></pre></td></tr></table></figure>
+<p>运行模糊器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ afl-fuzz -i $HOME&#x2F;fuzzing_xpdf&#x2F;pdf_examples&#x2F; -o $HOME&#x2F;fuzzing_xpdf&#x2F;out&#x2F; -s 123 -- $HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;bin&#x2F;pdftotext @@ $HOME&#x2F;fuzzing_xpdf&#x2F;output</span><br></pre></td></tr></table></figure>
+<p>每个选项简要说明：</p>
+<ul>
+<li><em>-i</em> 表示我们必须放置输入案例的目录（又名文件示例）</li>
+<li><em>-o</em> 表示 AFL++ 将存储变异文件的目录</li>
+<li><em>-s</em> 表示要使用的静态随机种子</li>
+<li><em>@@</em> 是占位符目标的命令行，AFL 将用每个输入文件名替换</li>
+</ul>
+<p>如果在 fuzz 过程中遇到有关于 core_pattern 的报错，可以这样设置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo su</span><br><span class="line">$ echo core &gt;&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern</span><br><span class="line">$ exit</span><br></pre></td></tr></table></figure>
+<p>成功后就会出现 fuzz 界面，可以看到此时有一个 crash</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519406513814/70b99174a47b19aabcc260624c5fa775e992521f.png" alt="image-20220222164326160"></p>
+<h2 id="重现崩溃"><a href="#重现崩溃" class="headerlink" title="重现崩溃"></a>重现崩溃</h2><p>在目录中找到崩溃对应的文件<code>$HOME/fuzzing_xpdf/out/default/crashes</code>，会发现一个文件名类似于<code>id:000000,sig:11,src:000972,time:155131,execs:90167,op:havoc,rep:8</code>的文件。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519642625054/e989abbf9d025fb5ffa28526e539ef599f7b4ced.png" alt="image-20220222164722446"></p>
+<p>将此文件作为输入传递给 pdftotext 二进制文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ $HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;bin&#x2F;pdftotext &#39;$HOME&#x2F;fuzzing_xpdf&#x2F;out&#x2F;default&#x2F;crashes&#x2F;&lt;your_filename&gt;&#39; $HOME&#x2F;fuzzing_xpdf&#x2F;output</span><br></pre></td></tr></table></figure>
+<p>要注意的是，如果显示打不开文件可以输入文件的绝对路径，例如我这就改为<code>$HOME/fuzzing_xpdf/install/bin/pdftotext &#39;/home/gyx/fuzzing_xpdf/out/default/crashes/id:000000,sig:11,src:000972,time:155131,execs:90167,op:havoc,rep:8&#39; /home/gyx/fuzzing_xpdf/output</code>，网上看到一个方法说可以把文件名改为 <code>xxx.pdf</code>，但是我没试成功。</p>
+<p>成功后显示是段错误</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519938839698/405c9b131d94efe67367c342df1b3e3eb836d7fe.png" alt="image-20220222165218670"></p>
+<h2 id="gdb-调试"><a href="#gdb-调试" class="headerlink" title="gdb 调试"></a>gdb 调试</h2><p>用 gdb 找出程序因为这个输入而崩溃的原因</p>
+<p>首先，使用调试信息重建 Xpdf 以获得符号堆栈跟踪</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ rm -r $HOME&#x2F;fuzzing_xpdf&#x2F;install</span><br><span class="line">$ cd $HOME&#x2F;fuzzing_xpdf&#x2F;xpdf-3.02&#x2F;</span><br><span class="line">$ make clean</span><br><span class="line">$ CFLAGS&#x3D;&quot;-g -O0&quot; CXXFLAGS&#x3D;&quot;-g -O0&quot; .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;&quot;</span><br><span class="line">$ make</span><br><span class="line">$ make install</span><br></pre></td></tr></table></figure>
+<p>运行 GDB</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ gdb --args $HOME&#x2F;fuzzing_xpdf&#x2F;install&#x2F;bin&#x2F;pdftotext $HOME&#x2F;fuzzing_xpdf&#x2F;out&#x2F;default&#x2F;crashes&#x2F;&lt;your_filename&gt; $HOME&#x2F;fuzzing_xpdf&#x2F;output</span><br></pre></td></tr></table></figure>
+<p>然后在 GDB 中输入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; run</span><br></pre></td></tr></table></figure>
+<p>可以看到程序有很多报错</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645520492903765/e1c60c005f12c7373184943465b1aac0ed3e3b07.png" alt="image-20220222170132713"></p>
+<p>然后键入<code>bt</code>以获取回溯</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521014969591/59e6faac75b3911da2e3566a83a3f2b1e7a421c5.png" alt="image-20220222171014762"></p>
+<p>可以发现程序调用了很多次<code>Parser::getObj</code>函数，再结合文档叙述发现确实是这样。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521247526414/2b904e58c3173a8651c7c1d31ccb34d82b4b9519.png" alt="image-20220222171407364"></p>
+<p>CVE-2019-13288：<a target="_blank" rel="noopener" href="https://www.cvedetails.com/cve/CVE-2019-13288/">https://www.cvedetails.com/cve/CVE-2019-13288/</a></p>
+<hr>
+<p>参考链接</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/antonio-morales/Fuzzing101/tree/main/Exercise%201">https://github.com/antonio-morales/Fuzzing101/tree/main/Exercise%201</a></p>
+
   </div>
 </article>
 
@@ -179,7 +274,7 @@
     </div>
 
     <div id="toc-footer" style="display: none">
-      
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%BD%91%E5%9D%80"><span class="toc-number">1.</span> <span class="toc-text">项目网址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
     </div>
 
     <div id="share-footer" style="display: none">
