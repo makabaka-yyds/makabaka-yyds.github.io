@@ -8,13 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
     <meta name="description" content="深育杯的 writebook主要函数add12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152unsigned __int64 sub_ABC()&amp;#123;  unsigned int v0; &#x2F;&#x2F; ebx  unsigned int v1; &#x2F;&#x2F; ebx">
 <meta property="og:type" content="article">
-<meta property="og:title" content="off by null构造堆重叠(unsortedbin的double free)">
+<meta property="og:title" content="堆利用之off by null构造堆重叠(unsortedbin的double free)">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/index.html">
 <meta property="og:site_name" content="Xu4n">
 <meta property="og:description" content="深育杯的 writebook主要函数add12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152unsigned __int64 sub_ABC()&amp;#123;  unsigned int v0; &#x2F;&#x2F; ebx  unsigned int v1; &#x2F;&#x2F; ebx">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-11-13T08:53:48.000Z">
-<meta property="article:modified_time" content="2021-11-19T12:44:33.619Z">
+<meta property="article:modified_time" content="2022-03-03T13:14:30.528Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="PWN">
 <meta property="article:tag" content="堆">
@@ -38,7 +38,7 @@
       
     
     <!-- title -->
-    <title>off by null构造堆重叠(unsortedbin的double free)</title>
+    <title>堆利用之off by null构造堆重叠(unsortedbin的double free)</title>
     <!-- styles -->
     
 <link rel="stylesheet" href="/css/style.css">
@@ -99,16 +99,16 @@
     <div id="share" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&text=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&is_video=false&description=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=off by null构造堆重叠(unsortedbin的double free)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&name=off by null构造堆重叠(unsortedbin的double free)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&t=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&text=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&is_video=false&description=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之off by null构造堆重叠(unsortedbin的double free)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&name=堆利用之off by null构造堆重叠(unsortedbin的double free)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&t=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -125,7 +125,7 @@
   <header>
     
     <h1 class="posttitle" itemprop="name headline">
-        off by null构造堆重叠(unsortedbin的double free)
+        堆利用之off by null构造堆重叠(unsortedbin的double free)
     </h1>
 
 
@@ -139,7 +139,7 @@
       
         <time datetime="2021-11-13T08:53:48.000Z" itemprop="datePublished">2021-11-13</time>
         
-        (Updated: <time datetime="2021-11-19T12:44:33.619Z" itemprop="dateModified">2021-11-19</time>)
+        (Updated: <time datetime="2022-03-03T13:14:30.528Z" itemprop="dateModified">2022-03-03</time>)
         
       
     </div>
@@ -218,16 +218,16 @@
     <div id="share-footer" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&text=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&is_video=false&description=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=off by null构造堆重叠(unsortedbin的double free)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&name=off by null构造堆重叠(unsortedbin的double free)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&t=off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&text=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&is_video=false&description=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之off by null构造堆重叠(unsortedbin的double free)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&title=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&name=堆利用之off by null构造堆重叠(unsortedbin的double free)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/13/off%20by%20null%E6%9E%84%E9%80%A0%E5%A0%86%E9%87%8D%E5%8F%A0(unsortedbin%E7%9A%84double%20free)/&t=堆利用之off by null构造堆重叠(unsortedbin的double free)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>

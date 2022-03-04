@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
     <meta name="description" content="house of lore 一般是 small bin 的一种利用手段，一般 libc 版本为 2.23 和 2.29  small bin 结构每个small bin维护着一个双向循环链表，而且chunk size都相同。当allocate memory时，总是从链表尾端unlink一个chunk，deallocate memory时，将那个chunk link到链表头。属于FILO(先进后出">
 <meta property="og:type" content="article">
-<meta property="og:title" content="house of lore(包含tcache stashing unlink attack)">
+<meta property="og:title" content="堆利用之house of lore(包含tcache stashing unlink attack)">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2021/11/24/house-of-lore/index.html">
 <meta property="og:site_name" content="Xu4n">
 <meta property="og:description" content="house of lore 一般是 small bin 的一种利用手段，一般 libc 版本为 2.23 和 2.29  small bin 结构每个small bin维护着一个双向循环链表，而且chunk size都相同。当allocate memory时，总是从链表尾端unlink一个chunk，deallocate memory时，将那个chunk link到链表头。属于FILO(先进后出">
@@ -45,7 +45,7 @@
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/temporaryButter/1643382418018433/d161bc4e7b1167b3787cd3162a24e29c62238b44.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/temporaryButter/1643382382608130/356537389d1553cc45b92eedab6e55eb6d298b26.png">
 <meta property="article:published_time" content="2021-11-24T11:46:01.000Z">
-<meta property="article:modified_time" content="2022-01-28T15:18:16.218Z">
+<meta property="article:modified_time" content="2022-03-03T13:14:13.046Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="PWN">
 <meta property="article:tag" content="堆">
@@ -71,7 +71,7 @@
       
     
     <!-- title -->
-    <title>house of lore(包含tcache stashing unlink attack)</title>
+    <title>堆利用之house of lore(包含tcache stashing unlink attack)</title>
     <!-- styles -->
     
 <link rel="stylesheet" href="/css/style.css">
@@ -132,16 +132,16 @@
     <div id="share" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&text=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&is_video=false&description=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=house of lore(包含tcache stashing unlink attack)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&name=house of lore(包含tcache stashing unlink attack)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&t=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&text=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&is_video=false&description=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之house of lore(包含tcache stashing unlink attack)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&name=堆利用之house of lore(包含tcache stashing unlink attack)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&t=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -158,7 +158,7 @@
   <header>
     
     <h1 class="posttitle" itemprop="name headline">
-        house of lore(包含tcache stashing unlink attack)
+        堆利用之house of lore(包含tcache stashing unlink attack)
     </h1>
 
 
@@ -172,7 +172,7 @@
       
         <time datetime="2021-11-24T11:46:01.000Z" itemprop="datePublished">2021-11-24</time>
         
-        (Updated: <time datetime="2022-01-28T15:18:16.218Z" itemprop="dateModified">2022-01-28</time>)
+        (Updated: <time datetime="2022-03-03T13:14:13.046Z" itemprop="dateModified">2022-03-03</time>)
         
       
     </div>
@@ -377,16 +377,16 @@
     <div id="share-footer" style="display: none">
       <ul>
   <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&text=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&is_video=false&description=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=house of lore(包含tcache stashing unlink attack)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&name=house of lore(包含tcache stashing unlink attack)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&t=house of lore(包含tcache stashing unlink attack)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&text=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&is_video=false&description=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=堆利用之house of lore(包含tcache stashing unlink attack)&body=Check out this article: http://makabaka-yyds.github.io/2021/11/24/house-of-lore/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&title=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&name=堆利用之house of lore(包含tcache stashing unlink attack)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2021/11/24/house-of-lore/&t=堆利用之house of lore(包含tcache stashing unlink attack)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>

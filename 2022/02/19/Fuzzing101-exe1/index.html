@@ -6,12 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="项目网址 https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 GDB 调试程序  环境与搭建Ubuntu 20(推荐使用) 安装 Xpdf首先需要下载一些额外工具(即 make 和 gcc) 1$ sudo apt install build-essential 为此项目创建一个文件 12$ cd">
+    <meta name="description" content="介绍本文是 Fuzzing101 训练的第一篇，目标是找到 Xpdf 3.02 版本不受控制的递归函数漏洞，而每次调用函数都会在栈上开辟新的栈帧，如果一个函数反复调用很多次，会导致栈内存耗尽从而程序崩溃。CVE-2019-13288 项目网址： https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 G">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Fuzzing101-exe1">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2022/02/19/Fuzzing101-exe1/index.html">
 <meta property="og:site_name" content="Xu4n">
-<meta property="og:description" content="项目网址 https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 GDB 调试程序  环境与搭建Ubuntu 20(推荐使用) 安装 Xpdf首先需要下载一些额外工具(即 make 和 gcc) 1$ sudo apt install build-essential 为此项目创建一个文件 12$ cd">
+<meta property="og:description" content="介绍本文是 Fuzzing101 训练的第一篇，目标是找到 Xpdf 3.02 版本不受控制的递归函数漏洞，而每次调用函数都会在栈上开辟新的栈帧，如果一个函数反复调用很多次，会导致栈内存耗尽从而程序崩溃。CVE-2019-13288 项目网址： https:&#x2F;&#x2F;github.com&#x2F;antonio-morales&#x2F;Fuzzing101  将会学到的知识 对程序进行插桩 AFL-FUZZ 的使用 G">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519406513814/70b99174a47b19aabcc260624c5fa775e992521f.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645519642625054/e989abbf9d025fb5ffa28526e539ef599f7b4ced.png">
@@ -20,7 +20,7 @@
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521014969591/59e6faac75b3911da2e3566a83a3f2b1e7a421c5.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe1/1645521247526414/2b904e58c3173a8651c7c1d31ccb34d82b4b9519.png">
 <meta property="article:published_time" content="2022-02-19T05:34:33.000Z">
-<meta property="article:modified_time" content="2022-02-22T09:29:16.093Z">
+<meta property="article:modified_time" content="2022-03-03T03:11:25.684Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="PWN">
 <meta property="article:tag" content="fuzz">
@@ -89,6 +89,8 @@
     <span id="actions">
       <ul>
         
+        <li><a class="icon" aria-label="上一篇" href="/2022/02/28/vnctfwp/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
         
         <li><a class="icon" aria-label="下一篇" href="/2022/02/11/HGAME%E9%83%A8%E5%88%86wp/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
         
@@ -118,7 +120,7 @@
 
     </div>
     <div id="toc">
-      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%BD%91%E5%9D%80"><span class="toc-number">1.</span> <span class="toc-text">项目网址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
     </div>
   </span>
 </div>
@@ -144,7 +146,7 @@
       
         <time datetime="2022-02-19T05:34:33.000Z" itemprop="datePublished">2022-02-19</time>
         
-        (Updated: <time datetime="2022-02-22T09:29:16.093Z" itemprop="dateModified">2022-02-22</time>)
+        (Updated: <time datetime="2022-03-03T03:11:25.684Z" itemprop="dateModified">2022-03-03</time>)
         
       
     </div>
@@ -169,7 +171,8 @@
   
 
   <div class="content" itemprop="articleBody">
-    <h2 id="项目网址"><a href="#项目网址" class="headerlink" title="项目网址"></a>项目网址</h2><p> <a target="_blank" rel="noopener" href="https://github.com/antonio-morales/Fuzzing101">https://github.com/antonio-morales/Fuzzing101</a> </p>
+    <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>本文是 Fuzzing101 训练的第一篇，目标是找到 Xpdf 3.02 版本不受控制的递归函数漏洞，而每次调用函数都会在栈上开辟新的栈帧，如果一个函数反复调用很多次，会导致<strong>栈内存耗尽从而程序崩溃</strong>。<a target="_blank" rel="noopener" href="https://www.cvedetails.com/cve/CVE-2019-13288/">CVE-2019-13288</a></p>
+<p>项目网址： <a target="_blank" rel="noopener" href="https://github.com/antonio-morales/Fuzzing101">https://github.com/antonio-morales/Fuzzing101</a> </p>
 <h2 id="将会学到的知识"><a href="#将会学到的知识" class="headerlink" title="将会学到的知识"></a>将会学到的知识</h2><ul>
 <li>对程序进行插桩</li>
 <li>AFL-FUZZ 的使用</li>
@@ -212,7 +215,7 @@
 <ul>
 <li><em>-i</em> 表示我们必须放置输入案例的目录（又名文件示例）</li>
 <li><em>-o</em> 表示 AFL++ 将存储变异文件的目录</li>
-<li><em>-s</em> 表示要使用的静态随机种子</li>
+<li><em>-s</em> 表示要使用的静态随机种子，这边建议设置一个固定种子(如 -s 123)，这样模糊测试的结果会和显示结果相似，从而更轻松的练习</li>
 <li><em>@@</em> 是占位符目标的命令行，AFL 将用每个输入文件名替换</li>
 </ul>
 <p>如果在 fuzz 过程中遇到有关于 core_pattern 的报错，可以这样设置</p>
@@ -274,7 +277,7 @@
     </div>
 
     <div id="toc-footer" style="display: none">
-      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%BD%91%E5%9D%80"><span class="toc-number">1.</span> <span class="toc-text">项目网址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Xpdf"><span class="toc-number">3.1.</span> <span class="toc-text">安装 Xpdf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-AFL"><span class="toc-number">3.2.</span> <span class="toc-text">安装 AFL++</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E6%A1%A9%E4%B8%8E%E8%BF%90%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">插桩与运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E7%8E%B0%E5%B4%A9%E6%BA%83"><span class="toc-number">5.</span> <span class="toc-text">重现崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">gdb 调试</span></a></li></ol>
     </div>
 
     <div id="share-footer" style="display: none">
