@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="介绍本文是 Fuzzing101 训练的第三篇，fuzz 对象是 4.9.2 版本的 TCPdump 数据包分析器。目标是找到 CVE-2017-13028 漏洞崩溃。 CVE-2017-13028 是一个越界读取漏洞，可以通过 BOOTP 数据包（引导协议）触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏洞。 将会学到的知识 什么是 ASan 如何使用 ASan ASan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fuzzing101-exe3">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="介绍本文是 Fuzzing101 训练的第三篇，fuzz 对象是 4.9.2 版本的 TCPdump 数据包分析器。目标是找到 CVE-2017-13028 漏洞崩溃。 CVE-2017-13028 是一个越界读取漏洞，可以通过 BOOTP 数据包（引导协议）触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏洞。 将会学到的知识 什么是 ASan 如何使用 ASan ASan">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650203568639882/a35694d9a884d26f4055e10b153c58546b066d81.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650248479656472/addd76bcbeea19ce92d71e43d359d5e3a3ae70c6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650274532756738/176cf487bbd1c0448ff20000ff883abb80ff83d3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650274952123115/b2498cee246aefb53a29d2424860de277e3c9910.png">
+<meta property="article:published_time" content="2022-04-17T13:15:45.000Z">
+<meta property="article:modified_time" content="2022-04-19T07:35:18.664Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta property="article:tag" content="fuzz">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650203568639882/a35694d9a884d26f4055e10b153c58546b066d81.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Fuzzing101-exe3</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/04/19/Fuzzing101-exe4/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/04/12/%E5%86%85%E6%A0%B8pwn%E5%88%9D%E6%8E%A2%E4%B9%8B%E6%A0%88/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&text=Fuzzing101-exe3"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&is_video=false&description=Fuzzing101-exe3"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Fuzzing101-exe3&body=Check out this article: http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&name=Fuzzing101-exe3&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&t=Fuzzing101-exe3"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%B9%B6%E6%9E%84%E5%BB%BA%E7%9B%AE%E6%A0%87"><span class="toc-number">3.1.</span> <span class="toc-text">下载并构建目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A7%8D%E5%AD%90%E8%AF%AD%E6%96%99%E5%BA%93%E5%88%9B%E5%BB%BA"><span class="toc-number">3.2.</span> <span class="toc-text">种子语料库创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASan"><span class="toc-number">4.</span> <span class="toc-text">ASan</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E5%90%AF%E7%94%A8-ASan-%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%E6%9E%84%E5%BB%BA"><span class="toc-number">4.1.</span> <span class="toc-text">在启用 ASan 的情况下构建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95"><span class="toc-number">5.</span> <span class="toc-text">模糊测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%A8%A1%E7%B3%8A%E5%99%A8"><span class="toc-number">5.1.</span> <span class="toc-text">运行模糊器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-ASan-%E8%AF%8A%E6%96%AD"><span class="toc-number">5.2.</span> <span class="toc-text">利用 ASan 诊断</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Fuzzing101-exe3
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-04-17T13:15:45.000Z" itemprop="datePublished">2022-04-17</time>
+        
+        (Updated: <time datetime="2022-04-19T07:35:18.664Z" itemprop="dateModified">2022-04-19</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/fuzz/">fuzz</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>, <a class="tag-link-link" href="/tags/fuzz/" rel="tag">fuzz</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>本文是 Fuzzing101 训练的第三篇，fuzz 对象是 4.9.2 版本的 TCPdump 数据包分析器。目标是找到 <a target="_blank" rel="noopener" href="https://www.cvedetails.com/cve/CVE-2017-13028/">CVE-2017-13028</a> 漏洞崩溃。</p>
+<p>CVE-2017-13028 是一个<strong>越界读取漏洞</strong>，可以通过 BOOTP 数据包（引导协议）触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏洞。</p>
+<h2 id="将会学到的知识"><a href="#将会学到的知识" class="headerlink" title="将会学到的知识"></a>将会学到的知识</h2><ul>
+<li>什么是 ASan</li>
+<li>如何使用 ASan</li>
+<li>ASan 对崩溃分类的展示</li>
+</ul>
+<h2 id="环境与搭建"><a href="#环境与搭建" class="headerlink" title="环境与搭建"></a>环境与搭建</h2><h3 id="下载并构建目标"><a href="#下载并构建目标" class="headerlink" title="下载并构建目标"></a>下载并构建目标</h3><p>为项目创建一个文件夹</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_tcpdump &amp;&amp; cd fuzzing_tcpdump&#x2F;</span><br></pre></td></tr></table></figure>
+<p>下载并解压 tcpdump-4.9.2.tar.gz</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https:&#x2F;&#x2F;github.com&#x2F;the-tcpdump-group&#x2F;tcpdump&#x2F;archive&#x2F;refs&#x2F;tags&#x2F;tcpdump-4.9.2.tar.gz</span><br><span class="line">tar -xzvf tcpdump-4.9.2.tar.gz</span><br></pre></td></tr></table></figure>
+<p>我们还需要下载 TCPdump 需要的跨平台库 libpcap。下载并解压 libpcap-1.8.0.tar.gz：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https:&#x2F;&#x2F;github.com&#x2F;the-tcpdump-group&#x2F;libpcap&#x2F;archive&#x2F;refs&#x2F;tags&#x2F;libpcap-1.8.0.tar.gz</span><br><span class="line">tar -xzvf libpcap-1.8.0.tar.gz</span><br></pre></td></tr></table></figure>
+<p>我们需要重命名<code>libpcap-libpcap-1.8.0</code>为<code>libpcap-1.8.0</code>. 否则，tcpdump 找不到<code>libpcap.a</code>本地路径：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv libpcap-libpcap-1.8.0&#x2F; libpcap-1.8.0</span><br></pre></td></tr></table></figure>
+<p>构建并安装 libpcap：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;libpcap-1.8.0&#x2F;</span><br><span class="line">.&#x2F;configure --enable-shared&#x3D;no</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+<p>构建和安装 tcpdump：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;tcpdump-tcpdump-4.9.2&#x2F;</span><br><span class="line">.&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;&quot;</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>键入以下指令查看是否配置成功：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;sbin&#x2F;tcpdump -h</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650203568639882/a35694d9a884d26f4055e10b153c58546b066d81.png" alt="image-20220417215248476"></p>
+<h3 id="种子语料库创建"><a href="#种子语料库创建" class="headerlink" title="种子语料库创建"></a>种子语料库创建</h3><p>种子语料库：为<strong>提供模糊的初始覆盖</strong>而准备的一个小型初始语料库。种子语料库不是由fuzzers自己创建的，通常是从现有的测试输入准备的，或者可以手工制作以提供有趣的覆盖范围。它们经常与模糊目标一起检入源代码。</p>
+<p>我们可以在 <code>$HOME/fuzzing_tcpdump/tcpdump-tcpdump-4.9.2/tests</code> 中找到很多 .pcacp 示例，可以用以下命令行运行这些 .pcacp 文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;sbin&#x2F;tcpdump -vvvvXX -ee -nn -r [.pcap file]</span><br></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;sbin&#x2F;tcpdump -vvvvXX -ee -nn -r .&#x2F;tests&#x2F;geneve.pcap</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650248479656472/addd76bcbeea19ce92d71e43d359d5e3a3ae70c6.png" alt="image-20220418102119412"></p>
+<h2 id="ASan"><a href="#ASan" class="headerlink" title="ASan"></a><strong>ASan</strong></h2><p><strong>AddressSanitizer (ASan)**是用于 C 和 C++ 的快速内存错误检测器。它由一个编译器检测模块和一个运行时库组成。该工具能够发现</strong>对堆、堆栈和全局对象的越界访问<strong>，以及</strong>释放后使用、双重释放和内存泄漏**错误。如今被移值到 &gt;=4.8 版本的 GCC 中。</p>
+<h3 id="在启用-ASan-的情况下构建"><a href="#在启用-ASan-的情况下构建" class="headerlink" title="在启用 ASan 的情况下构建"></a>在启用 ASan 的情况下构建</h3><p>现在我们将构建启用 ASAN 的 tcpdump（和 libpcap）。</p>
+<p>首先，我们要清理所有之前编译的目标文件和可执行文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME&#x2F;fuzzing_tcpdump&#x2F;install</span><br><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;libpcap-1.8.0&#x2F;</span><br><span class="line">make clean</span><br><span class="line"></span><br><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;tcpdump-tcpdump-4.9.2&#x2F;</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+<p>现在，我们在调用 configure 和 make 之前设置 AFL_USE_ASAN=1：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;libpcap-1.8.0&#x2F;</span><br><span class="line">export LLVM_CONFIG&#x3D;&quot;llvm-config-11&quot;</span><br><span class="line">CC&#x3D;afl-clang-lto .&#x2F;configure --enable-shared&#x3D;no --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;&quot;</span><br><span class="line">AFL_USE_ASAN&#x3D;1 make</span><br><span class="line"></span><br><span class="line">cd $HOME&#x2F;fuzzing_tcpdump&#x2F;tcpdump-tcpdump-4.9.2&#x2F;</span><br><span class="line">AFL_USE_ASAN&#x3D;1 CC&#x3D;afl-clang-lto .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;&quot;</span><br><span class="line">AFL_USE_ASAN&#x3D;1 make</span><br><span class="line">AFL_USE_ASAN&#x3D;1 make install</span><br></pre></td></tr></table></figure>
+<h2 id="模糊测试"><a href="#模糊测试" class="headerlink" title="模糊测试"></a>模糊测试</h2><h3 id="运行模糊器"><a href="#运行模糊器" class="headerlink" title="运行模糊器"></a>运行模糊器</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -m none -i $HOME&#x2F;fuzzing_tcpdump&#x2F;tcpdump-tcpdump-4.9.2&#x2F;tests&#x2F; -o $HOME&#x2F;fuzzing_tcpdump&#x2F;out&#x2F; -s 123 -- $HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;sbin&#x2F;tcpdump -vvvvXX -ee -nn -r @@</span><br></pre></td></tr></table></figure>
+<p>参数解释：</p>
+<ul>
+<li><code>-i</code>：输入目录</li>
+<li><code>-m</code>：内存限制</li>
+<li><code>-o</code>：输出目录</li>
+<li><code>-s</code>：设置固定种子</li>
+<li><code>@@</code>：指代文件</li>
+<li><code>-</code>：间隔符</li>
+</ul>
+<p>这里使用了-m参数，是因为在使用ASAN模式下对内存的消耗非常大，这里指定<code>-m none</code>就是指定禁用内存限制。</p>
+<p>结果：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650274532756738/176cf487bbd1c0448ff20000ff883abb80ff83d3.png" alt="image-20220418173532342"></p>
+<h3 id="利用-ASan-诊断"><a href="#利用-ASan-诊断" class="headerlink" title="利用 ASan 诊断"></a>利用 ASan 诊断</h3><p>调试使用 ASan 构建的程序比前面的练习要容易得多。我们只需要想程序提供崩溃文件就行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tcpdump&#x2F;install&#x2F;sbin&#x2F;tcpdump -vvvvXX -ee -nn -r &#39;&#x2F;home&#x2F;gyx&#x2F;fuzzing_tcpdump&#x2F;out&#x2F;default&#x2F;crashes&#x2F;id:000000,sig:06,src:001143,time:2462367,execs:1002839,op:havoc,rep:2&#39;</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe3/1650274952123115/b2498cee246aefb53a29d2424860de277e3c9910.png" alt="image-20220418174231894"></p>
+<p>可以看到它已经给出了漏洞点，也给出了执行跟踪</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x3D;&#x3D;850830&#x3D;&#x3D;ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6080000000fb at pc 0x0000004f5bc5 bp 0x7ffeee5d97c0 sp 0x7ffeee5d97b8</span><br></pre></td></tr></table></figure>
+<p>是一个堆的缓冲区溢出。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%B9%B6%E6%9E%84%E5%BB%BA%E7%9B%AE%E6%A0%87"><span class="toc-number">3.1.</span> <span class="toc-text">下载并构建目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A7%8D%E5%AD%90%E8%AF%AD%E6%96%99%E5%BA%93%E5%88%9B%E5%BB%BA"><span class="toc-number">3.2.</span> <span class="toc-text">种子语料库创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASan"><span class="toc-number">4.</span> <span class="toc-text">ASan</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E5%90%AF%E7%94%A8-ASan-%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%E6%9E%84%E5%BB%BA"><span class="toc-number">4.1.</span> <span class="toc-text">在启用 ASan 的情况下构建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95"><span class="toc-number">5.</span> <span class="toc-text">模糊测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%A8%A1%E7%B3%8A%E5%99%A8"><span class="toc-number">5.1.</span> <span class="toc-text">运行模糊器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-ASan-%E8%AF%8A%E6%96%AD"><span class="toc-number">5.2.</span> <span class="toc-text">利用 ASan 诊断</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&text=Fuzzing101-exe3"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&is_video=false&description=Fuzzing101-exe3"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Fuzzing101-exe3&body=Check out this article: http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&title=Fuzzing101-exe3"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&name=Fuzzing101-exe3&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/17/Fuzzing101-exe3/&t=Fuzzing101-exe3"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

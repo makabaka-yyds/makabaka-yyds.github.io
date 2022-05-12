@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="之前所说的相当于是给访问内存的方式，做了个初步规划，包括去哪找代码、去哪找数据、去哪找栈，以及如何通过分段和分页机制将逻辑地址转换为最终的物理地址。 目前的内存分布图  现在开始正式进入 main 函数分析。 12345678910111213141516171819202122232425262728293031323334void main(void) &amp;#123;    ROOT_DEV">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统之内核部分">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="之前所说的相当于是给访问内存的方式，做了个初步规划，包括去哪找代码、去哪找数据、去哪找栈，以及如何通过分段和分页机制将逻辑地址转换为最终的物理地址。 目前的内存分布图  现在开始正式进入 main 函数分析。 12345678910111213141516171819202122232425262728293031323334void main(void) &amp;#123;    ROOT_DEV">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647594025121391/e9a9bc8dbd50889b004df4c07e368e5a4a5d90e6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647601668029440/1d8daf264007aed295e7660dbfaa8f92f18bfee5.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647998568100717/6f87e9989e63b9e4439b63967df034230bf26555.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648002877578011/2cd0f8e82a5a4c2293c186453ed3693300c92a65.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648173848142684/0775d3f21c55c64b4d5805a9b09b7a086cdc204a.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648372387597933/37986f0157a42823961593902741ce195889364d.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648439425080654/98c499f6dd0d45d64b76ae3b9b12bd5b42d9f581.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648448883390142/33cef6c48ae10c3e9e402b9cb81584b292f54551.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648449524576329/33cef6c48ae10c3e9e402b9cb81584b292f54551.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648449619025578/aaee914fbed9419244dbf27cbfb745974106df16.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648450971773213/c754e3c906a5e60a32efc51cb601fcbd39a7b8e3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648556191205553/1d8daf264007aed295e7660dbfaa8f92f18bfee5.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648556313827348/6f87e9989e63b9e4439b63967df034230bf26555.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648557040502378/c8f037c560e25607fb531ce81d5b727b75e1216c.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648557983103126/b78c31d8d23020ccf5a4e0848ed8374dd308d75f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648558966056890/46605ccd15e99d8186eab91b90dbc445b20edb44.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648559941715857/ed6e25398debf7d27363d159c1e6a57ac2cd7858.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648604342735727/3db337914d1569bb2c8985ae8377880c98713caa.png">
+<meta property="article:published_time" content="2022-03-18T08:41:10.000Z">
+<meta property="article:modified_time" content="2022-04-04T08:28:12.323Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647594025121391/e9a9bc8dbd50889b004df4c07e368e5a4a5d90e6.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>操作系统之内核部分</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&text=操作系统之内核部分"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&is_video=false&description=操作系统之内核部分"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之内核部分&body=Check out this article: http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&name=操作系统之内核部分&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&t=操作系统之内核部分"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E5%8F%96%E5%80%BC%E4%B8%8E%E8%BF%90%E7%AE%97"><span class="toc-number">1.</span> <span class="toc-text">参数取值与运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96-init-%E6%93%8D%E4%BD%9C"><span class="toc-number">2.</span> <span class="toc-text">初始化 init 操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#mem-init"><span class="toc-number">2.1.</span> <span class="toc-text">mem_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#trap-init"><span class="toc-number">2.2.</span> <span class="toc-text">trap_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#blk-dev-init"><span class="toc-number">2.3.</span> <span class="toc-text">blk_dev_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tty-init"><span class="toc-number">2.4.</span> <span class="toc-text">tty_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#time-init"><span class="toc-number">2.5.</span> <span class="toc-text">time_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#shed-init"><span class="toc-number">2.6.</span> <span class="toc-text">shed_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#buffer-init-buffer-memory-end"><span class="toc-number">2.7.</span> <span class="toc-text">buffer_init(buffer_memory_end)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hd-init"><span class="toc-number">2.8.</span> <span class="toc-text">hd_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#floppy-init"><span class="toc-number">2.9.</span> <span class="toc-text">floppy_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sti"><span class="toc-number">2.10.</span> <span class="toc-text">sti()</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        操作系统之内核部分
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-03-18T08:41:10.000Z" itemprop="datePublished">2022-03-18</time>
+        
+        (Updated: <time datetime="2022-04-04T08:28:12.323Z" itemprop="dateModified">2022-04-04</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag">操作系统</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p> 之前所说的相当于是给访问内存的方式，做了个初步规划，包括去哪找代码、去哪找数据、去哪找栈，以及如何通过分段和分页机制将逻辑地址转换为最终的物理地址。</p>
+<p>目前的内存分布图</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647594025121391/e9a9bc8dbd50889b004df4c07e368e5a4a5d90e6.png" alt="640"></p>
+<p>现在开始正式进入 main 函数分析。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ROOT_DEV = ORIG_ROOT_DEV;</span><br><span class="line">    drive_info = DRIVE_INFO;</span><br><span class="line">    memory_end = (<span class="number">1</span>&lt;&lt;<span class="number">20</span>) + (EXT_MEM_K&lt;&lt;<span class="number">10</span>);</span><br><span class="line">    memory_end &amp;= <span class="number">0xfffff000</span>;</span><br><span class="line">    <span class="keyword">if</span> (memory_end &gt; <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">        memory_end = <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">if</span> (memory_end &gt; <span class="number">12</span>*<span class="number">1024</span>*<span class="number">1024</span>) </span><br><span class="line">        buffer_memory_end = <span class="number">4</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (memory_end &gt; <span class="number">6</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">        buffer_memory_end = <span class="number">2</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        buffer_memory_end = <span class="number">1</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    main_memory_start = buffer_memory_end;</span><br><span class="line"></span><br><span class="line">    mem_init(main_memory_start,memory_end);</span><br><span class="line">    trap_init();</span><br><span class="line">    blk_dev_init();</span><br><span class="line">    chr_dev_init();</span><br><span class="line">    tty_init();</span><br><span class="line">    time_init();</span><br><span class="line">    sched_init();</span><br><span class="line">    buffer_init(buffer_memory_end);</span><br><span class="line">    hd_init();</span><br><span class="line">    floppy_init();</span><br><span class="line"></span><br><span class="line">    sti();</span><br><span class="line">    move_to_user_mode();</span><br><span class="line">    <span class="keyword">if</span> (!fork()) &#123;</span><br><span class="line">        init();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(;;) pause();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="参数取值与运算"><a href="#参数取值与运算" class="headerlink" title="参数取值与运算"></a>参数取值与运算</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ROOT_DEV = ORIG_ROOT_DEV;</span><br><span class="line">    drive_info = DRIVE_INFO;</span><br><span class="line">    memory_end = (<span class="number">1</span>&lt;&lt;<span class="number">20</span>) + (EXT_MEM_K&lt;&lt;<span class="number">10</span>);</span><br><span class="line">    memory_end &amp;= <span class="number">0xfffff000</span>;</span><br><span class="line">    <span class="keyword">if</span> (memory_end &gt; <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">        memory_end = <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">if</span> (memory_end &gt; <span class="number">12</span>*<span class="number">1024</span>*<span class="number">1024</span>) </span><br><span class="line">        buffer_memory_end = <span class="number">4</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (memory_end &gt; <span class="number">6</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">        buffer_memory_end = <span class="number">2</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        buffer_memory_end = <span class="number">1</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    main_memory_start = buffer_memory_end;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根设备 <code>ROOT_DEV</code>，各设备的参数信息 <code>drive_info</code>，以及计算得到的内存边界<code>main_memory_start</code>、<code>main_memory_end</code>、<code>buffer_memory_start</code>、<code>buffer_memory_end</code>。</p>
+<p>具体说说内存边界的计算。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">memory_end = (<span class="number">1</span>&lt;&lt;<span class="number">20</span>) + (EXT_MEM_K&lt;&lt;<span class="number">10</span>);</span><br><span class="line">memory_end &amp;= <span class="number">0xfffff000</span>;</span><br><span class="line"><span class="keyword">if</span> (memory_end &gt; <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">    memory_end = <span class="number">16</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line"><span class="keyword">if</span> (memory_end &gt; <span class="number">12</span>*<span class="number">1024</span>*<span class="number">1024</span>) </span><br><span class="line">    buffer_memory_end = <span class="number">4</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (memory_end &gt; <span class="number">6</span>*<span class="number">1024</span>*<span class="number">1024</span>)</span><br><span class="line">    buffer_memory_end = <span class="number">2</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    buffer_memory_end = <span class="number">1</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">main_memory_start = buffer_memory_end;</span><br></pre></td></tr></table></figure>
+<p>整理一下可以发现，计算的就是三个变量：<code>main_memory_start</code>、<code>memory_end</code>、<code>buffer_memory_end</code>。又因为最后一行 <code>main_memory_start = buffer_memory_end</code>，所以最后其实只计算了两个变量<code>buffer_memory_end</code>、<code>memory_end</code>。</p>
+<p>具体逻辑就是一堆以 memory_end 为标准的 if else 判断，也就是内存的最大值，通过<code>memory_end = (1&lt;&lt;20) + (EXT_MEM_K&lt;&lt;10)</code>可以看出，内存最大值等于 <code>1M + 扩展内存大小</code>。</p>
+<p>所以这里说白了就是<strong>根据不同内存的大小，设置不同的边界值</strong>。</p>
+<p>我们假设内存为 8 M 大小，，那么 memory_end 就是 8 * 1024 * 1024，buffer_memory_end =  main_memory_start = 2 * 1024 * 1024。用一张图表示就是：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647601668029440/1d8daf264007aed295e7660dbfaa8f92f18bfee5.png" alt="640 (1)"></p>
+<p>获得之前的设备参数信息的途径之前也说过，都是由 setup.s 这个汇编程序调用 BIOS 中断获取的各个设备的信息，并保存在以 0x90000 为首地址的内存处。</p>
+<table>
+<thead>
+<tr>
+<th>内存地址</th>
+<th>长度(字节)</th>
+<th>名称</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x90000</td>
+<td>2</td>
+<td>光标位置</td>
+</tr>
+<tr>
+<td>0x90002</td>
+<td>2</td>
+<td>扩展内存数</td>
+</tr>
+<tr>
+<td>0x90004</td>
+<td>2</td>
+<td>显示页面</td>
+</tr>
+<tr>
+<td>0x90006</td>
+<td>1</td>
+<td>显示模式</td>
+</tr>
+<tr>
+<td>0x90007</td>
+<td>1</td>
+<td>字符列数</td>
+</tr>
+<tr>
+<td>0x90008</td>
+<td>2</td>
+<td>未知</td>
+</tr>
+<tr>
+<td>0x9000A</td>
+<td>1</td>
+<td>显示内存</td>
+</tr>
+<tr>
+<td>0x9000B</td>
+<td>1</td>
+<td>显示状态</td>
+</tr>
+<tr>
+<td>0x9000C</td>
+<td>2</td>
+<td>显卡特性参数</td>
+</tr>
+<tr>
+<td>0x9000E</td>
+<td>1</td>
+<td>屏幕行数</td>
+</tr>
+<tr>
+<td>0x9000F</td>
+<td>1</td>
+<td>屏幕列数</td>
+</tr>
+<tr>
+<td>0x90080</td>
+<td>16</td>
+<td>硬盘1参数表</td>
+</tr>
+<tr>
+<td>0x90090</td>
+<td>16</td>
+<td>硬盘2参数表</td>
+</tr>
+<tr>
+<td>0x901FC</td>
+<td>2</td>
+<td>根设备号</td>
+</tr>
+</tbody></table>
+<h2 id="初始化-init-操作"><a href="#初始化-init-操作" class="headerlink" title="初始化 init 操作"></a>初始化 init 操作</h2><p>上一节说白了就是<strong>给主内存、缓冲区、内核程序定义了三个边界</strong>。每个区具体怎么定义的还得看这一节。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    mem_init(main_memory_start,memory_end);</span><br><span class="line">    trap_init();</span><br><span class="line">    blk_dev_init();</span><br><span class="line">    chr_dev_init();</span><br><span class="line">    tty_init();</span><br><span class="line">    time_init();</span><br><span class="line">    sched_init();</span><br><span class="line">    buffer_init(buffer_memory_end);</span><br><span class="line">    hd_init();</span><br><span class="line">    floppy_init();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>包括<strong>内存初始化</strong> <strong>mem_init</strong>，<strong>中断初始化 trap_init</strong>、<strong>进程调度初始化 sched_init</strong> 等等。</p>
+<h3 id="mem-init"><a href="#mem-init" class="headerlink" title="mem_init()"></a>mem_init()</h3><p>具体主内存区怎么管理和分配就要看 mem_init 里干了啥了。</p>
+<p>管理：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOW_MEM 0x100000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PAGING_MEMORY (15*1024*1024)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PAGING_PAGES (PAGING_MEMORY&gt;&gt;12)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAP_NR(addr) (((addr)-LOW_MEM)&gt;&gt;12)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> USED 100</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">long</span> HIGH_MEMORY = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> mem_map[PAGING_PAGES] = &#123; <span class="number">0</span>, &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// start_mem = 2 * 1024 * 1024</span></span><br><span class="line"><span class="comment">// end_mem = 8 * 1024 * 1024</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mem_init</span><span class="params">(<span class="keyword">long</span> start_mem, <span class="keyword">long</span> end_mem)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    HIGH_MEMORY = end_mem;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span> ; i&lt;PAGING_PAGES ; i++)</span><br><span class="line">        mem_map[i] = USED;</span><br><span class="line">    i = MAP_NR(start_mem);</span><br><span class="line">    end_mem -= start_mem;</span><br><span class="line">    end_mem &gt;&gt;= <span class="number">12</span>;</span><br><span class="line">    <span class="keyword">while</span> (end_mem--&gt;<span class="number">0</span>)</span><br><span class="line">        mem_map[i++]=<span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>给 mem_map 的各个位置赋值，USED 是100，表示被占用 100 次，赋值为 0 表示未被占用；说白了就是<strong>准备了一个表，记录内存中哪些被占用了哪些没被占用</strong>。这就是所谓的管理。</p>
+<p>那么问题来了，数组能表示的范围有多大？初始化时那些地方时占用的，哪些地方又是未占用的？</p>
+<p>用一张图就可以解释，我们假设内存总共只有 8M。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647998568100717/6f87e9989e63b9e4439b63967df034230bf26555.png" alt="640"></p>
+<p>可以看出，初始化完成后，其实就是 mem_map 这个数组每个元素都代表一个 4k 内存是否空闲(准确来说是使用次数)。</p>
+<p>4k 内存叫做 1页 内存，将内存分成一页一页(4k)的单位去管理，也就是<strong>分页管理</strong>。</p>
+<p>1M 以下的内存是没有被管理的，因为这里是内核代码所在的地方，没有权限管理。</p>
+<p>1M ~ 2M 是<strong>缓冲区</strong>，2M 是缓冲区的末端，不是主内存区域，所以被标记为 USED ，表示无法再被分配。</p>
+<p>2M 以上就是<strong>主内存区域</strong>，初始化时都是 0 。</p>
+<hr>
+<p>简单讲一下程序是怎么申请内存，以及是怎么使用 mem_map 这个结构的：</p>
+<p>在 <strong>memory.c</strong> 文件中有个函数 **get_free_page()**，用于在主内存区中申请一页空闲内存页，并返回物理内存页的起始地址。</p>
+<p>比如我们在 fork 子进程的时候，会调用 <strong>copy_process</strong> 函数来复制进程的结构信息，其中有一个步骤就是要<strong>申请一页内存</strong>，用于存放进程结构信息 task_struct。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_process</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> *<span class="title">p</span>;</span></span><br><span class="line">    ...</span><br><span class="line">    p = (struct task_struct *) get_free_page();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们看 get_free_page 的具体实现，是内联汇编代码，看不懂不要紧，注意它里面就有 <strong>mem_map</strong> 结构的使用。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="title">get_free_page</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">register</span> <span class="keyword">unsigned</span> <span class="keyword">long</span> __res <span class="title">asm</span><span class="params">(<span class="string">&quot;ax&quot;</span>)</span></span>;</span><br><span class="line">    __asm__(</span><br><span class="line">        <span class="string">&quot;std ; repne ; scasb\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;jne 1f\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;movb $1,1(%%edi)\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;sall $12,%%ecx\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;addl %2,%%ecx\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;movl %%ecx,%%edx\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;movl $1024,%%ecx\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;leal 4092(%%edx),%%edi\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;rep ; stosl\n\t&quot;</span></span><br><span class="line">        <span class="string">&quot;movl %%edx,%%eax\n&quot;</span></span><br><span class="line">        <span class="string">&quot;1:&quot;</span></span><br><span class="line">        :<span class="string">&quot;=a&quot;</span> (__res)</span><br><span class="line">        :<span class="string">&quot;0&quot;</span> (<span class="number">0</span>),<span class="string">&quot;i&quot;</span> (LOW_MEM),<span class="string">&quot;c&quot;</span> (PAGING_PAGES),</span><br><span class="line">        <span class="string">&quot;D&quot;</span> (mem_map + PAGING_PAGES<span class="number">-1</span>) <span class="comment">//mem_map 使用</span></span><br><span class="line">        :<span class="string">&quot;di&quot;</span>,<span class="string">&quot;cx&quot;</span>,<span class="string">&quot;dx&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> __res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就是选择 mem_map 中首个空闲页面，并标记为已使用。</p>
+<hr>
+<p><strong>总结一下 mem_init() 干的事：用 men_map 结构记录内存中哪些被占用哪些没被占用来管理主内存区</strong></p>
+<h3 id="trap-init"><a href="#trap-init" class="headerlink" title="trap_init()"></a>trap_init()</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    trap_init();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">-----------------------------------------------------------</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">trap_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    set_trap_gate(<span class="number">0</span>,&amp;divide_error);<span class="comment">//0为中断号，&amp;divide_error为中断程序地址</span></span><br><span class="line">    set_trap_gate(<span class="number">1</span>,&amp;debug);</span><br><span class="line">    set_trap_gate(<span class="number">2</span>,&amp;nmi);</span><br><span class="line">    set_system_gate(<span class="number">3</span>,&amp;int3);   <span class="comment">/* int3-5 can be called from all */</span></span><br><span class="line">    set_system_gate(<span class="number">4</span>,&amp;overflow);</span><br><span class="line">    set_system_gate(<span class="number">5</span>,&amp;bounds);</span><br><span class="line">    set_trap_gate(<span class="number">6</span>,&amp;invalid_op);</span><br><span class="line">    set_trap_gate(<span class="number">7</span>,&amp;device_not_available);</span><br><span class="line">    set_trap_gate(<span class="number">8</span>,&amp;double_fault);</span><br><span class="line">    set_trap_gate(<span class="number">9</span>,&amp;coprocessor_segment_overrun);</span><br><span class="line">    set_trap_gate(<span class="number">10</span>,&amp;invalid_TSS);</span><br><span class="line">    set_trap_gate(<span class="number">11</span>,&amp;segment_not_present);</span><br><span class="line">    set_trap_gate(<span class="number">12</span>,&amp;stack_segment);</span><br><span class="line">    set_trap_gate(<span class="number">13</span>,&amp;general_protection);</span><br><span class="line">    set_trap_gate(<span class="number">14</span>,&amp;page_fault);</span><br><span class="line">    set_trap_gate(<span class="number">15</span>,&amp;reserved);</span><br><span class="line">    set_trap_gate(<span class="number">16</span>,&amp;coprocessor_error);</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">17</span>;i&lt;<span class="number">48</span>;i++)</span><br><span class="line">        set_trap_gate(i,&amp;reserved);</span><br><span class="line">    set_trap_gate(<span class="number">45</span>,&amp;irq13);</span><br><span class="line">    set_trap_gate(<span class="number">39</span>,&amp;parallel_interrupt);</span><br><span class="line">&#125;    </span><br></pre></td></tr></table></figure>
+<p>这一堆 set_xxx_gate 是啥意思呢，得先去看看它们的宏定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _set_gate(gate_addr,type,dpl,addr) \</span></span><br><span class="line">__asm__ (<span class="string">&quot;movw %%dx,%%ax\n\t&quot;</span> \</span><br><span class="line">    <span class="string">&quot;movw %0,%%dx\n\t&quot;</span> \</span><br><span class="line">    <span class="string">&quot;movl %%eax,%1\n\t&quot;</span> \</span><br><span class="line">    <span class="string">&quot;movl %%edx,%2&quot;</span> \</span><br><span class="line">    : \</span><br><span class="line">    : <span class="string">&quot;i&quot;</span> ((<span class="keyword">short</span>) (<span class="number">0x8000</span>+(dpl&lt;&lt;<span class="number">13</span>)+(type&lt;&lt;<span class="number">8</span>))), \</span><br><span class="line">    <span class="string">&quot;o&quot;</span> (*((<span class="keyword">char</span> *) (gate_addr))), \</span><br><span class="line">    <span class="string">&quot;o&quot;</span> (*(<span class="number">4</span>+(<span class="keyword">char</span> *) (gate_addr))), \</span><br><span class="line">    <span class="string">&quot;d&quot;</span> ((<span class="keyword">char</span> *) (addr)),<span class="string">&quot;a&quot;</span> (<span class="number">0x00080000</span>))</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> set_trap_gate(n,addr) \</span></span><br><span class="line">    _set_gate(&amp;idt[n],<span class="number">15</span>,<span class="number">0</span>,addr)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> set_system_gate(n,addr) \</span></span><br><span class="line">    _set_gate(&amp;idt[n],<span class="number">15</span>,<span class="number">3</span>,addr)</span><br></pre></td></tr></table></figure>
+<p>可以看到 <strong>set_trap_gate</strong> 和 <strong>set_system_gate</strong> 都指向了另一个宏定义 <strong>_set_gate</strong>，所以现在具体看一看 _set_gate，笑死根本看不懂，只需要知道结果就行，最终效果是<strong>在中断描述符表中插入了一个中断描述符</strong>。</p>
+<p>所以上面那一段代码就是<strong>往中断描述符表里插入一个又一个中断描述符</strong>，第一个参数是中断号，第二个参数是中断处理程序地址。</p>
+<p>set_trap_gate 和 set_system_gate 区别又是什么呢？这里只简单讲一下，区别只在于中断描述符的特权级不同，0 表示内核态，3 表示用户态。</p>
+<p>再然后就是用 for 循环的一个批量赋值操作：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">trap_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">17</span>;i&lt;<span class="number">48</span>;i++)</span><br><span class="line">        set_trap_gate(i,&amp;reserved);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>17 到 47 号都设置为了 reserved 函数，这只是暂时给它赋了这个值，之后各个硬件初始化会重新设置这些中断。</p>
+<p>所以现在内存图长这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648002877578011/2cd0f8e82a5a4c2293c186453ed3693300c92a65.png" alt="640 (1)"></p>
+<p><strong>总结一下 trap_init() 干的事：完善了 idt 表，其中 <code>0~16</code> 中断号被设置为了相对应的中断处理程序，<code>17~47</code>中断号被设置为了临时函数 reserved 。</strong></p>
+<h3 id="blk-dev-init"><a href="#blk-dev-init" class="headerlink" title="blk_dev_init()"></a>blk_dev_init()</h3><p>块设备初始化，块设备是 I/O 设备中的一类，是将信息存储在固定大小的块中，每个块都有自己的地址，还可以在设备的任意位置读取一定长度的数据，例如硬盘,U盘，SD卡等。</p>
+<p>讲人话就是读取这些设备之前做的准备工作。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    blk_dev_init();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">----------------------------------------------------</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">blk_dev_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;<span class="number">32</span>; i++) &#123;</span><br><span class="line">        request[i].dev = <span class="number">-1</span>;</span><br><span class="line">        request[i].next = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>给 request 数组的前 32 个元素的两个变量 dev 和 next 初始化。</p>
+<p>看一下 request 结构体，这个结构体可以完整描述一个读盘操作。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Ok, this is an expanded form so that we can use the same</span></span><br><span class="line"><span class="comment"> * request for paging requests when that is implemented. In</span></span><br><span class="line"><span class="comment"> * paging, &#x27;bh&#x27; is NULL, and &#x27;waiting&#x27; is used to wait for</span></span><br><span class="line"><span class="comment"> * read/write completion.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">request</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> dev;        <span class="comment">/* -1 if no request */</span></span><br><span class="line">    <span class="keyword">int</span> cmd;        <span class="comment">/* READ or WRITE */</span></span><br><span class="line">    <span class="keyword">int</span> errors;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sector;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> nr_sectors;</span><br><span class="line">    <span class="keyword">char</span> * buffer;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> * <span class="title">waiting</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">bh</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">request</span> * <span class="title">next</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>dev：设备号，-1 表示空闲</li>
+<li>cmd：命令，READ &amp; WRITE，表示本次操作是读或者是写</li>
+<li>errors：操作时产生的错误次数</li>
+<li>sector：起始扇区</li>
+<li>nr_sectors：扇区数</li>
+<li>buffer：数据缓冲区，也就是读盘后数据放在内存中的位置</li>
+<li>waiting：task_struct 结构，表示发起请求的进程</li>
+<li>bh：缓冲区头指针</li>
+<li>next：指向下一个请求项的指针</li>
+</ul>
+<p>request 数组就相当于把 32 个 request 结构体集成，然后用 next 指针串成链表。</p>
+<hr>
+<p>简单说一下系统是怎么用到 request[32] 这个结构的：</p>
+<p>读操作的系统调用函数是 sys_read，简化一下就是如下样子</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_read</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">int</span> fd,<span class="keyword">char</span> * buf,<span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">file</span> =</span> current-&gt;filp[fd];<span class="comment">//</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">inode</span> =</span> file-&gt;f_inode;</span><br><span class="line">    <span class="comment">// 校验 buf 区域的内存限制</span></span><br><span class="line">    verify_area(buf,count);</span><br><span class="line">    <span class="comment">// 仅关注目录文件或普通文件</span></span><br><span class="line">    <span class="keyword">return</span> file_read(inode,file,buf,count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第二行的 fd 是文件描述符，通过它可以找到一个文件的 inode，进而找到这个文件在硬盘中的位置。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648173848142684/0775d3f21c55c64b4d5805a9b09b7a086cdc204a.png" alt="640"></p>
+<p><code>file_read</code> 函数第一、二个参数也可以从图中对应，第三个参数 buf 指要复制到的内存的地址，第四个参数 count 指要赋值的字节数。</p>
+<p>继续看看 file_read 函数源码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">file_read</span><span class="params">(struct m_inode * inode, struct file * filp, <span class="keyword">char</span> * buf, <span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left,chars,nr;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">bh</span>;</span></span><br><span class="line">    left = count;</span><br><span class="line">    <span class="keyword">while</span> (left) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nr = bmap(inode,(filp-&gt;f_pos)/BLOCK_SIZE)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!(bh=bread(inode-&gt;i_dev,nr)))</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span></span><br><span class="line">            bh = <span class="literal">NULL</span>;</span><br><span class="line">        nr = filp-&gt;f_pos % BLOCK_SIZE;</span><br><span class="line">        chars = MIN( BLOCK_SIZE-nr , left );</span><br><span class="line">        filp-&gt;f_pos += chars;</span><br><span class="line">        left -= chars;</span><br><span class="line">        <span class="keyword">if</span> (bh) &#123;</span><br><span class="line">            <span class="keyword">char</span> * p = nr + bh-&gt;b_data;</span><br><span class="line">            <span class="keyword">while</span> (chars--&gt;<span class="number">0</span>)</span><br><span class="line">                put_fs_byte(*(p++),buf++);</span><br><span class="line">            brelse(bh);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">while</span> (chars--&gt;<span class="number">0</span>)</span><br><span class="line">                put_fs_byte(<span class="number">0</span>,buf++);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    inode-&gt;i_atime = CURRENT_TIME;</span><br><span class="line">    <span class="keyword">return</span> (count-left)?(count-left):-ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>整体看，就是一个 while 循环，每次读入一个块的数据，直到入参所要求的大小全部读完。</p>
+<p>再看到 bread 那一行，这个函数就是去读某一个设备的某一个数据块号的内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">struct buffer_head * <span class="title">bread</span><span class="params">(<span class="keyword">int</span> dev,<span class="keyword">int</span> block)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">bh</span> =</span> getblk(dev,block);</span><br><span class="line">    <span class="keyword">if</span> (bh-&gt;b_uptodate)</span><br><span class="line">        <span class="keyword">return</span> bh;</span><br><span class="line">    ll_rw_block(READ,bh);</span><br><span class="line">    wait_on_buffer(bh);</span><br><span class="line">    <span class="keyword">if</span> (bh-&gt;b_uptodate)</span><br><span class="line">        <span class="keyword">return</span> bh;</span><br><span class="line">    brelse(bh);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中 getblk 先申请了一个内存中的缓冲块，然后 ll_rw_block 负责把数据读入这个缓冲块。</p>
+<p>跟进</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">ll_rw_block</span><span class="params">(<span class="keyword">int</span> rw, struct buffer_head * bh)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    make_request(major,rw,bh);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">make_request</span><span class="params">(<span class="keyword">int</span> major,<span class="keyword">int</span> rw, struct buffer_head * bh)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">if</span> (rw == READ)</span><br><span class="line">        req = request+NR_REQUEST;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        req = request+((NR_REQUEST*<span class="number">2</span>)/<span class="number">3</span>);</span><br><span class="line"><span class="comment">/* find an empty request */</span></span><br><span class="line">    <span class="keyword">while</span> (--req &gt;= request)</span><br><span class="line">        <span class="keyword">if</span> (req-&gt;dev&lt;<span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    ...</span><br><span class="line"><span class="comment">/* fill up the request-info, and add it to the queue */</span></span><br><span class="line">    req-&gt;dev = bh-&gt;b_dev;</span><br><span class="line">    req-&gt;cmd = rw;</span><br><span class="line">    req-&gt;errors=<span class="number">0</span>;</span><br><span class="line">    req-&gt;sector = bh-&gt;b_blocknr&lt;&lt;<span class="number">1</span>;</span><br><span class="line">    req-&gt;nr_sectors = <span class="number">2</span>;</span><br><span class="line">    req-&gt;buffer = bh-&gt;b_data;</span><br><span class="line">    req-&gt;waiting = <span class="literal">NULL</span>;</span><br><span class="line">    req-&gt;bh = bh;</span><br><span class="line">    req-&gt;next = <span class="literal">NULL</span>;</span><br><span class="line">    add_request(major+blk_dev,req);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到用到了 request 结构。</p>
+<p>具体说来，就是该函数会往刚刚的设备的请求项链表 request[32] 中添加一个请求项，只要 request[32] 中有未处理的请求项存在，都会陆续地被处理，直到设备的请求项链表是空为止。</p>
+<p>所有 request[32] 是<strong>块设备驱动程序</strong>和<strong>内存缓冲区</strong>的桥梁，通过它可以完整地表示一个块设备读写操作要做的事。</p>
+<hr>
+<h3 id="tty-init"><a href="#tty-init" class="headerlink" title="tty_init()"></a>tty_init()</h3><p>执行完成后，我们会具备键盘输入到显示器输出字符这个最常用的功能。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    tty_init();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">--------------------------------------------</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">tty_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    rs_init();</span><br><span class="line">    con_init();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先看第一个函数 <code>rs_init()</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">rs_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    set_intr_gate(<span class="number">0x24</span>,rs1_interrupt);</span><br><span class="line">    set_intr_gate(<span class="number">0x23</span>,rs2_interrupt);</span><br><span class="line">    init(tty_table[<span class="number">1</span>].read_q.data);</span><br><span class="line">    init(tty_table[<span class="number">2</span>].read_q.data);</span><br><span class="line">    outb(inb_p(<span class="number">0x21</span>)&amp;<span class="number">0xE7</span>,<span class="number">0x21</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>串口中断的开启，以及设置对应的中断处理程序，串口已经很少用到了，所以直接忽略。</p>
+<p>再看第二个函数 <code>con_init()</code></p>
+<p>先将大致框架写出：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">con_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (ORIG_VIDEO_MODE == <span class="number">7</span>) &#123;</span><br><span class="line">        ...</span><br><span class="line">        <span class="keyword">if</span> ((ORIG_VIDEO_EGA_BX &amp; <span class="number">0xff</span>) != <span class="number">0x10</span>) &#123;...&#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;...&#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ...</span><br><span class="line">        <span class="keyword">if</span> ((ORIG_VIDEO_EGA_BX &amp; <span class="number">0xff</span>) != <span class="number">0x10</span>) &#123;...&#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;...&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一大堆 if else，这是为了应对不同的显示模式，来分配不同的变量值。那么我们就只需要看一个，便能推出其他所有。</p>
+<p>显示模式是什么呢？或者追溯本源，一个字符是怎么显示在屏幕上的呢？操作系统和 CPU 等硬件设备为了这件事都干了啥呢？</p>
+<p>之前有说过，设备会将自己要处理的数据映射到内存上。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648372387597933/37986f0157a42823961593902741ce195889364d.png" alt="640 (1)"></p>
+<p>从图中可以看出，内存中有一部分区域是，是和显存映射的。说人话就是，往这些内存区域写数据，相当于写在了显存中，往显存中写数据，就相当于在屏幕上写数据。</p>
+<p>举个例子</p>
+<p>当我们写这样一行汇编代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mov [0xB8000],&#39;h&#39;</span><br></pre></td></tr></table></figure>
+<p>就会在屏幕中输出<code>h</code>这个字符。</p>
+<p><code>0xB8000</code>指的是什么呢，这里只浅说一下，这片内存是每两个字节表示一个显示在屏幕上的字符，<strong>第一个是字符的编码，第二个是字符的颜色</strong>。(不理解也么事)</p>
+<p>所以现在代码就可以简化成这个样子</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ORIG_X          (*(unsigned char *)0x90000)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ORIG_Y          (*(unsigned char *)0x90001)</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">con_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">register</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> a;</span><br><span class="line">    <span class="comment">// 第一部分 获取显示模式相关信息</span></span><br><span class="line">    video_num_columns = (((*(<span class="keyword">unsigned</span> <span class="keyword">short</span> *)<span class="number">0x90006</span>) &amp; <span class="number">0xff00</span>) &gt;&gt; <span class="number">8</span>);</span><br><span class="line">    video_size_row = video_num_columns * <span class="number">2</span>;</span><br><span class="line">    video_num_lines = <span class="number">25</span>;</span><br><span class="line">    video_page = (*(<span class="keyword">unsigned</span> <span class="keyword">short</span> *)<span class="number">0x90004</span>);</span><br><span class="line">    video_erase_char = <span class="number">0x0720</span>;</span><br><span class="line">    <span class="comment">// 第二部分 显存映射的内存区域 </span></span><br><span class="line">    video_mem_start = <span class="number">0xb8000</span>;</span><br><span class="line">    video_port_reg  = <span class="number">0x3d4</span>;</span><br><span class="line">    video_port_val  = <span class="number">0x3d5</span>;</span><br><span class="line">    video_mem_end = <span class="number">0xba000</span>;</span><br><span class="line">    <span class="comment">// 第三部分 滚动屏幕操作时的信息</span></span><br><span class="line">    origin  = video_mem_start;</span><br><span class="line">    scr_end = video_mem_start + video_num_lines * video_size_row;</span><br><span class="line">    top = <span class="number">0</span>;</span><br><span class="line">    bottom  = video_num_lines;</span><br><span class="line">    <span class="comment">// 第四部分 定位光标并开启键盘中断</span></span><br><span class="line">    gotoxy(ORIG_X, ORIG_Y);</span><br><span class="line">    set_trap_gate(<span class="number">0x21</span>,&amp;keyboard_interrupt);<span class="comment">//设置键盘中断号</span></span><br><span class="line">    outb_p(inb_p(<span class="number">0x21</span>)&amp;<span class="number">0xfd</span>,<span class="number">0x21</span>);</span><br><span class="line">    a=inb_p(<span class="number">0x61</span>);</span><br><span class="line">    outb_p(a|<span class="number">0x80</span>,<span class="number">0x61</span>);</span><br><span class="line">    outb(a,<span class="number">0x61</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之前操作系统用汇编在内存中存了很多数据：</p>
+<table>
+<thead>
+<tr>
+<th>内存地址</th>
+<th>长度(字节)</th>
+<th>名称</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x90000</td>
+<td>2</td>
+<td>光标位置</td>
+</tr>
+<tr>
+<td>0x90002</td>
+<td>2</td>
+<td>扩展内存数</td>
+</tr>
+<tr>
+<td>0x90004</td>
+<td>2</td>
+<td>显示页面</td>
+</tr>
+<tr>
+<td>0x90006</td>
+<td>1</td>
+<td>显示模式</td>
+</tr>
+<tr>
+<td>0x90007</td>
+<td>1</td>
+<td>字符列数</td>
+</tr>
+<tr>
+<td>0x90008</td>
+<td>2</td>
+<td>未知</td>
+</tr>
+<tr>
+<td>0x9000A</td>
+<td>1</td>
+<td>显示内存</td>
+</tr>
+<tr>
+<td>0x9000B</td>
+<td>1</td>
+<td>显示状态</td>
+</tr>
+<tr>
+<td>0x9000C</td>
+<td>2</td>
+<td>显卡特性参数</td>
+</tr>
+<tr>
+<td>0x9000E</td>
+<td>1</td>
+<td>屏幕行数</td>
+</tr>
+<tr>
+<td>0x9000F</td>
+<td>1</td>
+<td>屏幕列数</td>
+</tr>
+<tr>
+<td>0x90080</td>
+<td>16</td>
+<td>硬盘1参数表</td>
+</tr>
+<tr>
+<td>0x90090</td>
+<td>16</td>
+<td>硬盘2参数表</td>
+</tr>
+<tr>
+<td>0x901FC</td>
+<td>2</td>
+<td>根设备号</td>
+</tr>
+</tbody></table>
+<p>第一部分：获取 <code>0x90006</code>处的数据，对应着表就是获取显示模式。</p>
+<p>第二部分：显存映射的内存地址范围。</p>
+<p>第三部分：设置一些滚动屏幕时需要的参数，定义顶行(第一行)和底行(最后一行)是哪里</p>
+<p>第四部分：把光标定位到之前保存的光标位置处(内存 <code>0x90000</code> 处数据)，设置并开启中断。</p>
+<p>开启键盘中断后，每敲击一个按键就会触发一次中断，中断程序就会把键盘码转换成 ASCII 码，然后写到光标处的内存地址，也就相当于往显存写，于是这个键盘敲击的字符就显示在了屏幕上。</p>
+<p>这一切具体是怎么做到的呢？</p>
+<p>从整段代码调用第一个函数开始看起</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gotoxy(ORIG_X, ORIG_Y);</span><br></pre></td></tr></table></figure>
+<p>跟进</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">gotoxy</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">int</span> new_x,<span class="keyword">unsigned</span> <span class="keyword">int</span> new_y)</span> </span>&#123;</span><br><span class="line">   ...</span><br><span class="line">   x = new_x;</span><br><span class="line">   y = new_y;</span><br><span class="line">   pos = origin + y*video_size_row + (x&lt;&lt;<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>x</code>表示列数；<code>y</code>表示行数；<code>pos</code>表示根据行号和列号计算出来的内存指针，也就是往<code>坐标(x,y)</code>所在的地址里写数据。</p>
+<p>当按下键盘，触发键盘中断，程序调用链如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">_keyboard_interrupt:</span><br><span class="line">    ...</span><br><span class="line">    call _do_tty_interrupt</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_tty_interrupt</span><span class="params">(<span class="keyword">int</span> tty)</span> </span>&#123;</span><br><span class="line">   copy_to_cooked(tty_table+tty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">copy_to_cooked</span><span class="params">(struct tty_struct * tty)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    tty-&gt;write(tty);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 控制台时 tty 的 write 为 con_write 函数(/kernel/chr_drv/console.c)</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">con_write</span><span class="params">(struct tty_struct * tty)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    __asm__(<span class="string">&quot;movb _attr,%%ah\n\t&quot;</span></span><br><span class="line">      <span class="string">&quot;movw %%ax,%1\n\t&quot;</span></span><br><span class="line">      ::<span class="string">&quot;a&quot;</span> (c),<span class="string">&quot;m&quot;</span> (*(<span class="keyword">short</span> *)pos)</span><br><span class="line">      :<span class="string">&quot;ax&quot;</span>);</span><br><span class="line">     pos += <span class="number">2</span>;</span><br><span class="line">     x++;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>直接看 con_write </p>
+<p>内联汇编处，把键盘输入的字符<code>c</code>写入<code>poc</code>指针指向的内存，相当于在屏幕上输出。</p>
+<p>之后的<code>pos += 2</code>和<code>x++</code>，相当于改变<code>pos</code>的值，也就是改变光标。</p>
+<p>所以说白了，内存把屏幕上所有的坐标点所对应的地址都映射到了内存中，当写入字符时，就是给光标所对应的坐标点的地址赋值，然后再移动光标。</p>
+<p><strong>换行</strong>：处于当前行的最后一列，就将光标计算出一个新值，使其处于下一行的开头，程序调用链如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">con_write</span><span class="params">(struct tty_struct * tty)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (x&gt;=video_num_columns) &#123;	<span class="comment">//判断x是否大于总列数</span></span><br><span class="line">        x -= video_num_columns;	<span class="comment">//大于了就减去总列数，即变为0</span></span><br><span class="line">        pos -= video_size_row;	</span><br><span class="line">        lf();</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lf</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (y+<span class="number">1</span>&lt;bottom) &#123;	<span class="comment">//判断y+1是否小于总行数</span></span><br><span class="line">      y++;				<span class="comment">//小于就y+1</span></span><br><span class="line">      pos += video_size_row;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">   &#125;</span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>/kernel/chr_drv/console.c</code>文件中还可以找到各种各样操作的源码，例如滚屏、回车、删除、插入等，简单列出一些：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定位光标的</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">gotoxy</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">int</span> new_x, <span class="keyword">unsigned</span> <span class="keyword">int</span> new_y)</span></span>&#123;&#125;</span><br><span class="line"><span class="comment">// 滚屏，即内容向上滚动一行</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">scrup</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;&#125;</span><br><span class="line"><span class="comment">// 光标同列位置下移一行</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lf</span><span class="params">(<span class="keyword">int</span> currcons)</span></span>&#123;&#125;</span><br><span class="line"><span class="comment">// 光标回到第一列</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">cr</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;&#125;</span><br><span class="line">...</span><br><span class="line"><span class="comment">// 删除一行</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">delete_line</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>总结一下 tty_init() 干的事：完善了键盘的输入和显示器的输出功能</strong></p>
+<h3 id="time-init"><a href="#time-init" class="headerlink" title="time_init()"></a>time_init()</h3><p>操作系统是怎么获取当前时间的呢？联网时，可以通过网络同步；但是不联网时，为什么时间是准确的呢？</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> CMOS_READ(addr) (&#123; \</span></span><br><span class="line">    outb_p(<span class="number">0x80</span>|addr,<span class="number">0x70</span>); \</span><br><span class="line">    inb_p(<span class="number">0x71</span>); \</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BCD_TO_BIN(val) ((val)=((val)&amp;15) + ((val)&gt;&gt;4)*10)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">time_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tm</span> <span class="title">time</span>;</span></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        time.tm_sec = CMOS_READ(<span class="number">0</span>);</span><br><span class="line">        time.tm_min = CMOS_READ(<span class="number">2</span>);</span><br><span class="line">        time.tm_hour = CMOS_READ(<span class="number">4</span>);</span><br><span class="line">        time.tm_mday = CMOS_READ(<span class="number">7</span>);</span><br><span class="line">        time.tm_mon = CMOS_READ(<span class="number">8</span>);</span><br><span class="line">        time.tm_year = CMOS_READ(<span class="number">9</span>);</span><br><span class="line">    &#125; <span class="keyword">while</span> (time.tm_sec != CMOS_READ(<span class="number">0</span>));</span><br><span class="line">    BCD_TO_BIN(time.tm_sec);</span><br><span class="line">    BCD_TO_BIN(time.tm_min);</span><br><span class="line">    BCD_TO_BIN(time.tm_hour);</span><br><span class="line">    BCD_TO_BIN(time.tm_mday);</span><br><span class="line">    BCD_TO_BIN(time.tm_mon);</span><br><span class="line">    BCD_TO_BIN(time.tm_year);</span><br><span class="line">    time.tm_mon--;		<span class="comment">//tm_mon 月份范围是0-11</span></span><br><span class="line">    startup_time = kernel_mktime(&amp;time);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到主要是由<code>CMOS_READ</code>和<code>BCD_TO_BIN</code>这两个函数实现的。</p>
+<p><strong>CMOS_READ</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> CMOS_READ(addr) (&#123; \</span></span><br><span class="line">    outb_p(<span class="number">0x80</span>|addr,<span class="number">0x70</span>); \</span><br><span class="line">    inb_p(<span class="number">0x71</span>); \</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>这个<code>outb_p</code>和<code>inb_p</code>是什么意思呢？</p>
+<p>out 相当于写了一下，in 相当于读了一下，这是 CPU 与外设交互的一种方式，CPU 与外设打交道基本是通过端口，在特定端口上写上特定的值来命令外设干嘛，然后从另一个端口读值来接受外设的反馈。</p>
+<p>整段代码代表对 CMOS 读取了一些数据，CMOS 是主板上一个可读写的存储设备，它会在计算机关机时存储一些信息，这里只要知道它是一种外设就行了。</p>
+<hr>
+<p>这里以硬盘为例讲一下交互</p>
+<p>先看一下硬盘的端口表</p>
+<table>
+<thead>
+<tr>
+<th>端口</th>
+<th>读</th>
+<th>写</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x1F0</td>
+<td>数据寄存器</td>
+<td>数据寄存器</td>
+</tr>
+<tr>
+<td>0x1F1</td>
+<td>错误寄存器</td>
+<td>特征寄存器</td>
+</tr>
+<tr>
+<td>0x1F2</td>
+<td>扇区计数寄存器</td>
+<td>扇区计数寄存器</td>
+</tr>
+<tr>
+<td>0x1F3</td>
+<td>扇区号寄存器或 LBA 块地址 0~7</td>
+<td>扇区号或 LBA 块地址 0~7</td>
+</tr>
+<tr>
+<td>0x1F4</td>
+<td>磁道数低 8 位或 LBA 块地址 8~15</td>
+<td>磁道数低 8 位或 LBA 块地址 8~15</td>
+</tr>
+<tr>
+<td>0x1F5</td>
+<td>磁道数高 8 位或 LBA 块地址 16~23</td>
+<td>磁道数高 8 位或 LBA 块地址 16~23</td>
+</tr>
+<tr>
+<td>0x1F6</td>
+<td>驱动器/磁头或 LBA 块地址 24~27</td>
+<td>驱动器/磁头或 LBA 块地址 24~27</td>
+</tr>
+<tr>
+<td>0x1F7</td>
+<td>命令寄存器或状态寄存器</td>
+<td>命令寄存器</td>
+</tr>
+</tbody></table>
+<p>读硬盘时，会先往除<code>0x1F0</code>端口的其他端口上写数据，告诉硬盘要读的是哪个扇区，读多少。然后再从<code>0x1F0</code>这个端口读数据。</p>
+<p>具体过程：</p>
+<ol>
+<li>在 0x1F2 写入要读取的扇区数</li>
+<li>在 0x1F3 ~ 0x1F6 这四个端口写入计算好的起始 LBA 地址</li>
+<li>在 0x1F7 处写入读命令的指令号</li>
+<li>不断检测 0x1F7 （此时已成为状态寄存器的含义）的忙位</li>
+<li>如果第四步骤为不忙，则开始不断从 0x1F0 处读取数据到内存指定位置，直到读完</li>
+</ol>
+<hr>
+<p>所以我们再回到代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> CMOS_READ(addr) (&#123; \</span></span><br><span class="line">    outb_p(<span class="number">0x80</span>|addr,<span class="number">0x70</span>); \</span><br><span class="line">    inb_p(<span class="number">0x71</span>); \</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BCD_TO_BIN(val) ((val)=((val)&amp;15) + ((val)&gt;&gt;4)*10)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">time_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tm</span> <span class="title">time</span>;</span></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        time.tm_sec = CMOS_READ(<span class="number">0</span>);</span><br><span class="line">        time.tm_min = CMOS_READ(<span class="number">2</span>);</span><br><span class="line">        time.tm_hour = CMOS_READ(<span class="number">4</span>);</span><br><span class="line">        time.tm_mday = CMOS_READ(<span class="number">7</span>);</span><br><span class="line">        time.tm_mon = CMOS_READ(<span class="number">8</span>);</span><br><span class="line">        time.tm_year = CMOS_READ(<span class="number">9</span>);</span><br><span class="line">    &#125; <span class="keyword">while</span> (time.tm_sec != CMOS_READ(<span class="number">0</span>));</span><br><span class="line">    BCD_TO_BIN(time.tm_sec);</span><br><span class="line">    BCD_TO_BIN(time.tm_min);</span><br><span class="line">    BCD_TO_BIN(time.tm_hour);</span><br><span class="line">    BCD_TO_BIN(time.tm_mday);</span><br><span class="line">    BCD_TO_BIN(time.tm_mon);</span><br><span class="line">    BCD_TO_BIN(time.tm_year);</span><br><span class="line">    time.tm_mon--;		<span class="comment">//tm_mon 月份范围是0-11</span></span><br><span class="line">    startup_time = kernel_mktime(&amp;time);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>do_while 循环，通过读写 CMOS 上的指定端口，获取<strong>年月日时分秒</strong>。至于 CMOS 是如何知道时间的，这个就不在我们讨论范围内了。</p>
+<p><strong>BCD_TO_BIN</strong></p>
+<p>将 BCD 转换成 BIN，因为从 CMOS 中获取的都是 BCD 码值，所以要转换成存储在我们变量上的二进制数值。</p>
+<p><strong>kernel_mktime</strong> </p>
+<p>将之前收集到的时间数据，计算从 <strong>1970 年 1 月 1 日 0 时 **起到开机当时经过的秒数，作为开机时间，存储在 **startup_time</strong> 这个变量里。</p>
+<p><strong>总结一下 time_init() 干的事：对 CMOS 进行读写操作，获取时间数据，经过一系列转换后得到开机时间。</strong></p>
+<h3 id="shed-init"><a href="#shed-init" class="headerlink" title="shed_init()"></a><strong>shed_init()</strong></h3><p>进程调度初始化，多进程的基石！！！</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sched_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    set_tss_desc(gdt+<span class="number">4</span>, &amp;(init_task.task.tss));</span><br><span class="line">    set_ldt_desc(gdt+<span class="number">5</span>, &amp;(init_task.task.ldt));</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>初始化 <code>TSS</code> 和 <code>LDT</code>，先说一下这两句话干了啥，之前有说过全局描述符表 gdt，gdt 表中不同位置存储了不同的段，这两句话就是把<code>TSS</code>和<code>LDT</code>存入<code>gdt</code>。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648439425080654/98c499f6dd0d45d64b76ae3b9b12bd5b42d9f581.png" alt="640"></p>
+<p>现在再来说说这两个结构事干嘛的：</p>
+<p><strong>TSS</strong></p>
+<p><code>TSS</code>是<strong>任务状态段</strong>，会<strong>保存和恢复进程的上下文</strong>，上下文就是各个寄存器的信息。这样进程切换的时候，即从A进程切换到B进程时，会先保存A进程寄存器的信息，当再次切换回A进程时，就会恢复寄存器里的信息，以便继续执行。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tss_struct</span>&#123;</span></span><br><span class="line">    <span class="keyword">long</span> back_link;</span><br><span class="line">    <span class="keyword">long</span> esp0;</span><br><span class="line">    <span class="keyword">long</span> ss0;</span><br><span class="line">    <span class="keyword">long</span> esp1;</span><br><span class="line">    <span class="keyword">long</span> ss1;</span><br><span class="line">    <span class="keyword">long</span> esp2;</span><br><span class="line">    <span class="keyword">long</span> ss2;</span><br><span class="line">    <span class="keyword">long</span> cr3;</span><br><span class="line">    <span class="keyword">long</span> eip;</span><br><span class="line">    <span class="keyword">long</span> eflags;</span><br><span class="line">    <span class="keyword">long</span> eax, ecx, edx, ebx;</span><br><span class="line">    <span class="keyword">long</span> esp;</span><br><span class="line">    <span class="keyword">long</span> ebp;</span><br><span class="line">    <span class="keyword">long</span> esi;</span><br><span class="line">    <span class="keyword">long</span> edi;</span><br><span class="line">    <span class="keyword">long</span> es;</span><br><span class="line">    <span class="keyword">long</span> cs;</span><br><span class="line">    <span class="keyword">long</span> ss;</span><br><span class="line">    <span class="keyword">long</span> ds;</span><br><span class="line">    <span class="keyword">long</span> fs;</span><br><span class="line">    <span class="keyword">long</span> gs;</span><br><span class="line">    <span class="keyword">long</span> ldt;</span><br><span class="line">    <span class="keyword">long</span> trace_bitmap;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">i387_struct</span> <span class="title">i387</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>LDT</strong></p>
+<p><code>LDT</code>是<strong>局部描述符表</strong>，与 GDT 全局描述符表相对应。内核态代码用 GDT 里的数据段和代码段，而用户进程代码则用每个用户进程自己的 LDT 里的数据段和代码段。</p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> a,b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> * <span class="title">task</span>[64] =</span> &#123;&amp;(init_task.task), &#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sched_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> * <span class="title">p</span>;</span></span><br><span class="line">        p = gdt+<span class="number">6</span>;</span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">1</span>;i&lt;<span class="number">64</span>;i++) &#123;</span><br><span class="line">        task[i] = <span class="literal">NULL</span>;</span><br><span class="line">        p-&gt;a=p-&gt;b=<span class="number">0</span>;</span><br><span class="line">        p++;</span><br><span class="line">        p-&gt;a=p-&gt;b=<span class="number">0</span>;</span><br><span class="line">        p++;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>循环给长度为64，结构为 task_struct 的数组 task 赋值 NULL (1~63)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648448883390142/33cef6c48ae10c3e9e402b9cb81584b292f54551.png" alt="640 (2)"></p>
+<p>task_struct 结构代表每个进程的信息，很重要</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line"><span class="comment">/* these are hardcoded - don&#x27;t touch */</span></span><br><span class="line">    <span class="keyword">long</span> state; <span class="comment">/* -1 unrunnable, 0 runnable, &gt;0 stopped */</span></span><br><span class="line">    <span class="keyword">long</span> counter;</span><br><span class="line">    <span class="keyword">long</span> priority;</span><br><span class="line">    <span class="keyword">long</span> signal;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> <span class="title">sigaction</span>[32];</span></span><br><span class="line">    <span class="keyword">long</span> blocked; <span class="comment">/* bitmap of masked signals */</span></span><br><span class="line">  <span class="comment">/* various fields */</span></span><br><span class="line">    <span class="keyword">int</span> exit_code;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> start_code,end_code,end_data,brk,start_stack;</span><br><span class="line">    <span class="keyword">long</span> pid,father,pgrp,session,leader;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> uid,euid,suid;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> gid,egid,sgid;</span><br><span class="line">    <span class="keyword">long</span> alarm;</span><br><span class="line">    <span class="keyword">long</span> utime,stime,cutime,cstime,start_time;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> used_math;</span><br><span class="line">  <span class="comment">/* file system info */</span></span><br><span class="line">    <span class="keyword">int</span> tty;  <span class="comment">/* -1 if no tty, so it must be signed */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> umask;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">pwd</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">root</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">executable</span>;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> close_on_exec;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">filp</span>[<span class="title">NR_OPEN</span>];</span></span><br><span class="line">  <span class="comment">/* ldt for this task 0 - zero 1 - cs 2 - ds&amp;ss */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> <span class="title">ldt</span>[3];</span></span><br><span class="line">  <span class="comment">/* tss for this task */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tss_struct</span> <span class="title">tss</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+<p>循环后面的内容就是给 gdt 剩下的位置都填充为 0，也就是把剩下留给 TSS 和 LDT 的描述符都先附上空值。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648449524576329/33cef6c48ae10c3e9e402b9cb81584b292f54551.png" alt="640 (2)"></p>
+<p>以后每创建一个新进程，就会在后面添加一组 TSS 和 LDT 表示这个进程的任务状态段以及局部描述符表信息。</p>
+<p>简单看一下，不懂也没事：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648449619025578/aaee914fbed9419244dbf27cbfb745974106df16.png" alt="640 (1)"></p>
+<p>为啥还没创建进程就会有一组 TSS 和 LDT 呢？是因为当进程调度机制建立起来，正在执行的代码就会变成 进程0 的代码，也就是说正在运行的代码会作为未来的一个进程的指令流。(不懂也没事)</p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ltr(n) __asm__(<span class="meta-string">&quot;ltr %%ax&quot;</span>::<span class="meta-string">&quot;a&quot;</span> (_TSS(n)))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> lldt(n) __asm__(<span class="meta-string">&quot;lldt %%ax&quot;</span>::<span class="meta-string">&quot;a&quot;</span> (_LDT(n)))</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sched_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    ltr(<span class="number">0</span>);</span><br><span class="line">    lldt(<span class="number">0</span>);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ltr</code>是给<code>tr</code>寄存器赋值，以告诉 CPU 任务状态段 TSS 在内存中的位置；<code>lldt</code>是给<code>ldt</code>寄存器赋值，以告诉 CPU 局部描述符 LDT 在内存中的位置。 (同之前的<code>lidt</code>和<code>lght</code>)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648450971773213/c754e3c906a5e60a32efc51cb601fcbd39a7b8e3.png" alt="640 (3)"></p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sched_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    outb_p(<span class="number">0x36</span>,<span class="number">0x43</span>);      <span class="comment">/* binary, mode 3, LSB/MSB, ch 0 */</span></span><br><span class="line">    outb_p(LATCH &amp; <span class="number">0xff</span> , <span class="number">0x40</span>);    <span class="comment">/* LSB */</span></span><br><span class="line">    outb(LATCH &gt;&gt; <span class="number">8</span> , <span class="number">0x40</span>);    <span class="comment">/* MSB */</span></span><br><span class="line">    set_intr_gate(<span class="number">0x20</span>,&amp;timer_interrupt);</span><br><span class="line">    outb(inb_p(<span class="number">0x21</span>)&amp;~<span class="number">0x01</span>,<span class="number">0x21</span>);</span><br><span class="line">    set_system_gate(<span class="number">0x80</span>,&amp;system_call);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>四行端口读写代码，交互的外设是一个可编程定时器的芯片(LATCH)，这四行代码就开启了这个定时器，之后这个定时器变会<strong>持续的、以一定频率的向 CPU 发出中断信号</strong>。</p>
+<p>两行设置中断代码，第一个是<strong>时钟中断</strong>，中断号为 0x20，中断程序为 timer_interrupt，每次定时器向 CPU 发出中断，都会执行这个函数。第二个是<strong>系统调用</strong>，中断号为 0x80，灰常关键，所有用户态程序想要调用内核提供的方法，都需要基于这个系统调用来进行。</p>
+<hr>
+<p>来总结一下现在的中断都设置了哪些：</p>
+<table>
+<thead>
+<tr>
+<th>中断号</th>
+<th>中断处理函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0 ~ 0x10</td>
+<td>trap_init 里设置的一堆</td>
+</tr>
+<tr>
+<td>0x20</td>
+<td>timer_interrupt</td>
+</tr>
+<tr>
+<td>0x21</td>
+<td>keyboard_interrupt</td>
+</tr>
+<tr>
+<td>0x80</td>
+<td>system_call</td>
+</tr>
+</tbody></table>
+<p>0 ~ 0x10：一些基本的中断，比如除零异常等 (trap_init)</p>
+<p>0x20：时钟中断</p>
+<p>0x21：处理键盘输入，使得键盘能用 (tty_init)</p>
+<p>0x80：系统调用</p>
+<hr>
+<p><strong>总结一下 shed_init() 干的事：</strong></p>
+<ul>
+<li>在全局描述符表 gdt 里写入了两个结构 TSS 和 LDT，作为未来进程 0 的任务状态段和局部描述符表信息。</li>
+<li>初始化了一个 task_struct 结构数组(task[0]=init_task.init,task[1~63]=NULL)， 作为未来进程 0 的信息。</li>
+<li>和一个可编程定时器芯片进行交互，使其持续向 CPU 发出中断信号；设置了时间中断 0x20 和系统调用 0x80，一个是进程调度的起点，一个是用户程序调用操作系统的桥梁。</li>
+</ul>
+<h3 id="buffer-init-buffer-memory-end"><a href="#buffer-init-buffer-memory-end" class="headerlink" title="buffer_init(buffer_memory_end)"></a>buffer_init(buffer_memory_end)</h3><p>首先要注意到的是，这个函数一开始就传入了一个参数，这个参数是什么呢？是 main 函数最开始计算的三个变量的其中一个。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648556191205553/1d8daf264007aed295e7660dbfaa8f92f18bfee5.png" alt="640"></p>
+<p>而之前我们又用 <code>mem_init</code> 设置好了<strong>主内存</strong>的管理结构 <code>mam_map</code>。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648556313827348/6f87e9989e63b9e4439b63967df034230bf26555.png" alt="640 (1)"></p>
+<p>而这个函数就是<strong>要把缓冲区也初始化管理起来</strong>。</p>
+<p>看看源码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">int</span> end;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">start_buffer</span> =</span> (struct buffer_head *) &amp;end;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">buffer_init</span><span class="params">(<span class="keyword">long</span> buffer_end)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">h</span> =</span> start_buffer;</span><br><span class="line">    <span class="keyword">void</span> * b = (<span class="keyword">void</span> *) buffer_end;</span><br><span class="line">    <span class="keyword">while</span> ( (b -= <span class="number">1024</span>) &gt;= ((<span class="keyword">void</span> *) (h+<span class="number">1</span>)) ) &#123;</span><br><span class="line">        h-&gt;b_dev = <span class="number">0</span>;</span><br><span class="line">        h-&gt;b_dirt = <span class="number">0</span>;</span><br><span class="line">        h-&gt;b_count = <span class="number">0</span>;</span><br><span class="line">        h-&gt;b_lock = <span class="number">0</span>;</span><br><span class="line">        h-&gt;b_uptodate = <span class="number">0</span>;</span><br><span class="line">        h-&gt;b_wait = <span class="literal">NULL</span>;</span><br><span class="line">        h-&gt;b_next = <span class="literal">NULL</span>;</span><br><span class="line">        h-&gt;b_prev = <span class="literal">NULL</span>;</span><br><span class="line">        h-&gt;b_data = (<span class="keyword">char</span> *) b;</span><br><span class="line">        h-&gt;b_prev_free = h<span class="number">-1</span>;</span><br><span class="line">        h-&gt;b_next_free = h+<span class="number">1</span>;</span><br><span class="line">        h++;</span><br><span class="line">    &#125;</span><br><span class="line">    h--;</span><br><span class="line">    free_list = start_buffer;</span><br><span class="line">    free_list-&gt;b_prev_free = h;</span><br><span class="line">    h-&gt;b_next_free = free_list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;<span class="number">307</span>;i++)</span><br><span class="line">        hash_table[i]=<span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先看第一行，将一个外部变量 end 的地址赋值给缓冲区开始位置 <code>start_buffer</code>。这个 end 变量并不是操作系统写好的，而是由链接器 ld 在链接整个程序时设置的一个外部变量，是已经计算好了的内核代码的末尾地址。</p>
+<p>用一张图表示就是：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648557040502378/c8f037c560e25607fb531ce81d5b727b75e1216c.png" alt="640 (2)"></p>
+<p>可以说是靠 end 这个值划分了内核程序和缓冲区。</p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">buffer_init</span><span class="params">(<span class="keyword">long</span> buffer_end)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> * <span class="title">h</span> =</span> start_buffer;</span><br><span class="line">    <span class="keyword">void</span> * b = (<span class="keyword">void</span> *) buffer_end;</span><br><span class="line">    <span class="keyword">while</span> ( (b -= <span class="number">1024</span>) &gt;= ((<span class="keyword">void</span> *) (h+<span class="number">1</span>)) ) &#123;</span><br><span class="line">        ...</span><br><span class="line">        h-&gt;b_data = (<span class="keyword">char</span> *) b;</span><br><span class="line">        h-&gt;b_prev_free = h<span class="number">-1</span>;</span><br><span class="line">        h-&gt;b_next_free = h+<span class="number">1</span>;</span><br><span class="line">        h++;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对两个变量进行操作</p>
+<p>第一个变量是 <strong>buffer_head 结构的 h</strong>，代表缓冲头，指针值是 start_buffer，也就是 end 的地址。</p>
+<p>第二个变量是 <strong>b</strong>，指针值是 buffer_end，代表缓冲区的结尾。</p>
+<p>b 每循环一次 <code>-1024</code>，缓冲头 h + 1。所以 b 代表缓冲块，h 代表缓冲头，一个从上往下，一个从下往上。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648557983103126/b78c31d8d23020ccf5a4e0848ed8374dd308d75f.png" alt="640 (3)"></p>
+<p>而且 h 被赋上了各种属性，其中 <code>b_data</code>属性就被赋值成了缓冲块 b。</p>
+<p>两个空闲 buffer 指针：<strong>b_prev_free</strong> 表示前一个空闲缓冲头，<strong>b_next_free</strong> 表示后一个空闲缓冲头。可以说缓冲头由双向链表链成。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648558966056890/46605ccd15e99d8186eab91b90dbc445b20edb44.png" alt="640"></p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">buffer_init</span><span class="params">(<span class="keyword">long</span> buffer_end)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    free_list = start_buffer;</span><br><span class="line">    free_list-&gt;b_prev_free = h;</span><br><span class="line">    h-&gt;b_next_free = free_list;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将第一个缓冲头赋给 free_list，并将 free_list(第一个缓冲头) 的 b_prev_free 赋值为 h(最后一个缓冲头)，并将 h(最后一个缓冲头) 的 b_next_free 赋值为 free_list(第一个缓冲头)，说人话就是最后一个缓冲头的下一个缓冲头是第一个缓冲头，第一个缓冲头的上一个缓冲头是最后一个缓冲头。用图表示就是：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648559941715857/ed6e25398debf7d27363d159c1e6a57ac2cd7858.png" alt="640 (1)"></p>
+<p>free_list 可以在这个双向链表中遍历任何一个缓冲头，然后通过特定的缓冲头又能对应到特定的缓冲块。管理系统就这样建成了。</p>
+<p>接着往下看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">buffer_init</span><span class="params">(<span class="keyword">long</span> buffer_end)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>;i&lt;<span class="number">307</span>;i++)</span><br><span class="line">        hash_table[i]=<span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个 <code>hash_table</code> 数组是干啥的呢？</p>
+<p> 我们知道这个 buffer.c 是在 fs 文件夹里的，fs 代表着文件系统。当读取块设备的数据时，会先读到缓冲区中，如果缓冲区已经有了，就不会再从块设备里读取了，而是直接从缓冲区取走。</p>
+<p>那系统怎么知道缓冲区已经有了要读取的块设备中的数据呢？</p>
+<p>每一次都遍历双向链表效率太低，所以就需要这个 hash_table 的结构快速查找。</p>
+<p>现在只是初始化了这个 hash_table 结构。</p>
+<hr>
+<p>简单补充一下 hash_table 的调用过程</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _hashfn(dev,block) (((unsigned)(dev^block))%307)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> hash(dev,block) hash_table[_hashfn(dev,block)]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 搜索合适的缓冲块 </span></span><br><span class="line"><span class="function">struct buffer_head * <span class="title">getblk</span><span class="params">(<span class="keyword">int</span> dev,<span class="keyword">int</span> block)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">buffer_head</span> <span class="title">bh</span> =</span> get_hash_table(dev,block)；</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">struct buffer_head * <span class="title">get_hash_table</span><span class="params">(<span class="keyword">int</span> dev, <span class="keyword">int</span> block)</span> </span>&#123;</span><br><span class="line">    ...    </span><br><span class="line">    find_buffer(dev,block);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> struct buffer_head * <span class="title">find_buffer</span><span class="params">(<span class="keyword">int</span> dev, <span class="keyword">int</span> block)</span> </span>&#123; </span><br><span class="line">    ...     </span><br><span class="line">    hash(dev,block);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到最关键的是 <strong>(dev^block))%307</strong>，hash_table下标的寻找方式。即(设备号^逻辑块号) % 307</p>
+<p>利用了数据结构哈希表来实现</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648604342735727/3db337914d1569bb2c8985ae8377880c98713caa.png" alt="640"></p>
+<hr>
+<p><strong>总结一下buffer_init()干的事：初始化缓冲区管理</strong></p>
+<h3 id="hd-init"><a href="#hd-init" class="headerlink" title="hd_init()"></a>hd_init()</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//struct blk_dev_struct &#123;</span></span><br><span class="line"><span class="comment">//    void (*request_fn)(void);</span></span><br><span class="line"><span class="comment">//    struct request * current_request;</span></span><br><span class="line"><span class="comment">//&#125;;</span></span><br><span class="line"><span class="comment">//extern struct blk_dev_struct blk_dev[NR_BLK_DEV];</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">hd_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    blk_dev[<span class="number">3</span>].request_fn = do_hd_request;</span><br><span class="line">    set_intr_gate(<span class="number">0x2E</span>,&amp;hd_interrupt);	<span class="comment">//设置中断描述符</span></span><br><span class="line">    outb_p(inb_p(<span class="number">0x21</span>)&amp;<span class="number">0xfb</span>,<span class="number">0x21</span>);	<span class="comment">//和硬件交互</span></span><br><span class="line">    outb(inb_p(<span class="number">0xA1</span>)&amp;<span class="number">0xbf</span>,<span class="number">0xA1</span>); 	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>硬盘初始化</p>
+<p>硬件设备的初始化大体都是：</p>
+<ol>
+<li>往某些 IO 端口上读写一些数据，表示开启它</li>
+<li>然后向中断向量表中添加一个中断，使得 CPU 能够响应这个硬件设备的动作</li>
+<li>初始化一些数据结构来管理</li>
+</ol>
+<p>先看第一行</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">hd_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    blk_dev[<span class="number">3</span>].request_fn = do_hd_request;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将 blk_dev 数组的索引 3 位置处的块设备管理结构 <strong>blk_dev_struct</strong> 的 <strong>request_fn</strong> 赋值为了 <strong>do_hd_request</strong></p>
+<p>Linux 0.11 内核用了一个 <strong>blk_dev[]</strong> 来进行管理，每一个索引表示一个块设备。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">blk_dev_struct</span> <span class="title">blk_dev</span>[<span class="title">NR_BLK_DEV</span>] =</span> &#123; （kernel/blk_drv/ll_rw_blk.c）</span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* no_dev */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* dev mem */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* dev fd */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* dev hd */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* dev ttyx */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,     <span class="comment">/* dev tty */</span></span><br><span class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;      <span class="comment">/* dev lp */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以看到索引为 3 的地方表示 hd。</p>
+<p>每个块设备执行读写请求都有自己的函数实现，在上面看来就是一个统一函数 <strong>request_fn</strong>，对于硬盘来说，实现的就是<code>do_hd_request</code>函数。</p>
+<p>再看第二行</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">hd_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    set_intr_gate(<span class="number">0x2E</span>,&amp;hd_interrupt);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>设置中断，中断号为 <code>0x2E</code>，中断程序为<code>hd_interrupt</code>，也就是执行 <code>do_hd_request()</code>函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">_hd_interrupt:</span><br><span class="line">    ...</span><br><span class="line">    xchgl _do_hd,%edx</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line"><span class="comment">// 如果是读盘操作，这个 do_hd 是 read_intr</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">read_intr</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    do_hd_request();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<p>再来总结一下中断</p>
+<table>
+<thead>
+<tr>
+<th align="left">中断号</th>
+<th align="left">中断处理函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>0 ~ 0x10</code></td>
+<td align="left"><code>trap_init</code> 里设置的一堆</td>
+</tr>
+<tr>
+<td align="left"><code>0x20</code></td>
+<td align="left"><code>timer_interrupt</code></td>
+</tr>
+<tr>
+<td align="left"><code>0x21</code></td>
+<td align="left"><code>keyboard_interrupt</code></td>
+</tr>
+<tr>
+<td align="left"><code>0x2E</code></td>
+<td align="left"><code>hd_interrupt</code></td>
+</tr>
+<tr>
+<td align="left"><code>0x80</code></td>
+<td align="left"><code>system_call</code></td>
+</tr>
+</tbody></table>
+<p>0~0x10：17个基本中断，如除零异常，trap_init 初始化设置。</p>
+<p>0x20：时钟中断。开启定时器，sched_init 初始化设置。</p>
+<p>0x21：键盘中断，此时按键盘开始起效，con_init 初始化设置。</p>
+<p>0x2E：硬盘中断，读写硬盘完成后触发中断，d_init 初始化设置。</p>
+<p>0x80：系统调用中断，sched_init 初始化设置。</p>
+<p><strong>可以发现，让操作系统工作的唯一方式，就是触发中断。</strong></p>
+<hr>
+<p>接着往下看：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">hd_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    outb_p(inb_p(<span class="number">0x21</span>)&amp;<span class="number">0xfb</span>,<span class="number">0x21</span>);</span><br><span class="line">    outb(inb_p(<span class="number">0xA1</span>)&amp;<span class="number">0xbf</span>,<span class="number">0xA1</span>); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>往几个 IO 端口上读写，目的是<strong>允许硬盘控制器发送中断请求信号</strong>。</p>
+<p><strong>总结一下 hd_init() 干的事：给硬盘赋值读写请求函数，设置了新的中断号和中断程序，和 IO 设备交互，发送中断。</strong></p>
+<hr>
+<p>读硬盘最底层的操作流程是怎样的呢？之前 tty_init 的时候也讲过：</p>
+<p>硬盘的端口表：</p>
+<table>
+<thead>
+<tr>
+<th align="left">端口</th>
+<th align="left">读</th>
+<th align="left">写</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">0x1F0</td>
+<td align="left">数据寄存器</td>
+<td align="left">数据寄存器</td>
+</tr>
+<tr>
+<td align="left">0x1F1</td>
+<td align="left">错误寄存器</td>
+<td align="left">特征寄存器</td>
+</tr>
+<tr>
+<td align="left">0x1F2</td>
+<td align="left">扇区计数寄存器</td>
+<td align="left">扇区计数寄存器</td>
+</tr>
+<tr>
+<td align="left">0x1F3</td>
+<td align="left">扇区号寄存器或 LBA 块地址 0~7</td>
+<td align="left">扇区号或 LBA 块地址 0~7</td>
+</tr>
+<tr>
+<td align="left">0x1F4</td>
+<td align="left">磁道数低 8 位或 LBA 块地址 8~15</td>
+<td align="left">磁道数低 8 位或 LBA 块地址 8~15</td>
+</tr>
+<tr>
+<td align="left">0x1F5</td>
+<td align="left">磁道数高 8 位或 LBA 块地址 16~23</td>
+<td align="left">磁道数高 8 位或 LBA 块地址 16~23</td>
+</tr>
+<tr>
+<td align="left">0x1F6</td>
+<td align="left">驱动器/磁头或 LBA 块地址 24~27</td>
+<td align="left">驱动器/磁头或 LBA 块地址 24~27</td>
+</tr>
+<tr>
+<td align="left">0x1F7</td>
+<td align="left">命令寄存器或状态寄存器</td>
+<td align="left">命令寄存器</td>
+</tr>
+</tbody></table>
+<p>读硬盘时，会先往除<code>0x1F0</code>端口的其他端口上写数据，告诉硬盘要读的是哪个扇区，读多少。然后再从<code>0x1F0</code>这个端口读数据。</p>
+<p>具体过程：</p>
+<ol>
+<li>在 0x1F2 写入要读取的扇区数</li>
+<li>在 0x1F3 ~ 0x1F6 这四个端口写入计算好的起始 LBA 地址</li>
+<li>在 0x1F7 处写入读命令的指令号</li>
+<li>不断检测 0x1F7 （此时已成为状态寄存器的含义）的忙位</li>
+<li>如果第四步骤为不忙，则开始不断从 0x1F0 处读取数据到内存指定位置，直到读完</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">hd_out</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">int</span> drive,<span class="keyword">unsigned</span> <span class="keyword">int</span> nsect,<span class="keyword">unsigned</span> <span class="keyword">int</span> sect,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">unsigned</span> <span class="keyword">int</span> head,<span class="keyword">unsigned</span> <span class="keyword">int</span> cyl,<span class="keyword">unsigned</span> <span class="keyword">int</span> cmd,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">void</span> (*intr_addr)(<span class="keyword">void</span>))</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    do_hd = intr_addr;</span><br><span class="line">    outb_p(hd_info[drive].ctl,HD_CMD);</span><br><span class="line">    port = <span class="number">0x1f0</span>;</span><br><span class="line">    outb_p(hd_info[drive].wpcom&gt;&gt;<span class="number">2</span>,++port);</span><br><span class="line">    outb_p(nsect,++port);</span><br><span class="line">    outb_p(sect,++port);</span><br><span class="line">    outb_p(cyl,++port);</span><br><span class="line">    outb_p(cyl&gt;&gt;<span class="number">8</span>,++port);</span><br><span class="line">    outb_p(<span class="number">0xA0</span>|(drive&lt;&lt;<span class="number">4</span>)|head,++port);</span><br><span class="line">    outb(cmd,++port);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>outb_p</code>转换成汇编就是<code>out</code>指令，往指定的硬盘 IO 端口写数据。</p>
+<p>当我们在用户层写 read/write 函数，即便是经过系统调用、文件系统、缓冲区管理等等过程，但只要是读写硬盘，最终都要调用到这个最底层的函数。</p>
+<hr>
+<h3 id="floppy-init"><a href="#floppy-init" class="headerlink" title="floppy_init()"></a><strong>floppy_init()</strong></h3><p>软盘初始化，现在基本不常用了，就不多说了。</p>
+<h3 id="sti"><a href="#sti" class="headerlink" title="sti()"></a>sti()</h3><p>sti 对应一个同名的汇编指令 sti()，表示<strong>允许中断</strong>，在这之后，所有的中断开始生效。本质上是将 eflags 寄存器里的中断允许标志位 IF 位置 1。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E5%8F%96%E5%80%BC%E4%B8%8E%E8%BF%90%E7%AE%97"><span class="toc-number">1.</span> <span class="toc-text">参数取值与运算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96-init-%E6%93%8D%E4%BD%9C"><span class="toc-number">2.</span> <span class="toc-text">初始化 init 操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#mem-init"><span class="toc-number">2.1.</span> <span class="toc-text">mem_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#trap-init"><span class="toc-number">2.2.</span> <span class="toc-text">trap_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#blk-dev-init"><span class="toc-number">2.3.</span> <span class="toc-text">blk_dev_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tty-init"><span class="toc-number">2.4.</span> <span class="toc-text">tty_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#time-init"><span class="toc-number">2.5.</span> <span class="toc-text">time_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#shed-init"><span class="toc-number">2.6.</span> <span class="toc-text">shed_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#buffer-init-buffer-memory-end"><span class="toc-number">2.7.</span> <span class="toc-text">buffer_init(buffer_memory_end)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hd-init"><span class="toc-number">2.8.</span> <span class="toc-text">hd_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#floppy-init"><span class="toc-number">2.9.</span> <span class="toc-text">floppy_init()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sti"><span class="toc-number">2.10.</span> <span class="toc-text">sti()</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&text=操作系统之内核部分"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&is_video=false&description=操作系统之内核部分"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之内核部分&body=Check out this article: http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&title=操作系统之内核部分"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&name=操作系统之内核部分&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/&t=操作系统之内核部分"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

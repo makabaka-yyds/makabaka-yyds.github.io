@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="介绍本文是 Fuzzing101 训练的第四篇，fuzz 对象是 libtiff 4.0.4，目标是找到 CVE-2016-9297 的漏洞崩溃，并测量崩溃的代码覆盖率。 CVE-2016-9297：越界读取漏洞，可以通过精心设计的 TIFF_SETGET_C16ASCII 或 TIFF_SETGET_C32_ASCII 标记值触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fuzzing101-exe4">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="介绍本文是 Fuzzing101 训练的第四篇，fuzz 对象是 libtiff 4.0.4，目标是找到 CVE-2016-9297 的漏洞崩溃，并测量崩溃的代码覆盖率。 CVE-2016-9297：越界读取漏洞，可以通过精心设计的 TIFF_SETGET_C16ASCII 或 TIFF_SETGET_C32_ASCII 标记值触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650335393019317/5002287b11a72928078ac8a9527b55856e6ea184.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650351617807513/26b06d6975d1027da931b81e6d8191776745ac86.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650353654934655/f36b20b915e461dd2f0739cafcf2a917edb2283d.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650353945336428/bc0c62a41cc522eeb7bba545db8c13317ed6ff91.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650355178612074/e66fc350f0ab485e3b7d0ab33e0963039923397a.png">
+<meta property="article:published_time" content="2022-04-19T01:56:46.000Z">
+<meta property="article:modified_time" content="2022-04-19T08:03:12.609Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta property="article:tag" content="fuzz">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650335393019317/5002287b11a72928078ac8a9527b55856e6ea184.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Fuzzing101-exe4</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/04/20/Fuzzing101-exe5/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/04/17/Fuzzing101-exe3/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&text=Fuzzing101-exe4"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&is_video=false&description=Fuzzing101-exe4"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Fuzzing101-exe4&body=Check out this article: http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&name=Fuzzing101-exe4&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&t=Fuzzing101-exe4"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%B9%B6%E6%9E%84%E5%BB%BA%E7%9B%AE%E6%A0%87"><span class="toc-number">3.1.</span> <span class="toc-text">下载并构建目标</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E8%A6%86%E7%9B%96%E7%8E%87"><span class="toc-number">4.</span> <span class="toc-text">代码覆盖率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95"><span class="toc-number">5.</span> <span class="toc-text">模糊测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ASan-%E8%AF%8A%E6%96%AD"><span class="toc-number">5.1.</span> <span class="toc-text">ASan 诊断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E9%87%8F-PoC-%E7%9A%84%E4%BB%A3%E7%A0%81%E8%A6%86%E7%9B%96%E7%8E%87"><span class="toc-number">6.</span> <span class="toc-text">测量 PoC 的代码覆盖率</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Fuzzing101-exe4
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-04-19T01:56:46.000Z" itemprop="datePublished">2022-04-19</time>
+        
+        (Updated: <time datetime="2022-04-19T08:03:12.609Z" itemprop="dateModified">2022-04-19</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/fuzz/">fuzz</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>, <a class="tag-link-link" href="/tags/fuzz/" rel="tag">fuzz</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>本文是 Fuzzing101 训练的第四篇，fuzz 对象是 libtiff 4.0.4，目标是找到 <a target="_blank" rel="noopener" href="https://www.cvedetails.com/cve/CVE-2016-9297/">CVE-2016-9297</a> 的漏洞崩溃，并测量崩溃的代码覆盖率。</p>
+<p>CVE-2016-9297：越界读取漏洞，可以通过精心设计的 TIFF_SETGET_C16ASCII 或 TIFF_SETGET_C32_ASCII 标记值触发。越界读取是当程序读取超出预期缓冲区末尾或开头之前的数据时发生的漏洞。将造成的结果是它允许远程攻击者导致拒绝服务或可能从进程内存中获取潜在的敏感信息。</p>
+<h2 id="将会学到的知识"><a href="#将会学到的知识" class="headerlink" title="将会学到的知识"></a>将会学到的知识</h2><ul>
+<li>如何使用 LCOV 测量代码覆盖率</li>
+<li>如何使用代码覆盖率数据来提高 fuzzing 的有效性</li>
+</ul>
+<h2 id="环境与搭建"><a href="#环境与搭建" class="headerlink" title="环境与搭建"></a>环境与搭建</h2><h3 id="下载并构建目标"><a href="#下载并构建目标" class="headerlink" title="下载并构建目标"></a>下载并构建目标</h3><p>为新项目创建一个文件夹：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME</span><br><span class="line">mkdir fuzzing_tiff &amp;&amp; cd fuzzing_tiff&#x2F;</span><br></pre></td></tr></table></figure>
+<p>下载并解压 libtiff 4.0.4：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https:&#x2F;&#x2F;download.osgeo.org&#x2F;libtiff&#x2F;tiff-4.0.4.tar.gz</span><br><span class="line">tar -xzvf tiff-4.0.4.tar.gz</span><br></pre></td></tr></table></figure>
+<p>构建和安装 libtiff：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd tiff-4.0.4&#x2F;</span><br><span class="line">.&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>作为目标二进制文件，我们可以对位于 /bin 文件夹中的 tiffinfo 二进制文件进行模糊测试。 作为种子输入语料库，我们将使用 /test/images/ 文件夹中的示例图像。</p>
+<p>要测试一切是否正常，只需键入：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;bin&#x2F;tiffinfo -D -j -c -r -s -w $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;test&#x2F;images&#x2F;palette-1c-1b.tiff</span><br></pre></td></tr></table></figure>
+<p>将会看到</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650335393019317/5002287b11a72928078ac8a9527b55856e6ea184.png" alt="image-20220419102952750"></p>
+<p><code>-j -c -r -s -w</code> 是为了提高<strong>代码覆盖率</strong>并增加发现错误的机会。</p>
+<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>代码覆盖率是一种软件指标，显示每行代码被触发的次数。通过使用代码覆盖率，我们将了解模糊器已到达代码的哪些部分并可视化模糊测试过程。</p>
+<p>先安装lcov</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install lcov</span><br></pre></td></tr></table></figure>
+<p>使用<code>--coverage</code>标志（编译器和链接器）重建 libTIFF：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME&#x2F;fuzzing_tiff&#x2F;install</span><br><span class="line">cd $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;</span><br><span class="line">make clean</span><br><span class="line">  </span><br><span class="line">CFLAGS&#x3D;&quot;--coverage&quot; LDFLAGS&#x3D;&quot;--coverage&quot; .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>通过键入以下内容来收集代码覆盖率数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;</span><br><span class="line">lcov --zerocounters --directory .&#x2F;</span><br><span class="line">lcov --capture --initial --directory .&#x2F; --output-file app.info</span><br><span class="line">$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;bin&#x2F;tiffinfo -D -j -c -r -s -w $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;test&#x2F;images&#x2F;palette-1c-1b.tiff</span><br><span class="line">lcov --no-checksum --directory .&#x2F; --capture --output-file app2.info</span><br></pre></td></tr></table></figure>
+<p>解释每个命令：</p>
+<ul>
+<li><code>lcov --zerocounters --directory ./</code>：重置以前的计数器</li>
+<li><code>lcov --capture --initial --directory ./ --output-file app.info</code>：返回包含每条检测线的零覆盖率的“基线”覆盖率数据文件</li>
+<li><code>$HOME/fuzzing_tiff/install/bin/tiffinfo -D -j -c -r -s -w $HOME/fuzzing_tiff/tiff-4.0.4/test/images/palette-1c-1b.tiff</code>：运行要分析的应用程序。可以使用不同的输入多次运行它</li>
+<li><code>lcov --no-checksum --directory ./ --capture --output-file app2.info</code>：将当前覆盖状态保存到 app2.info 文件中</li>
+</ul>
+<p>生成 HTML 输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">genhtml --highlight --legend -output-directory .&#x2F;html-coverage&#x2F; .&#x2F;app2.info</span><br></pre></td></tr></table></figure>
+<p>如果一切顺利，结果会放在 <code>./html-coverage/index.html</code> 文件，将会看到如下内容：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650351617807513/26b06d6975d1027da931b81e6d8191776745ac86.png" alt="image-20220419150017463"></p>
+<h2 id="模糊测试"><a href="#模糊测试" class="headerlink" title="模糊测试"></a>模糊测试</h2><p>现在我们将在启用 ASAN 的情况下编译 libtiff。</p>
+<p>清理所有之前编译的目标文件和可执行文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME&#x2F;fuzzing_tiff&#x2F;install</span><br><span class="line">cd $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;</span><br><span class="line">make clean</span><br></pre></td></tr></table></figure>
+<p>调用 make 之前设置 AFL_USE_ASAN=1：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export LLVM_CONFIG&#x3D;&quot;llvm-config-11&quot;</span><br><span class="line">CC&#x3D;afl-clang-lto .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;&quot; --disable-shared</span><br><span class="line">AFL_USE_ASAN&#x3D;1 make -j4</span><br><span class="line">AFL_USE_ASAN&#x3D;1 make install</span><br></pre></td></tr></table></figure>
+<p>现在就可以使用以下命令运行模糊器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">afl-fuzz -m none -i $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;test&#x2F;images&#x2F; -o $HOME&#x2F;fuzzing_tiff&#x2F;out&#x2F; -s 123 -- $HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;bin&#x2F;tiffinfo -D -j -c -r -s -w @@</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650353654934655/f36b20b915e461dd2f0739cafcf2a917edb2283d.png" alt="image-20220419153414672"></p>
+<h3 id="ASan-诊断"><a href="#ASan-诊断" class="headerlink" title="ASan 诊断"></a>ASan 诊断</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;bin&#x2F;tiffinfo -D -j -c -r -s -w &#x2F;home&#x2F;gyx&#x2F;fuzzing_tiff&#x2F;out&#x2F;default&#x2F;crashes&#x2F;id:000000,sig:06,src:000092,time:104764,execs:96551,op:havoc,rep:8</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650353945336428/bc0c62a41cc522eeb7bba545db8c13317ed6ff91.png" alt="image-20220419153905071"></p>
+<h2 id="测量-PoC-的代码覆盖率"><a href="#测量-PoC-的代码覆盖率" class="headerlink" title="测量 PoC 的代码覆盖率"></a>测量 PoC 的代码覆盖率</h2><p>也就是把之前 <code>代码覆盖率</code> 部分再执行一遍，并将目标文件改成 crash 的文件就行，即</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">rm -r $HOME&#x2F;fuzzing_tiff&#x2F;install</span><br><span class="line">cd $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;</span><br><span class="line">make clean</span><br><span class="line">  </span><br><span class="line">CFLAGS&#x3D;&quot;--coverage&quot; LDFLAGS&#x3D;&quot;--coverage&quot; .&#x2F;configure --prefix&#x3D;&quot;$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;&quot; --disable-shared</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd $HOME&#x2F;fuzzing_tiff&#x2F;tiff-4.0.4&#x2F;</span><br><span class="line">lcov --zerocounters --directory .&#x2F;</span><br><span class="line">lcov --capture --initial --directory .&#x2F; --output-file app.info</span><br><span class="line">$HOME&#x2F;fuzzing_tiff&#x2F;install&#x2F;bin&#x2F;tiffinfo -D -j -c -r -s -w &#x2F;home&#x2F;gyx&#x2F;fuzzing_tiff&#x2F;out&#x2F;default&#x2F;crashes&#x2F;id:000000,sig:06,src:000092,time:104764,execs:96551,op:havoc,rep:8</span><br><span class="line">lcov --no-checksum --directory .&#x2F; --capture --output-file app2.info</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">genhtml --highlight --legend -output-directory .&#x2F;html-coverage&#x2F; .&#x2F;app2.info</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/Fuzzing101-exe4/1650355178612074/e66fc350f0ab485e3b7d0ab33e0963039923397a.png" alt="image-20220419155938393"></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E5%AD%A6%E5%88%B0%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="toc-number">2.</span> <span class="toc-text">将会学到的知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">环境与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%B9%B6%E6%9E%84%E5%BB%BA%E7%9B%AE%E6%A0%87"><span class="toc-number">3.1.</span> <span class="toc-text">下载并构建目标</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E8%A6%86%E7%9B%96%E7%8E%87"><span class="toc-number">4.</span> <span class="toc-text">代码覆盖率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95"><span class="toc-number">5.</span> <span class="toc-text">模糊测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ASan-%E8%AF%8A%E6%96%AD"><span class="toc-number">5.1.</span> <span class="toc-text">ASan 诊断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E9%87%8F-PoC-%E7%9A%84%E4%BB%A3%E7%A0%81%E8%A6%86%E7%9B%96%E7%8E%87"><span class="toc-number">6.</span> <span class="toc-text">测量 PoC 的代码覆盖率</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&text=Fuzzing101-exe4"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&is_video=false&description=Fuzzing101-exe4"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Fuzzing101-exe4&body=Check out this article: http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&title=Fuzzing101-exe4"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&name=Fuzzing101-exe4&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/19/Fuzzing101-exe4/&t=Fuzzing101-exe4"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

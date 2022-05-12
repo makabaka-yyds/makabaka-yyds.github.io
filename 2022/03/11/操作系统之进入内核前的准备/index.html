@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="本来是想着入门内核的，然后看着看着就看到了这篇文章，觉得学到很多，反正以后操作系统也要接触，就当初探了一下，写个学习笔记记录一下学到的东西。(果然只有自己再总结加工才能真正吸收xs) 开机会发生什么？当按下开机键后究竟发生了什么呢？ 网上搜出来大体是这样： 1BIOS 按照“启动顺序”，把控制权转交给排在第一位的存储设备：硬盘。然后在硬盘里寻找主引导记录的分区，这个分区告诉电脑操作系统在哪里，并">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统之进入内核前的准备">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="本来是想着入门内核的，然后看着看着就看到了这篇文章，觉得学到很多，反正以后操作系统也要接触，就当初探了一下，写个学习笔记记录一下学到的东西。(果然只有自己再总结加工才能真正吸收xs) 开机会发生什么？当按下开机键后究竟发生了什么呢？ 网上搜出来大体是这样： 1BIOS 按照“启动顺序”，把控制权转交给排在第一位的存储设备：硬盘。然后在硬盘里寻找主引导记录的分区，这个分区告诉电脑操作系统在哪里，并">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647006188975711/3cd5283d38740727ae12cced09fa39237a762818.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647006818169834/2a8d8a3e0c168b4dc281c3591ef325ed6483995c.jpg">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647583152427772/5a4ce99a5f0c81c4a4dac52b0e517cd0b3720bb8.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647584564986120/1a31cdf7f753eab624e7aad84f70d671c200d19e.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647584748063609/31a4ba8e328760bbea62a993bfab1dc8c7194568.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585189534501/ced2dcc9c0e660e93c7f580ab1bd23e8e1136be8.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585409694916/2bed17af7ad43a0852b8cd5e703fbe47c0b0e0fa.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585565732944/cc5d52e70fcac8af64b60263edaeb11a22f78b5e.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387713365211/883583318ae1286e5027b74d8feedd0eaf6091c9.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585788244847/bd62219d0cb3eeefdbe1495e756d12d1d5f18054.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585876571874/dc8007e7201b63e0efdd269d9dc95448d41be498.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387124416308/ac8334a059eefd075d21f2eb4790e20b66d79eec.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586298118237/4ed2e437187e104401fab5e32bdb6a24dd428ac5.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586473179939/3bd5457f3eb4ef80f21d0b91e7247db64898c136.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387246607465/6b16f29d296cea9397cf242496a6275af8ba2ef7.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387713365211/883583318ae1286e5027b74d8feedd0eaf6091c9.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387799526623/607473eb2b9535abba2b66def59b1b8add5d4c2b.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387860825455/c64b56c662e33a389d175d046ac504d16f73d7b8.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649388035415663/497437165bd4765e3191234a6abf74af7cac22a3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649417482942435/05ebe1114ddafd78cdfb17b16c2d8d6332d7ba4a.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649418882843397/780dd6c4bbcae3d90983285c459a4c1460fe3d34.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649418969404186/e9a9bc8dbd50889b004df4c07e368e5a4a5d90e6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387860825455/c64b56c662e33a389d175d046ac504d16f73d7b8.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649419637391002/a3361bab535cc3bc4f325cf7934ac5bc5400a590.png">
+<meta property="article:published_time" content="2022-03-11T13:34:56.000Z">
+<meta property="article:modified_time" content="2022-04-08T12:09:02.458Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647006188975711/3cd5283d38740727ae12cced09fa39237a762818.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>操作系统之进入内核前的准备</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/03/11/CSAPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&text=操作系统之进入内核前的准备"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&is_video=false&description=操作系统之进入内核前的准备"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之进入内核前的准备&body=Check out this article: http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&name=操作系统之进入内核前的准备&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&t=操作系统之进入内核前的准备"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E6%9C%BA%E4%BC%9A%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">开机会发生什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BIOS-%E5%B0%86%E5%90%AF%E5%8A%A8%E5%8C%BA%E5%A4%8D%E5%88%B6%E5%88%B0%E5%86%85%E5%AD%980x7c00"><span class="toc-number">2.</span> <span class="toc-text">BIOS 将启动区复制到内存0x7c00</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%8D%E6%8C%AA%E4%B8%AA%E4%BD%8D%E7%BD%AE%EF%BC%9A%E5%86%85%E5%AD%980x90000"><span class="toc-number">3.</span> <span class="toc-text">再挪个位置：内存0x90000</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%9A%84%E5%88%9D%E6%AD%A5%E8%A7%84%E5%88%92"><span class="toc-number">4.</span> <span class="toc-text">内存的初步规划</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E6%95%B4%E4%B8%AA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%BB%A3%E7%A0%81%E6%90%AC%E5%88%B0%E5%86%85%E5%AD%98%E4%B8%AD"><span class="toc-number">5.</span> <span class="toc-text">将整个操作系统代码搬到内存中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%88%E4%B8%80%E6%AC%A1%E5%81%9A%E5%86%85%E5%AD%98%E8%B0%83%E6%95%B4"><span class="toc-number">6.</span> <span class="toc-text">又一次做内存调整</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="toc-number">7.</span> <span class="toc-text">模式转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E5%BC%8F%E5%BC%80%E5%90%AF%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F%EF%BC%8C%E8%B7%B3%E8%87%B3system%E5%A4%84%E6%89%A7%E8%A1%8C"><span class="toc-number">8.</span> <span class="toc-text">正式开启保护模式，跳至system处执行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%8D%E6%AC%A1%E8%AE%BE%E7%BD%AE-idt-%E5%92%8C-gdt"><span class="toc-number">9.</span> <span class="toc-text">再次设置 idt 和 gdt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E9%A1%B5"><span class="toc-number">10.</span> <span class="toc-text">分页</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        操作系统之进入内核前的准备
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-03-11T13:34:56.000Z" itemprop="datePublished">2022-03-11</time>
+        
+        (Updated: <time datetime="2022-04-08T12:09:02.458Z" itemprop="dateModified">2022-04-08</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag">操作系统</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p> 本来是想着入门内核的，然后看着看着就看到了这篇文章，觉得学到很多，反正以后操作系统也要接触，就当初探了一下，写个学习笔记记录一下学到的东西。(果然只有自己再总结加工才能真正吸收xs)</p>
+<h2 id="开机会发生什么？"><a href="#开机会发生什么？" class="headerlink" title="开机会发生什么？"></a>开机会发生什么？</h2><p>当按下开机键后究竟发生了什么呢？</p>
+<p>网上搜出来大体是这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BIOS 按照“启动顺序”，把控制权转交给排在第一位的存储设备：硬盘。然后在硬盘里寻找主引导记录的分区，这个分区告诉电脑操作系统在哪里，并把操作系统被加载到内存中，然后你就能看到经典的启动界面了，这个开机过程也就完成了。</span><br></pre></td></tr></table></figure>
+<p>现在就来具体讲讲(也没有很具体)整个过程：</p>
+<p>先放一张实模式下的内存分布图：(不用管实模式是什么)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647006188975711/3cd5283d38740727ae12cced09fa39237a762818.png" alt="未命名图片"></p>
+<p>可以简单理解为计算机刚开机的时候就只有 1M 的内存可用，可以看到 BIOS 被映射到了 0xC0000 - 0xFFFFF 的位置。</p>
+<p>众所周知，CPU 会把内存中的指令放入 PC 寄存器 并执行。BIOS 程序的入口地址规定是 0xFFFF0，开机的一瞬间，CPU 的 PC 寄存器会被强制初始化为 0xFFFF0；说得再具体一点就是：CPU 将 段寄存器CS 初始化为 0xF000，将偏移地址寄存器 IP 初始化为 0xFFF0，再根据最终地址的计算规则，将段寄存器左移 4 位，再加上偏移地址，得到的最终的物理地址就是 0xFFFF0。这也就是为啥开机最先执行的是 BIOS 程序了。</p>
+<p>上面说了 BIOS 被映射到了 0xC0000 - 0xFFFFF 的位置，而开机 CPU 跳转的地方是 0xFFFF0，只剩下 16 个字节可以写，这有啥用呢？很显然根本干不了啥，所以 0xFFFF0 这个入口地址处存的是个跳转指令，跳到一个更大范围的空间去执行代码。</p>
+<p>0xFFFF0 处存储的机器指令，翻译成汇编语言就是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jmp far f000:e05b</span><br></pre></td></tr></table></figure>
+<p>意思就是跳转到 0xfe05b 处执行。</p>
+<p>也就是说 0xfe05b 的代码，才是 BIOS 程序真正要执行的代码，这一段代码会执行很多事情，比如检测/初始化……但最重要的还是最后执行的<strong>加载启动区。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">这里浅说一下 BIOS 是如何找到启动区的：</span><br><span class="line"></span><br><span class="line">它会按顺序读取启动盘(磁盘)位于 &#96;0盘0道1扁区&#96; 的内容，并判断末尾的两个字节是否分别是 &#96;0x55&#96; 和 &#96;0xaa&#96;，如果是就将其判定为启动区，如果末尾不是这两个字节，就会继续向下寻找，找不到报错。</span><br></pre></td></tr></table></figure>
+<p>加载的意思就是<strong>把设备程序复制到内存的进程中</strong>；</p>
+<p>在这里就是找到启动区之后 BIOS 就会把启动区的内容复制到内存中的 0x7c00（开发团队定的） 处，指令就会在这执行。</p>
+<p>启动区 512 字节的代码示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">; hello-os</span><br><span class="line">; TAB&#x3D;4</span><br><span class="line"></span><br><span class="line">  ORG  0x7c00   ;程序加载到内存的 0x7c00 这个位置</span><br><span class="line"></span><br><span class="line">;程序主体</span><br><span class="line"></span><br><span class="line">entry:</span><br><span class="line">  MOV  AX,0   ;初始化寄存器</span><br><span class="line">  MOV  SS,AX</span><br><span class="line">  MOV  SP,0x7c00</span><br><span class="line">  MOV  DS,AX   ;段寄存器初始化为 0</span><br><span class="line">  MOV  ES,AX</span><br><span class="line">  MOV  SI,msg</span><br><span class="line">putloop:</span><br><span class="line">  MOV  AL,[SI]</span><br><span class="line">  ADD  SI,1</span><br><span class="line">  CMP  AL,0   ;如果遇到 0 结尾的，就跳出循环不再打印新字符</span><br><span class="line">  JE  fin</span><br><span class="line">  MOV  AH,0x0e   ;指定文字</span><br><span class="line">  MOV  BX,15   ;指定颜色</span><br><span class="line">  INT  0x10   ;调用 BIOS 显示字符函数</span><br><span class="line">  JMP  putloop</span><br><span class="line">fin:</span><br><span class="line">  HLT</span><br><span class="line">  JMP  fin</span><br><span class="line">msg:</span><br><span class="line">  DB  0x0a,0x0a  ;换行、换行</span><br><span class="line">  DB  &quot;hello-os&quot;</span><br><span class="line">  DB  0x0a   ;换行</span><br><span class="line">  DB  0    ;0 结尾</span><br><span class="line"></span><br><span class="line">  RESB 0x7dfe-$   ;填充0到512字节</span><br><span class="line">  DB 0x55, 0xaa   ;可启动设备标识</span><br></pre></td></tr></table></figure>
+<p>附上这个流程的简图：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647006818169834/2a8d8a3e0c168b4dc281c3591ef325ed6483995c.jpg" alt="CE781E6560EB019D97000D6CDC4F1EC4"></p>
+<hr>
+<p>以 Linux-0.11 为例</p>
+<h2 id="BIOS-将启动区复制到内存0x7c00"><a href="#BIOS-将启动区复制到内存0x7c00" class="headerlink" title="BIOS 将启动区复制到内存0x7c00"></a>BIOS 将启动区复制到内存0x7c00</h2><p>开机 BIOS 会将硬盘中启动区的 512 字节的数据，复制到内存 0x7c00 的位置，并跳转到该处执行。</p>
+<p>用图表示就是：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647583152427772/5a4ce99a5f0c81c4a4dac52b0e517cd0b3720bb8.png" alt="未命名图片"></p>
+<p>最开始的代码是用汇编语言写的 bootsect.s，，位于 boot 文件夹下，存放在启动区中，也就是我们复制到 内存 0x7c00 处地址的内容。</p>
+<p>所以就从这开始分析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov ax,0x07c0</span><br><span class="line">mov ds,ax</span><br></pre></td></tr></table></figure>
+<p>首先会将 ds 寄存器赋值为 0x07c0 ，众所周知，ds 寄存器是数据段寄存器，存储着数据段的起始地址。之后的地址都会以它为标准进行偏移，也方便内存利用这个地址进行寻址。</p>
+<p>但是为啥不是 0x7c00 呢？是因为地址的寻址方式，使得段地址要先左移四位。</p>
+<hr>
+<h2 id="再挪个位置：内存0x90000"><a href="#再挪个位置：内存0x90000" class="headerlink" title="再挪个位置：内存0x90000"></a>再挪个位置：内存0x90000</h2><p>接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mov ax,0x9000</span><br><span class="line">mov es,ax</span><br><span class="line">mov cx,#256</span><br><span class="line">sub si,si</span><br><span class="line">sub di,di</span><br><span class="line">rep movw</span><br></pre></td></tr></table></figure>
+<p>把 es(额外段寄存器) 赋值成 0x9000，cx 寄存器变成 十进制的 256(代码里是用十进制表示的，和其他地方有些不一样)，si、di 为 0。</p>
+<p>整合一下所有的寄存器就是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ds &#x3D; 0x07c0</span><br><span class="line">es &#x3D; 0x9000</span><br><span class="line">cx &#x3D; 256</span><br><span class="line">di &#x3D; si &#x3D;0</span><br></pre></td></tr></table></figure>
+<p>然后执行最后一句 ‘rep movw’</p>
+<p>rep 表示重复执行后面的指令，movw 表示复制一个字，所有整句话的意思就是 <strong>重复复制一个字</strong>。</p>
+<p>那么问题来了：</p>
+<p>复制多少次？因为 cx 记录次数，所以会复制 256 次。</p>
+<p>从哪复制到哪呢？是从 ds:si 复制到 es:di </p>
+<p>一次复制多少呢？ 刚刚有说过复制一个字，也就是两个字节(一个字不一定是两个字节，只是这个例子是这样)</p>
+<p>所以整段话用更通俗的语言描述出来就是：<strong>将内存地址</strong> <strong>0x7c00</strong> <strong>处开始往后的</strong> <strong>512</strong> <strong>字节的数据复制到</strong> <strong>0x90000 处</strong>。</p>
+<p>所以经过这么一折腾，操作系统最开始的代码，又被挪到了另一个地方：0x90000。</p>
+<hr>
+<h2 id="内存的初步规划"><a href="#内存的初步规划" class="headerlink" title="内存的初步规划"></a>内存的初步规划</h2><p>接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">jmpi go,0x9000</span><br><span class="line">go: </span><br><span class="line">  mov ax,cs</span><br><span class="line">  mov ds,ax</span><br></pre></td></tr></table></figure>
+<p>jmpi 是一个段间跳转指令，表示跳转到 0x9000:go 处执行，根据寻址方式可以知道，go 是一个偏移地址，所以这句指令意思就是<strong>跳到 0x90000+go 处地址执行</strong>。</p>
+<p>也就是后面的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">go: mov ax,cs</span><br><span class="line">    mov ds,ax</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov ss,ax</span><br><span class="line">    mov sp,#0xFF00</span><br></pre></td></tr></table></figure>
+<p>全是赋值操作，把 cs 寄存器的值分别复制给 ds、es、ss 寄存器，然后把 0xff00 给了sp 寄存器。</p>
+<p>CS 寄存器表示代码段寄存器，是 CPU 当前正在执行的代码在内存中的位置，由 CS:IP 这组寄存器配合指向的，CS 是基址，IP 是偏移。</p>
+<p>所以之前执行 jmpi go,0x9000 后，CS 就被赋值为了 0x9000，之后的 mov 操作就把 ds、es、ss 这些寄存器都赋值为了 0x9000。</p>
+<p>ds为数据段寄存器，之前代码在 0x7c00 处，所以它被赋值为了 0x07c0，现在代码在 0x90000 处，所以自然就被赋值成了 0x9000。</p>
+<p>ss 是栈段寄存器，会配合栈基址寄存器 sp 来表示栈顶，此时 sp 被赋值为了 0xFF00，所以现在的栈顶地址是 ss:sp 所指向的 0x9FF00。这么设置是因为代码段在 0x90000，栈顶离代码段是很远的，所以栈向下发展就很难和代码段撞上。</p>
+<p>总结一下就是，利用跳转指令跳到空间更大的地方，给一些寄存器赋值，说白了就是做了一个内存的初步规划，通过设置<strong>基址</strong>的方法访问代码和数据，设置<strong>栈顶</strong>指针的方法访问栈。</p>
+<hr>
+<h2 id="将整个操作系统代码搬到内存中"><a href="#将整个操作系统代码搬到内存中" class="headerlink" title="将整个操作系统代码搬到内存中"></a>将整个操作系统代码搬到内存中</h2><p>接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">load_setup:</span><br><span class="line">    mov dx,#0x0000      ; drive 0, head 0</span><br><span class="line">    mov cx,#0x0002      ; sector 2, track 0</span><br><span class="line">    mov bx,#0x0200      ; address &#x3D; 512, in 0x9000</span><br><span class="line">    mov ax,#0x0200+4    ; service 2, nr of sectors</span><br><span class="line">    int 0x13            ; read it</span><br><span class="line">    jnc ok_load_setup       ; ok - continue</span><br><span class="line">    mov dx,#0x0000</span><br><span class="line">    mov ax,#0x0000      ; reset the diskette</span><br><span class="line">    int 0x13</span><br><span class="line">    jmp load_setup</span><br><span class="line"></span><br><span class="line">ok_load_setup:</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>int 0x13 表示发起 0x13 号中断，上面被赋值的寄存器都作为它的参数。这句指令表示<strong>读取磁盘</strong>。</p>
+<p>整句代码的意思就是将硬盘的第 2 个扇区开始，把数据加载到内存 0x90200 处，共加载 4 个扇区。</p>
+<p>大概长这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647584564986120/1a31cdf7f753eab624e7aad84f70d671c200d19e.png" alt="未命名图片"></p>
+<p>可以看到程序有个判断，意思就是如果读取成功，就会跳到 ok_load_setup ，如果失败就会重试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ok_load_setup:</span><br><span class="line">    ...</span><br><span class="line">    mov ax,#0x1000</span><br><span class="line">    mov es,ax       ; segment of 0x10000</span><br><span class="line">    call read_it</span><br><span class="line">    ...</span><br><span class="line">    jmpi 0,SETUPSEG ；SETUPSEG &#x3D; 0x9020</span><br></pre></td></tr></table></figure>
+<p>只看重要部分，这一段代码的意思就是把从硬盘第 6 个扇区开始往后的 240 个扇区，加载到内存 0x10000 处。</p>
+<p>在这之后，整个操作系统的代码，就全部从磁盘搬到内存中了。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647584748063609/31a4ba8e328760bbea62a993bfab1dc8c7194568.png" alt="未命名图片"></p>
+<p>之后再通过 jmpi 0,0x9020 ，跳到 0x90200 处，也就是硬盘里第二个扇区的开始。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">再补充一下，操作系统的编译过程，整个过程是通过 Makefile 和  build.c 配合完成的</span><br><span class="line">1. 把 bootsect.s 编译成 bootsect 放在硬盘的 1 扇区</span><br><span class="line">2. 把 setup.s 编译成 setup 放在硬盘的 2~5 扇区。</span><br><span class="line">3.把剩下的全部代码（head.s 作为开头）编译成 system 放在硬盘的随后 240 个扇区。</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="又一次做内存调整"><a href="#又一次做内存调整" class="headerlink" title="又一次做内存调整"></a>又一次做内存调整</h2><p>所以现在就会执行第二扇区的开始内容了，也就是 setup.s 文件。先看看 setup.s 的开头</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">start:</span><br><span class="line">    mov ax,#0x9000  ; this is done in bootsect already, but...</span><br><span class="line">    mov ds,ax</span><br><span class="line">    mov ah,#0x03    ; read cursor pos</span><br><span class="line">    xor bh,bh</span><br><span class="line">    int 0x10        ; save it in known place, con_init fetches</span><br><span class="line">    mov [0],dx      ; it from 0x90000.</span><br></pre></td></tr></table></figure>
+<p>INT 0x10 也是一个中断指令，用来触发屏幕及显示器的服务程序。ah 寄存器被赋为 0x03 表示读光标位置。</p>
+<p>当这个程序执行完毕并返回时，dx 寄存器的值表示光标的位置，其中 dh 存储行号，dl 存储列号。</p>
+<p>mov [0],dx 表示把光标的位置存储到偏移为 0 的地方，也就是 0x90000。</p>
+<p>接下来的代码也和之前的套路差不多，一一对应着看就行。(参考链接：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-cn/BIOS%E4%B8%AD%E6%96%B7%E5%91%BC%E5%8F%AB">https://zh.wikipedia.org/zh-cn/BIOS%E4%B8%AD%E6%96%B7%E5%91%BC%E5%8F%AB</a>)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">比如获取内存信息。</span><br><span class="line">; Get memory size (extended mem, kB)</span><br><span class="line">    mov ah,#0x88</span><br><span class="line">    int 0x15</span><br><span class="line">    mov [2],ax</span><br><span class="line">获取显卡显示模式。</span><br><span class="line">; Get video-card data:</span><br><span class="line">    mov ah,#0x0f</span><br><span class="line">    int 0x10</span><br><span class="line">    mov [4],bx      ; bh &#x3D; display page</span><br><span class="line">    mov [6],ax      ; al &#x3D; video mode, ah &#x3D; window width</span><br><span class="line">检查显示方式并取参数</span><br><span class="line">; check for EGA&#x2F;VGA and some config parameters</span><br><span class="line">    mov ah,#0x12</span><br><span class="line">    mov bl,#0x10</span><br><span class="line">    int 0x10</span><br><span class="line">    mov [8],ax</span><br><span class="line">    mov [10],bx</span><br><span class="line">    mov [12],cx</span><br><span class="line">获取第一块硬盘的信息。</span><br><span class="line">; Get hd0 data</span><br><span class="line">    mov ax,#0x0000</span><br><span class="line">    mov ds,ax</span><br><span class="line">    lds si,[4*0x41]</span><br><span class="line">    mov ax,#INITSEG</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov di,#0x0080</span><br><span class="line">    mov cx,#0x10</span><br><span class="line">    rep</span><br><span class="line">    movsb</span><br><span class="line">获取第二块硬盘的信息。</span><br><span class="line">; Get hd1 data</span><br><span class="line">    mov ax,#0x0000</span><br><span class="line">    mov ds,ax</span><br><span class="line">    lds si,[4*0x46]</span><br><span class="line">    mov ax,#INITSEG</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov di,#0x0090</span><br><span class="line">    mov cx,#0x10</span><br><span class="line">    rep</span><br><span class="line">    movsb</span><br></pre></td></tr></table></figure>
+<p>经过这一连串的代码后，各地址存储的内容如下：</p>
+<p>之前说过 0x90000 往后的 512 字节被复制成了 bootsect，所以这个地方相当于覆盖掉了一些 bootsect 的内容。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585189534501/ced2dcc9c0e660e93c7f580ab1bd23e8e1136be8.png" alt="未命名图片"></p>
+<p>之后在分析用 C语言 编写的操作系统时，相应的变量会在上面给出的对应地址中取。</p>
+<p>存储好信息后，接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli         ; no interrupts allowed ;</span><br></pre></td></tr></table></figure>
+<p>cli 是关闭中断的意思</p>
+<p>继续看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">; first we move the system to it&#39;s rightful place</span><br><span class="line">    mov ax,#0x0000</span><br><span class="line">    cld         ; &#39;direction&#39;&#x3D;0, movs moves forward</span><br><span class="line">do_move:</span><br><span class="line">    mov es,ax       ; destination segment</span><br><span class="line">    add ax,#0x1000</span><br><span class="line">    cmp ax,#0x9000</span><br><span class="line">    jz  end_move</span><br><span class="line">    mov ds,ax       ; source segment</span><br><span class="line">    sub di,di</span><br><span class="line">    sub si,si</span><br><span class="line">    mov cx,#0x8000</span><br><span class="line">    rep movsw</span><br><span class="line">    jmp do_move</span><br><span class="line">; then we load the segment descriptors</span><br><span class="line">end_move:</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>结合之前分析的，这段代码的意思就是把内存 0x10000 到 0x90000 的内容复制到 0x00000 处。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585409694916/2bed17af7ad43a0852b8cd5e703fbe47c0b0e0fa.png" alt="未命名图片"></p>
+<p>也就是 0x00000 到 0x80000 的内容被复制成了 system，包括之前的 0x7c00 处的 bootsect 也被覆盖了；system 可以理解为操作系统的全部，是除 bootsect 和 setup 之外全部程序链接在一起的结果。</p>
+<p>那么现在的内存布局就是这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585565732944/cc5d52e70fcac8af64b60263edaeb11a22f78b5e.png" alt="未命名图片"></p>
+<p>总结一下前面，操作系统又给自己移了下位置：从 0 开始存放着操作系统的所有代码，即 system，0x90000 之后的几十个字节存放了一些设备信息。</p>
+<hr>
+<h2 id="模式转换"><a href="#模式转换" class="headerlink" title="模式转换"></a>模式转换</h2><p>接着会进行一项大工程，模式转换，即把现在 16 位的实模式转换从 32 位的保护模式。先别急着纠结什么是实模式和保护模式，等会就说。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">lidt  idt_48      ; load idt with 0,0</span><br><span class="line">lgdt  gdt_48      ; load gdt with whatever appropriate</span><br></pre></td></tr></table></figure>
+<p>要读懂这些指令，得先清楚实模式和保护模式寻址的区别：</p>
+<p>实模式：物理地址=段基址左移四位+偏移地址。</p>
+<p>保护模式：段寄存器（比如 ds、ss、cs）里存储的是段选择子，段选择子去全局描述符表 gdt 中寻找段描述符，从中取出段基址。</p>
+<p>整个过程如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387713365211/883583318ae1286e5027b74d8feedd0eaf6091c9.png" alt="640 (2)"></p>
+<p>取出段基址的前提是 CPU 要知道存段基址的地方在哪，所以操作系统会把这个位置存储在一个叫 gdtr 的寄存器中。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585788244847/bd62219d0cb3eeefdbe1495e756d12d1d5f18054.png" alt="未命名图片"></p>
+<p><code>lgdt gdt_48</code> 就是用来干这事的。</p>
+<p>lgdt 指令就是把后面的 gdt_48 存入 gdtr 寄存器中。</p>
+<p>再具体看看 gdt_48 长什么样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.word	0x800		! gdt limit&#x3D;2048, 256 GDT entries</span><br><span class="line">.word	512+gdt,0x9	! gdt base &#x3D; 0X9xxxx</span><br></pre></td></tr></table></figure>
+<p>看标签可以看出它是个 48 位的数据，其中高 32 位存储着 gdt 的内存地址：0x90200+gdt</p>
+<p>指令中的 gdt 代表处在当下文件的偏移量，而文件又是 setup.s，所以基址就是 0x90200，所以 全局描述符表 gdt 所在的地址就是 0x90200+gdt。</p>
+<p>gdt 里存储了一系列段描述符：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">gdt:</span><br><span class="line">	.word	0,0,0,0		! dummy</span><br><span class="line"></span><br><span class="line">	.word	0x07FF		! 8Mb - limit&#x3D;2047 (2048*4096&#x3D;8Mb)</span><br><span class="line">	.word	0x0000		! base address&#x3D;0</span><br><span class="line">	.word	0x9A00		! code read&#x2F;exec</span><br><span class="line">	.word	0x00C0		! granularity&#x3D;4096, 386</span><br><span class="line"></span><br><span class="line">	.word	0x07FF		! 8Mb - limit&#x3D;2047 (2048*4096&#x3D;8Mb)</span><br><span class="line">	.word	0x0000		! base address&#x3D;0</span><br><span class="line">	.word	0x9200		! data read&#x2F;write</span><br><span class="line">.word	0x00C0		! granularity&#x3D;4096, 386</span><br></pre></td></tr></table></figure>
+
+
+<p>看一下全局描述符表的构成：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585876571874/dc8007e7201b63e0efdd269d9dc95448d41be498.png" alt="未命名图片"></p>
+<p>可以看到目前有三个段描述符，第一个为空，第二个是代码段描述符，第三个是数据段描述符。</p>
+<p>第二个和第三个段描述符的段基址都是 0 ，也就是说通过段选择子找到的无论是代码段还是数据段，取出的段地址都是 0 ，所以物理地址就是直接给出的偏移地址。</p>
+<p>现在再来讲讲 lidt idt_48 是干嘛的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">idt_48:</span><br><span class="line">	.word	0			! idt limit&#x3D;0</span><br><span class="line">	.word	0,0			! idt base&#x3D;0L</span><br></pre></td></tr></table></figure>
+<p>功能和 lgdt gdt_48 差不多</p>
+<p>之前有说过 gdtr 寄存器存储着<strong>全局描述符表gdt</strong>的地址</p>
+<p>idtr 寄存器存储的是<strong>中断描述符表idt</strong>的地址，当发生中断时，CPU 就会通过中断号去中断描述符表中找到中断处理程序的地址，然后跳过去执行。</p>
+<p>总结一下前面，进行了一项大工程——模式转化，把16位的实模式转变成了32位的保护模式，利用两个指令将全局描述符表和中断描述符表地址放入相应的寄存器中，也讲了描述表的地址要怎么看。</p>
+<p>现在内存结构：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387124416308/ac8334a059eefd075d21f2eb4790e20b66d79eec.png" alt="640"></p>
+<hr>
+<h2 id="正式开启保护模式，跳至system处执行"><a href="#正式开启保护模式，跳至system处执行" class="headerlink" title="正式开启保护模式，跳至system处执行"></a>正式开启保护模式，跳至system处执行</h2><p>上面说的只是进入保护模式前准备工作的一部分，接着往下看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mov al,#0xD1        ; command write</span><br><span class="line">out #0x64,al</span><br><span class="line">mov al,#0xDF        ; A20 on</span><br><span class="line">out #0x60,al</span><br></pre></td></tr></table></figure>
+<p>这段代码的意思是：打开 A20 地址线</p>
+<p>我们知道的是 8086 的 CPU 地址总线是 20位，所以如果程序给出 21 位的 内存地址，多出来的一位就会被忽略，举个例子就是：<code>1 0000 00000000 00000000</code></p>
+<p>那个 1 因为处在第 21 位，所以会被忽略，整个内存地址算下来就是 0，如今 CPU 已经有 32位 和 64位，但是因为兼容性，还是要保持只能用 20 位地址线的模式，所以打开 A20 地址线就相当于让地址总线突破 20 位变为 32位。</p>
+<p>接着往下就是一大坨代码，不需要特别了解，就是对可编程中断控制器 8259 芯片进行的编程，然后引脚和中断号关系对应如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586298118237/4ed2e437187e104401fab5e32bdb6a24dd428ac5.png" alt="未命名图片"></p>
+<p>然后才到真正切换模式的时候：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mov ax,#0x0001  ; protected mode (PE) bit</span><br><span class="line">lmsw ax      ; This is it;</span><br><span class="line">jmpi 0,8     ; jmp offset 0 of segment 8 (cs)</span><br></pre></td></tr></table></figure>
+<p>前两行把 cr0 这个寄存器位 0 置 1，就会切到保护模式</p>
+<p>后一行 <code>jmpi 0,8</code>，8 表示 cs 中的值，0 表示偏移地址。因为现在是保护模式，所以 cs 里存的是段选择子。8 用二进制表示就是：<code>00000,0000,0000,1000</code></p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586473179939/3bd5457f3eb4ef80f21d0b91e7247db64898c136.png" alt="未命名图片"></p>
+<p>对应着表的结构图可以发现，描述符索引就是1，再根据这个索引去全局描述符表里找段描述符，从而取出地址。</p>
+<p>之前有说过，全局描述符表中0对应的空，1对应的代码段描述符(可读可执行)，2对应的数据段描述符(可读可写)，所以这里对应的就是代码段描述符，段基址都为0。又因为偏移也是0，所以整个地址就是0。也就是跳到内存地址为0处。</p>
+<p>内存地址为 0 处之前也说过是system，system 可以理解为操作系统的全部，是除 bootsect 和 setup 之外全部程序链接在一起的结果。现在 bootsect 和 setup 两个文件都分析过了，所以盲猜 head.s 就是 system 的一部分，我们接下来就分析它。</p>
+<hr>
+<h2 id="再次设置-idt-和-gdt"><a href="#再次设置-idt-和-gdt" class="headerlink" title="再次设置 idt 和 gdt"></a>再次设置 idt 和 gdt</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov fs,ax</span><br><span class="line">    mov gs,ax</span><br><span class="line">    lss esp,_stack_start</span><br></pre></td></tr></table></figure>
+<p>_pg_dir 表示页目录，之后设置分页机制，页目录会存放在这。</p>
+<p>之后就是把 ds、es、fs、gs 段寄存器赋值为 0x10，0x10对应的二进制数是10000，对应全局描述符表里的数据段描述符。</p>
+<p>lss 指令表示把 esp 指向 _stack_start(之前在 0x9FF00)</p>
+<hr>
+<p>这里补充一下 _stack_start，它被定义在 sched.c 里</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> user_stack[<span class="number">4096</span> &gt;&gt; <span class="number">2</span>];</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="keyword">long</span> *a;</span><br><span class="line">  <span class="keyword">short</span> b;</span><br><span class="line">&#125;</span><br><span class="line">stack_start = &#123;&amp;user_stack[<span class="number">4096</span> &gt;&gt; <span class="number">2</span>], <span class="number">0x10</span>&#125;;</span><br></pre></td></tr></table></figure>
+<p>stack_start结构中高位 8 字节是 0x10，会赋值给 ss 栈段寄存器，低位 16 字节是 user_stack 这个数组的最后一个元素的地址值，会赋值给 esp 寄存器。又因为 0x10 对应全局描述符表里的数据段描述符，基址为 0。所以整个栈顶的地址，就是 esp 里存的地址。</p>
+<hr>
+<p>继续往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">call setup_idt ;设置中断描述符表</span><br><span class="line">call setup_gdt ;设置全局描述符表</span><br><span class="line">mov eax,10h</span><br><span class="line">mov ds,ax</span><br><span class="line">mov es,ax</span><br><span class="line">mov fs,ax</span><br><span class="line">mov gs,ax</span><br><span class="line">lss esp,_stack_start</span><br></pre></td></tr></table></figure>
+<p>设置了 idt 和 gdt ，然后又重新执行了一次之前的操作</p>
+<p>重新再执行一次的原因是因为上面修改了 gdt</p>
+<p>设置 idt 的具体代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">setup_idt:</span><br><span class="line">    lea edx,ignore_int</span><br><span class="line">    mov eax,00080000h</span><br><span class="line">    mov ax,dx</span><br><span class="line">    mov dx,8E00h</span><br><span class="line">    lea edi,_idt</span><br><span class="line">    mov ecx,256</span><br><span class="line">rp_sidt:</span><br><span class="line">    mov [edi],eax</span><br><span class="line">    mov [edi+4],edx</span><br><span class="line">    add edi,8</span><br><span class="line">    dec ecx</span><br><span class="line">    jne rp_sidt</span><br><span class="line">    lidt fword ptr idt_descr</span><br><span class="line">    ret</span><br><span class="line"></span><br><span class="line">idt_descr:</span><br><span class="line">    dw 256*8-1</span><br><span class="line">    dd _idt</span><br><span class="line"></span><br><span class="line">_idt:</span><br><span class="line">    DQ 256 dup(0)</span><br></pre></td></tr></table></figure>
+<p>这段代码的作用就是，设置了 256 个中断描述符，每个中断描述符都指向 ignore_int 的函数地址，ignore_int 是一个默认的中断处理程序，之后会被具体的中断程序覆盖。就比如你现在敲键盘是没什么反应的，因为键盘模块的中断程序还没覆盖掉它，任何中断都是调用 ignore_int 程序。</p>
+<p>setup_gdt 也是同理就不多说了，直接看设置好了的结果吧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">_gdt:</span><br><span class="line">    DQ 0000000000000000h    ;&#x2F;* NULL descriptor *&#x2F;</span><br><span class="line">    DQ 00c09a0000000fffh    ;&#x2F;* 16Mb *&#x2F;</span><br><span class="line">    DQ 00c0920000000fffh    ;&#x2F;* 16Mb *&#x2F;</span><br><span class="line">    DQ 0000000000000000h    ;&#x2F;* TEMPORARY - don&#39;t use *&#x2F;</span><br><span class="line">    DQ 252 dup(0)</span><br></pre></td></tr></table></figure>
+<p>其实和之前设置的一样，也还是有代码段描述符和数据段描述符这些。</p>
+<p>为什么之前设置过了现在又要设置一遍呢？</p>
+<p>是因为之前设置的 gdt 所处的 setup 程序中，之后会被缓冲区覆盖，所以要重新给它挪个位置，挪到head。然后结果就变成了这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387246607465/6b16f29d296cea9397cf242496a6275af8ba2ef7.png" alt="640 (1)"></p>
+<p>总结一下之前说的就是，把 idt 和 gdt 移位，其中 idt 方面给每个中断设置了一个默认中断程序 ignore_int，gdt 方面没有太多变化。</p>
+<hr>
+<h2 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">jmp after_page_tables</span><br><span class="line">...</span><br><span class="line">after_page_tables:</span><br><span class="line">    push 0</span><br><span class="line">    push 0</span><br><span class="line">    push 0</span><br><span class="line">    push L6</span><br><span class="line">    push _main</span><br><span class="line">    jmp setup_paging</span><br><span class="line">L6:</span><br><span class="line">    jmp L6</span><br></pre></td></tr></table></figure>
+<p>这就是开启分页机制，并且跳转到 main 函数。</p>
+<p>先来看看什么叫分页机制。</p>
+<p>还记不记得，在保护模式下，我们在代码中给出一个内存地址，要经过分段机制的转换，才变成最终物理地址。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387713365211/883583318ae1286e5027b74d8feedd0eaf6091c9.png" alt="640 (2)"></p>
+<p>开了分页机制后，就多了一步转换</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387799526623/607473eb2b9535abba2b66def59b1b8add5d4c2b.png" alt="640 (3)"></p>
+<p>也就是说，在没有开启分页机制时，程序员给出的逻辑地址，通过分段机制转换成物理地址；</p>
+<p>开启分页机制后，逻辑地址<strong>仍然要通过分段机制进行转化</strong>，但是这个时候得到的是<strong>线性地址</strong>，再通过一次<strong>分页机制转换</strong>，才得到最终的物理地址。</p>
+<p>分页地址是如何转换的呢？</p>
+<p>比如给出一个线性地址 15M ，二进制表示就是 0000000011_0100000000_000000000000</p>
+<p>整个过程：(个人感觉应该是 13 M)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387860825455/c64b56c662e33a389d175d046ac504d16f73d7b8.png" alt="640 (4)"></p>
+<p>也就是说，线性地址会被拆成 <strong>高 10 位：中间 10 位：后 12 位</strong></p>
+<p>高 10 位负责在<strong>页目录表</strong>中找到一个<strong>页目录项</strong>，中间 10 位再去该页目录项中找到相应的<strong>页表项</strong>，这个页表项的值，再加上后 12 位的偏移地址，得到最终的物理地址。(由内存管理单元MMU负责)</p>
+<p>浅看一下页目录项和页表项的结构：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649388035415663/497437165bd4765e3191234a6abf74af7cac22a3.png" alt="640 (5)"></p>
+<p>当我们开启分页机制的开关，只需要更改 cr0 寄存器的一位即可，和之前开保护模式差不多</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649417482942435/05ebe1114ddafd78cdfb17b16c2d8d6332d7ba4a.png" alt="640"></p>
+<p>所以之前的那段代码，就是<strong>帮我们把页表和页目录存在内存中</strong>，然后<strong>开启</strong> <strong>cr0</strong> <strong>寄存器的分页开关</strong>。再粘出来看看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">setup_paging:</span><br><span class="line">    mov ecx,1024*5</span><br><span class="line">    xor eax,eax</span><br><span class="line">    xor edi,edi</span><br><span class="line">    pushf</span><br><span class="line">    cld</span><br><span class="line">    rep stosd</span><br><span class="line">    mov eax,_pg_dir</span><br><span class="line">    mov [eax],pg0+7</span><br><span class="line">    mov [eax+4],pg1+7</span><br><span class="line">    mov [eax+8],pg2+7</span><br><span class="line">    mov [eax+12],pg3+7</span><br><span class="line">    mov edi,pg3+4092</span><br><span class="line">    mov eax,00fff007h</span><br><span class="line">    std</span><br><span class="line">L3: stosd</span><br><span class="line">    sub eax,00001000h</span><br><span class="line">    jge L3</span><br><span class="line">    popf</span><br><span class="line">    xor eax,eax</span><br><span class="line">    mov cr3,eax</span><br><span class="line">    mov eax,cr0</span><br><span class="line">    or  eax,80000000h</span><br><span class="line">    mov cr0,eax</span><br><span class="line">    ret</span><br></pre></td></tr></table></figure>
+<p>这段代码会产生什么效果呢？</p>
+<p>当时 linux-0.11 认为，总共可以使用的内存不会超过 16M，即最大地址空间为 0xFFFFFF。</p>
+<p>而对应分页机制，1 个页目录表最多包含 1024 个页目录项(页表)，1 个页目录项最多包含 1024 个页表项(页)，1 个页表项位 4 kb(因为偏移有 12 位)，所以 16 M 的地址空间可以用 1 个页目录表 + 4 个页表搞定：<code>4（页表数）* 1024（页表项数） * 4KB（一页大小）= 16MB</code></p>
+<p>所以，上面这段代码，会将页目录表放在内存地址的最开头，也就是 head.s 的最开头的 <code>_pg_dir</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>之后紧挨着这个页目录表，放置 4 个页表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.org 0x1000 pg0:</span><br><span class="line">.org 0x2000 pg1:</span><br><span class="line">.org 0x3000 pg2:</span><br><span class="line">.org 0x4000 pg3:</span><br><span class="line">.org 0x5000</span><br></pre></td></tr></table></figure>
+<p>最终布局如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649418882843397/780dd6c4bbcae3d90983285c459a4c1460fe3d34.png" alt="640 (1)"></p>
+<p>同 idt 和 gdt 一样，我们需要告诉 CPU 这些页表存在了什么地方，通过下面这个代码实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">xor eax,eax</span><br><span class="line">mov cr3,eax</span><br></pre></td></tr></table></figure>
+<p>将 cr3 赋为0，0 地址处就是页目录表。</p>
+<p>现在，看一下整个内存的布局是什么样的：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649418969404186/e9a9bc8dbd50889b004df4c07e368e5a4a5d90e6.png" alt="640 (2)"></p>
+<p>页表设置好了，我们再来看看内存是怎样映射的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">setup_paging:</span><br><span class="line">    ...</span><br><span class="line">    mov eax,_pg_dir</span><br><span class="line">    mov [eax],pg0+7</span><br><span class="line">    mov [eax+4],pg1+7</span><br><span class="line">    mov [eax+8],pg2+7</span><br><span class="line">    mov [eax+12],pg3+7</span><br><span class="line">    mov edi,pg3+4092</span><br><span class="line">    mov eax,00fff007h</span><br><span class="line">    std</span><br><span class="line">L3: stosd</span><br><span class="line">    sub eax, 1000h</span><br><span class="line">    jpe L3</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>前 5 行，以第 2 行为例，[eax]被赋为 pg0+7，也就是 0x1007，页表地址为 0x1000，页属性为 0x07 表示改页存在、用户可读写。</p>
+<p>后面几行表示，填充 4 个页表的每一项，一共 4 * 1024 = 4096 项，依次映射到内存的前 16MB 空间。</p>
+<p>经过这套分页机制，线性地址将恰好和最终转换的物理地址一样。</p>
+<p>也就是如下图的效果：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387860825455/c64b56c662e33a389d175d046ac504d16f73d7b8.png" alt="640 (4)"></p>
+<p>至今为止，该设置的什么 idt、gdt、页表都设置好了，也开启了保护模式，之后就正式进入 main.c 了。</p>
+<hr>
+<p>正式进入 main.c 还是有一个过程的，现在来讲一下这个过程。</p>
+<p>main.c 是怎么被执行的呢？还是要回去看一下 head.s，设置分页的那个地方。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">after_page_tables:</span><br><span class="line">    push 0</span><br><span class="line">    push 0</span><br><span class="line">    push 0</span><br><span class="line">    push L6</span><br><span class="line">    push _main</span><br><span class="line">    jmp setup_paging</span><br><span class="line">...</span><br><span class="line">setup_paging:</span><br><span class="line">    ...</span><br><span class="line">    ret</span><br></pre></td></tr></table></figure>
+<p>进行五次压栈，然后跳到 setup_paging，注意 setup_paging 函数最后有一个 ret 指令，会将栈顶的元素值当作返回地址(将esp赋值给eip)，然后跳转过去。</p>
+<p>整个栈结构如下：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649419637391002/a3361bab535cc3bc4f325cf7934ac5bc5400a590.png" alt="640 (3)"></p>
+<p>L6 作为 main 函数的返回地址，三个 0 作为 main 函数的参数，都不用太关心。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E6%9C%BA%E4%BC%9A%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">开机会发生什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BIOS-%E5%B0%86%E5%90%AF%E5%8A%A8%E5%8C%BA%E5%A4%8D%E5%88%B6%E5%88%B0%E5%86%85%E5%AD%980x7c00"><span class="toc-number">2.</span> <span class="toc-text">BIOS 将启动区复制到内存0x7c00</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%8D%E6%8C%AA%E4%B8%AA%E4%BD%8D%E7%BD%AE%EF%BC%9A%E5%86%85%E5%AD%980x90000"><span class="toc-number">3.</span> <span class="toc-text">再挪个位置：内存0x90000</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%9A%84%E5%88%9D%E6%AD%A5%E8%A7%84%E5%88%92"><span class="toc-number">4.</span> <span class="toc-text">内存的初步规划</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E6%95%B4%E4%B8%AA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%BB%A3%E7%A0%81%E6%90%AC%E5%88%B0%E5%86%85%E5%AD%98%E4%B8%AD"><span class="toc-number">5.</span> <span class="toc-text">将整个操作系统代码搬到内存中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%88%E4%B8%80%E6%AC%A1%E5%81%9A%E5%86%85%E5%AD%98%E8%B0%83%E6%95%B4"><span class="toc-number">6.</span> <span class="toc-text">又一次做内存调整</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="toc-number">7.</span> <span class="toc-text">模式转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E5%BC%8F%E5%BC%80%E5%90%AF%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F%EF%BC%8C%E8%B7%B3%E8%87%B3system%E5%A4%84%E6%89%A7%E8%A1%8C"><span class="toc-number">8.</span> <span class="toc-text">正式开启保护模式，跳至system处执行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%8D%E6%AC%A1%E8%AE%BE%E7%BD%AE-idt-%E5%92%8C-gdt"><span class="toc-number">9.</span> <span class="toc-text">再次设置 idt 和 gdt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E9%A1%B5"><span class="toc-number">10.</span> <span class="toc-text">分页</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&text=操作系统之进入内核前的准备"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&is_video=false&description=操作系统之进入内核前的准备"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之进入内核前的准备&body=Check out this article: http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&title=操作系统之进入内核前的准备"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&name=操作系统之进入内核前的准备&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/11/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E8%BF%9B%E5%85%A5%E5%86%85%E6%A0%B8%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87/&t=操作系统之进入内核前的准备"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="实验地址：https:&#x2F;&#x2F;pdos.csail.mit.edu&#x2F;6.828&#x2F;2018&#x2F;schedule.html 理论的东西就不多说了，另一篇专门讲操作系统的博客已经讲的很清楚了，做这个主要是想上手调试一下。 环境搭建Ubuntu 18.04 环境还是要再配置一下：https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;58143429 然后就是将课程克隆到本地 1234mkdir ~&amp;#x2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT6.828-Lab1">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="实验地址：https:&#x2F;&#x2F;pdos.csail.mit.edu&#x2F;6.828&#x2F;2018&#x2F;schedule.html 理论的东西就不多说了，另一篇专门讲操作系统的博客已经讲的很清楚了，做这个主要是想上手调试一下。 环境搭建Ubuntu 18.04 环境还是要再配置一下：https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;58143429 然后就是将课程克隆到本地 1234mkdir ~&amp;#x2">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648735198666140/a3c8c4f9ee8980d05a1699d799c29a475dfbe013.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648890627783337/47ef26977b1c21b8c2178b47d39966290dc1b169.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648898854529259/21ec23644950e7c2d501426a6f8af26388fd19c3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648899788276702/380990dad3808829850838a828bc5b5a35130823.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586473179939/3bd5457f3eb4ef80f21d0b91e7247db64898c136.png">
+<meta property="article:published_time" content="2022-03-31T13:38:25.000Z">
+<meta property="article:modified_time" content="2022-04-02T14:06:36.168Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="MIT6.828">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648735198666140/a3c8c4f9ee8980d05a1699d799c29a475dfbe013.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>MIT6.828-Lab1</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/04/04/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%B8%AD%E6%96%AD/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&text=MIT6.828-Lab1"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&is_video=false&description=MIT6.828-Lab1"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=MIT6.828-Lab1&body=Check out this article: http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&name=MIT6.828-Lab1&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&t=MIT6.828-Lab1"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-number">1.</span> <span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-1"><span class="toc-number">2.</span> <span class="toc-text">Exercise 1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-2"><span class="toc-number">3.</span> <span class="toc-text">Exercise 2</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ROM-BIOS"><span class="toc-number">3.1.</span> <span class="toc-text">ROM BIOS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-3"><span class="toc-number">4.</span> <span class="toc-text">Exercise 3</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        MIT6.828-Lab1
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-03-31T13:38:25.000Z" itemprop="datePublished">2022-03-31</time>
+        
+        (Updated: <time datetime="2022-04-02T14:06:36.168Z" itemprop="dateModified">2022-04-02</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/MIT6-828/">MIT6.828</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/MIT6-828/" rel="tag">MIT6.828</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p> 实验地址：<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.828/2018/schedule.html">https://pdos.csail.mit.edu/6.828/2018/schedule.html</a></p>
+<p>理论的东西就不多说了，另一篇专门讲操作系统的博客已经讲的很清楚了，做这个主要是想上手调试一下。</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>Ubuntu 18.04 环境还是要再配置一下：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/58143429">https://zhuanlan.zhihu.com/p/58143429</a></p>
+<p>然后就是将课程克隆到本地</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir ~&#x2F;6.828</span><br><span class="line">cd ~&#x2F;6.828</span><br><span class="line">git clone https:&#x2F;&#x2F;pdos.csail.mit.edu&#x2F;6.828&#x2F;2018&#x2F;jos.git lab</span><br><span class="line">cd lab</span><br></pre></td></tr></table></figure>
+<h2 id="Exercise-1"><a href="#Exercise-1" class="headerlink" title="Exercise 1"></a>Exercise 1</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">熟悉 6.828 参考页上提供的汇编语言材料。您现在不必阅读它们，但在阅读和编写 x86 程序集时，您几乎肯定会想参考其中的一些材料。</span><br><span class="line">我们建议您阅读 Brennan 的内联汇编指南中的“语法”部分。它对我们将在 JOS 中与 GNU 汇编器一起使用的 AT&amp;T 汇编语法给出了很好的（并且非常简短的）描述。</span><br></pre></td></tr></table></figure>
+<p>要求了解基本的汇编，这个就不多说了。</p>
+<h2 id="Exercise-2"><a href="#Exercise-2" class="headerlink" title="Exercise 2"></a>Exercise 2</h2><h3 id="ROM-BIOS"><a href="#ROM-BIOS" class="headerlink" title="ROM BIOS"></a>ROM BIOS</h3><p>利用 QEMU 来调试计算机如何启动</p>
+<p>在实验目录下打开两个终端，一个输入<strong>make qemu-gdb</strong>，另一个输入<strong>make gdb</strong>。</p>
+<p>可以看到</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648735198666140/a3c8c4f9ee8980d05a1699d799c29a475dfbe013.png" alt="image-20220331215958368"></p>
+<p>其中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[f000:fff0]    0xffff0:	ljmp   $0xf000,$0xe05b</span><br></pre></td></tr></table></figure>
+<p>是 GDB 对要执行的第一条指令的反汇编，可以看出当开机的一瞬间，PC 会在 <code>0xffff0</code> 处执行(CS = 0xf000 | IP = 0xfff0 | 实模式下的寻址方式为：物理地址= 16 * 段+偏移量)，也就是 BIOS</p>
+<p>而该地址处又表示要跳到分段地址 0xfe05b 处</p>
+<p>然后就是exer2的任务描述：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">使用GDB的&#39;si&#39;命令，去追踪ROM BIOS几条指令，并且试图去猜测，它是在做什么。但是不需要把每个细节都弄清楚。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[f000:e05b]    0xfe05b:	cmpl   $0x0,%cs:0x6ac8</span><br><span class="line">[f000:e062]    0xfe062:	jne    0xfd2e1</span><br></pre></td></tr></table></figure>
+<p>比较 0x0 和 %cs:0x6ac8 的值，此时 CS 是 0xf000，jne：上一个 cmp 指令不为 0 时跳转，即两值不相等时跳转。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[f000:e066]    0xfe066:	xor    %dx,%dx</span><br></pre></td></tr></table></figure>
+<p>这一条指令的地址是 0xfe066，说明之前 %cs:0x6ac8 和 0x0 相等，这条指令是指把 dx 置 0 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[f000:e068]    0xfe068:	mov    %dx,%ss       &#x2F;&#x2F;把dx赋给ss</span><br><span class="line">[f000:e06a]    0xfe06a:	mov    $0x7000,%esp  &#x2F;&#x2F;sp &#x3D; 0x7000</span><br><span class="line">[f000:e070]    0xfe070:	mov    $0xf34c2,%edx &#x2F;&#x2F;edx &#x3D; 0xf34c2</span><br><span class="line">[f000:e076]    0xfe076:	jmp    0xfd15c       &#x2F;&#x2F;jmp to 0xfd15c</span><br><span class="line">[f000:d15c]    0xfd15c:	mov    %eax,%ecx     &#x2F;&#x2F;把eax赋给ecx</span><br><span class="line">[f000:d15f]    0xfd15f:	cli </span><br><span class="line">[f000:d160]    0xfd160:	cld </span><br></pre></td></tr></table></figure>
+<p>cli：关闭中断指令，毕竟还在启动，肯定不能被别的中断了</p>
+<p>cld：设置方向标识位为0，表示后续的串操作比如MOVS操作，内存地址的变化方向，如果为 0 代表从低地址值变为高地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[f000:d161]    0xfd161:	mov    $0x8f,%eax    &#x2F;&#x2F;把eax赋值为0x8f</span><br><span class="line">[f000:d167]    0xfd167:	out    %al,$0x70	 </span><br><span class="line">[f000:d169]    0xfd169:	in     $0x71,%al</span><br></pre></td></tr></table></figure>
+<p>out 和 in 指令用于操作 IO 端口，CPU 与外设通讯，通常是通过访问、修改设备控制器中的寄存器来实现的，这些位于设备控制器当中的寄存器也叫做 <strong>IO 端口</strong>。为了方便管理，80x86CPU采用 IO 端口单独编址的方式，即所有设备的端口都被命名到一个 IO 端口地址空间中。这个空间是独立于内存地址空间的。所以必须采用和访问内存的指令不一样的指令来访问端口。</p>
+<p>所以这里引入 in，out 操作：</p>
+<p>in %al, PortAddress   向端口地址为 PortAddress 的端口写入值，值为 al 寄存器中的值</p>
+<p>out PortAddres,%al    把端口地址为 PortAddress 的端口中的值读入寄存器al中</p>
+<p>标准规定端口操作必须要用 al 寄存器作为缓冲。</p>
+<p>所以这几条命令就是操作端口 0x70 和 0x71，<a target="_blank" rel="noopener" href="http://bochs.sourceforge.net/techspec/PORTS.LST">对应的设备</a>是 CMOS，是一种可读写的存储设备，会在计算机关机时存储一些信息。</p>
+<p>CMOS 可以控制很多功能，其中有一个是控制**不可屏蔽中断(NMI)**。不可屏蔽中断是什么呢？是一种优先级很高的中断，比如内存损坏问题出现就会触发，用于解决紧急问题。</p>
+<p>操作 CMOS 存储器 0x70 和 0x71 这两个端口都需要，其中 0x70 叫做<strong>索引寄存器</strong>，这个 8 位存储器的最高位能设置不可屏蔽中断是否能发生，设置成 1，不发生，设置成 0 ，发生。低 7 位用于指定 <strong>CMOS 存储器中的存储单元地址</strong>。</p>
+<p>举个例子，假如现在要访问第 1 号存储单元，且开启不可屏蔽中断，那么就需要将 AL 寄存器赋值为 0x81 (对应二进制 10000001)，即</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov $0x81, %al</span><br><span class="line">out %al, 0x70</span><br></pre></td></tr></table></figure>
+<p>读和写由 0x71 端口完成，比如现在想从 1 号存储单元读值，则需要</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">in $0x71, %al </span><br></pre></td></tr></table></figure>
+<p>我们会到之前的代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[f000:d161]    0xfd161:	mov    $0x8f,%eax    &#x2F;&#x2F;把eax赋值为0x8f</span><br><span class="line">[f000:d167]    0xfd167:	out    %al,$0x70	 </span><br><span class="line">[f000:d169]    0xfd169:	in     $0x71,%al</span><br></pre></td></tr></table></figure>
+<p>此时 eax 为 0x8f，那么 al 也为 0x8f (AX是EAX的低16位，AL又是AX的低８位，所以相当于AL是AX的最低４位（×)，对应二进制是 10001111，最高位为 1 ，说明会关闭不可屏蔽中断，之后的七位转化成十六进制是 0xf，所以会访问 CMOS 的第 0xf 号存储单元，并把值读到 al 中。</p>
+<p>接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[f000:d16b]    0xfd16b:	in     $0x92,%al</span><br><span class="line">[f000:d16d]    0xfd16d:	or     $0x2,%al</span><br><span class="line">[f000:d16f]    0xfd16f:	out    %al,$0x92</span><br></pre></td></tr></table></figure>
+<p>也是对端口进行操作，就不多说了，具体实现了什么好像也不是很重要。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[f000:d171]    0xfd171:	lidtw  %cs:0x6ab8</span><br><span class="line">[f000:d177]    0xfd177:	lgdtw  %cs:0x6a74</span><br></pre></td></tr></table></figure>
+<p>加载中断向量表寄存器(IDTR)和全局描述符表寄存器(GDTR)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[f000:d17d]    0xfd17d:	mov    %cr0,%eax</span><br><span class="line">[f000:d180]    0xfd180:	or     $0x1,%eax</span><br><span class="line">[f000:d184]    0xfd184:	mov    %eax,%cr0</span><br></pre></td></tr></table></figure>
+<p>只是测试，不重要。</p>
+<p>这一部分将就着看，毕竟不是很懂，感觉也不是重点。</p>
+<h2 id="Exercise-3"><a href="#Exercise-3" class="headerlink" title="Exercise 3"></a>Exercise 3</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">查看实验室工具指南，尤其是 GDB 命令部分。即使您熟悉 GDB，这也包括一些对操作系统工作有用的深奥 GDB 命令。</span><br><span class="line"></span><br><span class="line">在地址 0x7c00 处设置断点，该地址将加载引导扇区。继续执行直到该断点。跟踪boot&#x2F;boot.S中的代码，使用源代码和反汇编文件 obj&#x2F;boot&#x2F;boot.asm跟踪您的位置。还可以在 GDB 中使用x&#x2F;i命令来反汇编引导加载程序中的指令序列，并将原始引导加载程序源代码与obj&#x2F;boot&#x2F;boot.asm 和 GDB 中的反汇编进行比较。</span><br><span class="line"></span><br><span class="line">追踪到boot&#x2F;main.c中的bootmain()，然后追踪到readsect()。确定与readsect()中的每个语句相对应的确切汇编指令。跟踪readsect()的其余部分 并返回bootmain() ，并确定从磁盘读取内核剩余扇区的for循环的开始和结束。找出循环结束时将运行的代码，在此处设置断点，然后继续执行该断点。然后逐步完成引导加载程序的其余部分。</span><br></pre></td></tr></table></figure>
+<p>将断点下在 0x7c00 处，查看具体代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c00] &#x3D;&gt; 0x7c00:	cli </span><br><span class="line">[   0:7c01] &#x3D;&gt; 0x7c01:	cld </span><br></pre></td></tr></table></figure>
+<p>cli 将所有中断关闭</p>
+<p>cld 指定之后发生的串处理操作的指针移动方向，大概了解就行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c02] &#x3D;&gt; 0x7c02:	xor    %ax,%ax</span><br><span class="line">[   0:7c04] &#x3D;&gt; 0x7c04:	mov    %ax,%ds</span><br><span class="line">[   0:7c06] &#x3D;&gt; 0x7c06:	mov    %ax,%es</span><br><span class="line">[   0:7c08] &#x3D;&gt; 0x7c08:	mov    %ax,%ss</span><br></pre></td></tr></table></figure>
+<p>初始化 ax、ds、es、ss 寄存器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c0a] &#x3D;&gt; 0x7c0a:	in     $0x64,%al</span><br><span class="line">[   0:7c0c] &#x3D;&gt; 0x7c0c:	test   $0x2,%al</span><br><span class="line">[   0:7c0e] &#x3D;&gt; 0x7c0e:	jne    0x7c0a</span><br></pre></td></tr></table></figure>
+<p>又是对 IO 设备进行操作，0x64 端口对应键盘控制器，<code>test   $0x2,%al</code>表示检测 al 的第二位，也就是 bit1，查找资料发现，bit1 对应的输入的缓冲区是否已满</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648890627783337/47ef26977b1c21b8c2178b47d39966290dc1b169.png" alt="image-20220402171027456"></p>
+<p>所以这三条指令的意思就是：一直等到 al 的 bit1 为 0 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c10] &#x3D;&gt; 0x7c10:	mov    $0xd1,%al</span><br><span class="line">[   0:7c12] &#x3D;&gt; 0x7c12:	out    %al,$0x64</span><br></pre></td></tr></table></figure>
+<p>当 al 的 bit1 为 0 时，说明可以写新数据了，这两句指令的意思是将 0xd1 这个数据写入到 0x64 的端口。</p>
+<p>当 0xd1 被写入 0x64 端口时会发生什么？</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648898854529259/21ec23644950e7c2d501426a6f8af26388fd19c3.png" alt="image-20220402192734391"></p>
+<p>首先向 0x64 端口写数据，代表向键盘控制器 804x 发送指令，这个指令将会被送给0x60端口。0xd1 指令代表下一次写入 0x60 端口的数据将被写入给 804x 控制器的输出端口。可以理解为下一次写入 0x60 端口的数据是一个控制指令。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c14] &#x3D;&gt; 0x7c14:	in     $0x64,%al</span><br><span class="line">[   0:7c16] &#x3D;&gt; 0x7c16:	test   $0x2,%al</span><br><span class="line">[   0:7c18] &#x3D;&gt; 0x7c18:	jne    0x7c14</span><br></pre></td></tr></table></figure>
+<p>这三行是再一次等待刚刚写入的指令 0xd1，是否完全读取。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c1a] &#x3D;&gt; 0x7c1a:	mov    $0xdf,%al</span><br><span class="line">[   0:7c1c] &#x3D;&gt; 0x7c1c:	out    %al,$0x60</span><br></pre></td></tr></table></figure>
+<p>将 0xdf 写入到 0x60 端口，也就是将 0xdf 指令写入 804x 控制器(简单理解成键盘的一个控制器就行)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/MIT6.828-Lab1/1648899788276702/380990dad3808829850838a828bc5b5a35130823.png" alt="image-20220402194308080"></p>
+<p>可以看到 A20 被打开了，什么是 A20呢？</p>
+<p>我们知道的是 8086 的 CPU 地址总线是 20位，所以如果程序给出 21 位的 内存地址，多出来的一位就会呗忽略，举个例子就是：<code>1 0000 00000000 00000000</code>。那个 1 因为处在第 21 位，所以会被忽略，整个内存地址算下来就是 0，如今 CPU 已经有 32位 和 64位，但是因为兼容性，还是要保持只能用 20 位地址线的模式，所以打开 A20 地址线就相当于让地址总线突破 20 位变为 32位。</p>
+<p>打开了 A20 说明可以进入保护模式了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c1e] &#x3D;&gt; 0x7c1e:	lgdtw  0x7c64</span><br><span class="line">[   0:7c23] &#x3D;&gt; 0x7c23:	mov    %cr0,%eax</span><br><span class="line">[   0:7c26] &#x3D;&gt; 0x7c26:	or     $0x1,%eax</span><br><span class="line">[   0:7c2a] &#x3D;&gt; 0x7c2a:	mov    %eax,%cr0</span><br></pre></td></tr></table></figure>
+<p>将 0x7c64 的地址加载到全局描述符表GDT，查看 0x7c64 地址为 <code>pop %ss</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x&#x2F;i 0x7c64</span><br><span class="line">   0x7c64:	pop    %ss</span><br></pre></td></tr></table></figure>
+<p>后面三行代码是把 cr0 寄存器赋值为 0 ，正式进入保护模式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[   0:7c2d] &#x3D;&gt; 0x7c2d:	ljmp   $0x8,$0x7c32</span><br><span class="line">The target architecture is assumed to be i386</span><br><span class="line">&#x3D;&gt; 0x7c32:	mov    $0x10,%ax</span><br><span class="line">--------------------------------------------------</span><br><span class="line">对应 boot.s 里的</span><br><span class="line">ljmp    $PROT_MODE_CSEG, $protcseg</span><br></pre></td></tr></table></figure>
+<p>16 位模式切换成 32 位</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x3D;&gt; 0x7c32:	mov    $0x10,%ax</span><br><span class="line">&#x3D;&gt; 0x7c36:	mov    %eax,%ds</span><br><span class="line">&#x3D;&gt; 0x7c38:	mov    %eax,%es</span><br><span class="line">&#x3D;&gt; 0x7c3a:	mov    %eax,%fs</span><br><span class="line">&#x3D;&gt; 0x7c3c:	mov    %eax,%gs</span><br><span class="line">&#x3D;&gt; 0x7c3e:	mov    %eax,%ss</span><br></pre></td></tr></table></figure>
+<p>初始化段寄存器为 0x10，因为现在处在保护模式，段寄存器中存的都是段选择子，所以 0x10 对应的是代码段描述符</p>
+<p>至于为什么是 0x10 对应的代码段，卧槽我还真看不出为啥，只知道 gdt 是这样定义的：</p>
+<p>第一个是NULL，第二个是代码段，第三个是数据段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># Bootstrap GDT</span><br><span class="line">.p2align 2                                # force 4 byte alignment</span><br><span class="line">gdt:</span><br><span class="line">  SEG_NULL				# null seg</span><br><span class="line">  SEG(STA_X|STA_R, 0x0, 0xffffffff)	# code seg</span><br><span class="line">  SEG(STA_W, 0x0, 0xffffffff)	        # data seg</span><br><span class="line"></span><br><span class="line">gdtdesc:</span><br><span class="line">  .word   0x17                            # sizeof(gdt) - 1</span><br><span class="line">  .long   gdt                             # address gdt</span><br></pre></td></tr></table></figure>
+<p>mmu.h 里定义了 SEG 宏</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#define SEG(type, base, lim, dpl) 					\</span><br><span class="line">&#123; ((lim) &gt;&gt; 12) &amp; 0xffff, (base) &amp; 0xffff, ((base) &gt;&gt; 16) &amp; 0xff,	\</span><br><span class="line">    type, 1, dpl, 1, (unsigned) (lim) &gt;&gt; 28, 0, 0, 1, 1,		\</span><br><span class="line">    (unsigned) (base) &gt;&gt; 24 &#125;</span><br></pre></td></tr></table></figure>
+<p>笑死，更看不懂了。</p>
+<p>还是记这个图要好点，把 0x10 转化为二进制就是 10000，从描述符索引那看起，第一个是NULL，对应的下标是 3，第二个是 code，对应的下标是 4，10000 正好对应 4</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586473179939/3bd5457f3eb4ef80f21d0b91e7247db64898c136.png" alt="未命名图片"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x3D;&gt; 0x7c40:	mov    $0x7c00,%esp</span><br><span class="line">&#x3D;&gt; 0x7c45:	call   0x7d15</span><br><span class="line">---------------------------------------------</span><br><span class="line">  # Set up the stack pointer and call into C.</span><br><span class="line">  movl    $start, %esp</span><br><span class="line">  call bootmain</span><br></pre></td></tr></table></figure>
+<p>对应着 boot.s 的代码可以知道，这两行代码是在设置堆栈指针，同时跳到 main 中的 bootmain</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#x3D;&gt; 0x7d15:	push   %ebp</span><br><span class="line">&#x3D;&gt; 0x7d16:	mov    %esp,%ebp</span><br><span class="line">&#x3D;&gt; 0x7d18:	push   %esi</span><br><span class="line">&#x3D;&gt; 0x7d19:	push   %ebx</span><br><span class="line">#readseg((uint32_t) ELFHDR, SECTSIZE*8, 0);</span><br><span class="line">&#x3D;&gt; 0x7d1a:	push   $0x0		&#x2F;&#x2F;参数3</span><br><span class="line">&#x3D;&gt; 0x7d1c:	push   $0x1000	&#x2F;&#x2F;参数2</span><br><span class="line">&#x3D;&gt; 0x7d21:	push   $0x10000	&#x2F;&#x2F;参数1</span><br><span class="line">&#x3D;&gt; 0x7d26:	call   0x7cdc	&#x2F;&#x2F;readseg</span><br></pre></td></tr></table></figure>
+<p>栈环境的设置，调用 readseg 函数，<code>readseg((uint32_t) ELFHDR, SECTSIZE*8, 0)</code></p>
+<p>bootmain 函数里有它的定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void readseg(uchar *pa, uint count, uint offset);</span><br></pre></td></tr></table></figure>
+<p> 它的功能从注释上来理解应该是，把距离内核起始地址offset个偏移量存储单元作为起始，将它和它之后的count字节的数据读出送入以pa为起始地址的内存物理地址处。</p>
+<p>所以结合之前的传参说明这个函数把磁盘的第一个页(0x1000)的内容读入了内存地址为 0x10000 的地方。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-number">1.</span> <span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-1"><span class="toc-number">2.</span> <span class="toc-text">Exercise 1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-2"><span class="toc-number">3.</span> <span class="toc-text">Exercise 2</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ROM-BIOS"><span class="toc-number">3.1.</span> <span class="toc-text">ROM BIOS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exercise-3"><span class="toc-number">4.</span> <span class="toc-text">Exercise 3</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&text=MIT6.828-Lab1"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&is_video=false&description=MIT6.828-Lab1"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=MIT6.828-Lab1&body=Check out this article: http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&title=MIT6.828-Lab1"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&name=MIT6.828-Lab1&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/31/MIT6-828-Lab1/&t=MIT6.828-Lab1"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

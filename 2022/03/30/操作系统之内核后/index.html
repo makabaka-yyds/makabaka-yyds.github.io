@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="切换到用户态模式123456789101112void main(void) &amp;#123;    &#x2F;&#x2F; 第二部分的内容，各种初始化工作    ...    &#x2F;&#x2F; 第三部分的内容，一个新进程的诞生    move_to_user_mode();    if (!fork()) &amp;#123;        &#x2F;&#x2F; 新进程里干了啥，是第四部分的内容        init();    &amp;#125;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统之内核后">
+<meta property="og:url" content="http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/index.html">
+<meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="切换到用户态模式123456789101112void main(void) &amp;#123;    &#x2F;&#x2F; 第二部分的内容，各种初始化工作    ...    &#x2F;&#x2F; 第三部分的内容，一个新进程的诞生    move_to_user_mode();    if (!fork()) &amp;#123;        &#x2F;&#x2F; 新进程里干了啥，是第四部分的内容        init();    &amp;#125;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689226620104/615eb9dcb00b0eee72b7e0fa76dcacdcc689cbbe.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689594787849/05ebe1114ddafd78cdfb17b16c2d8d6332d7ba4a.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690525497475/ec8c16f2732116ed163c08ece9f0335f4844647c.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690540771139/8468fb8fee33bc16efe53da1257b22f7359691a6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690637452053/ef706296266e46c2d3bf6c80144e03aa65a1b9a0.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689226620104/615eb9dcb00b0eee72b7e0fa76dcacdcc689cbbe.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648693401023671/03fd28ed3881c1b332090ae726b95eb255f533e6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648695739362874/90250a7c9b635645920ba46ad55e23d300459707.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648710491949143/1eb48617718a75062ee9e24b2181b4beaa9b3275.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648783950536952/ed8a3ec9b87a2d57ac9004408823bd0f61fb2bf7.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648693401023671/03fd28ed3881c1b332090ae726b95eb255f533e6.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648869110129721/ced2ad2a82fbc6d6463ec5868f15744219039a1d.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648448883390142/33cef6c48ae10c3e9e402b9cb81584b292f54551.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647998568100717/6f87e9989e63b9e4439b63967df034230bf26555.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648950992137847/36d135e49cbd0845e5fc658b09355deb60dc3f61.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648951866867898/88bbee672c08a2ad73f38a684099f291e526acd3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649032750984256/607473eb2b9535abba2b66def59b1b8add5d4c2b.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649033074101612/c64b56c662e33a389d175d046ac504d16f73d7b8.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649035058708990/2549d0ea2e98dea26801814b40e7ca4ab1347585.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649036338518275/ced162022a106cdc58008ffae57b5f4fc6a2a6fc.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058587201738/c0d13e59d768303b9a8fdb32c127f74460f1c367.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058699631611/e3541df09abfdf203a6f3400505052850f133c00.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649059769511895/497437165bd4765e3191234a6abf74af7cac22a3.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648950992137847/36d135e49cbd0845e5fc658b09355deb60dc3f61.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649036338518275/ced162022a106cdc58008ffae57b5f4fc6a2a6fc.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058587201738/c0d13e59d768303b9a8fdb32c127f74460f1c367.png">
+<meta property="article:published_time" content="2022-03-30T01:28:07.000Z">
+<meta property="article:modified_time" content="2022-04-04T08:30:22.025Z">
+<meta property="article:author" content="Xu4n">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689226620104/615eb9dcb00b0eee72b7e0fa76dcacdcc689cbbe.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>操作系统之内核后</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2022/03/31/MIT6-828-Lab1/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/03/18/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E9%83%A8%E5%88%86/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&text=操作系统之内核后"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&is_video=false&description=操作系统之内核后"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之内核后&body=Check out this article: http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&name=操作系统之内核后&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&t=操作系统之内核后"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%87%E6%8D%A2%E5%88%B0%E7%94%A8%E6%88%B7%E6%80%81%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">切换到用户态模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#move-to-user-mode"><span class="toc-number">1.1.</span> <span class="toc-text">move_to_user_mode()</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E6%80%81%E4%B8%8E%E7%94%A8%E6%88%B7%E6%80%81%E7%9A%84%E6%9C%AC%E8%B4%A8-%E7%89%B9%E6%9D%83%E7%BA%A7"><span class="toc-number">1.1.1.</span> <span class="toc-text">内核态与用户态的本质-特权级</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%89%B9%E6%9D%83%E7%BA%A7%E8%BD%AC%E6%8D%A2%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.2.</span> <span class="toc-text">特权级转换的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%99%A4%E4%BA%86%E6%94%B9%E5%8F%98%E7%89%B9%E6%9D%83%E7%BA%A7%E4%B9%8B%E5%A4%96"><span class="toc-number">1.1.3.</span> <span class="toc-text">除了改变特权级之外</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-number">1.2.</span> <span class="toc-text">进程调度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%8E%AF%E5%A2%83"><span class="toc-number">1.2.1.</span> <span class="toc-text">上下文环境</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E9%97%B4%E4%BF%A1%E6%81%AF"><span class="toc-number">1.2.2.</span> <span class="toc-text">运行时间信息</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%80%9C%E4%BC%98%E5%85%88%E7%BA%A7%E2%80%9D"><span class="toc-number">1.2.3.</span> <span class="toc-text">“优先级”</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81"><span class="toc-number">1.2.4.</span> <span class="toc-text">进程状态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.2.5.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%9A%84%E5%85%A8%E8%BF%87%E7%A8%8B"><span class="toc-number">1.2.6.</span> <span class="toc-text">进程调度的全过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fork"><span class="toc-number">1.3.</span> <span class="toc-text">fork()</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-number">1.3.1.</span> <span class="toc-text">系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sys-fork"><span class="toc-number">1.3.2.</span> <span class="toc-text">sys_fork()</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#find-empty-process"><span class="toc-number">1.3.2.1.</span> <span class="toc-text">find_empty_process</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#copy-process"><span class="toc-number">1.3.2.2.</span> <span class="toc-text">copy_process</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#LDT-%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.3.2.2.1.</span> <span class="toc-text">LDT 的赋值</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%A1%B5%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B6"><span class="toc-number">1.3.2.2.2.</span> <span class="toc-text">页表的复制</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-1"><span class="toc-number">1.3.2.2.3.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%BB%E5%BE%AA%E7%8E%AF"><span class="toc-number">2.</span> <span class="toc-text">死循环</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        操作系统之内核后
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Xu4n</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-03-30T01:28:07.000Z" itemprop="datePublished">2022-03-30</time>
+        
+        (Updated: <time datetime="2022-04-04T08:30:22.025Z" itemprop="dateModified">2022-04-04</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag">操作系统</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="切换到用户态模式"><a href="#切换到用户态模式" class="headerlink" title="切换到用户态模式"></a>切换到用户态模式</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 第二部分的内容，各种初始化工作</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 第三部分的内容，一个新进程的诞生</span></span><br><span class="line">    move_to_user_mode();</span><br><span class="line">    <span class="keyword">if</span> (!fork()) &#123;</span><br><span class="line">        <span class="comment">// 新进程里干了啥，是第四部分的内容</span></span><br><span class="line">        init();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 死循环，操作系统怠速状态</span></span><br><span class="line">    <span class="keyword">for</span>(;;) pause();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>切换到用户态模式，并在一个新的进程中做一个最终的初始化 init。这个 init 函数会创建出一个进程，设置终端的标准 IO，并且再创建出一个执行 shell 程序的进程用来接受用户的命令。</p>
+<h3 id="move-to-user-mode"><a href="#move-to-user-mode" class="headerlink" title="move_to_user_mode()"></a><strong>move_to_user_mode()</strong></h3><p>改变代码的特权级，从内核态转变为用户态。</p>
+<p>一旦转变为了用户态，就会一直处于用户态的模式，除非发生了中断，比如用户发出了系统调用的中断指令，那么此时将会从用户态陷入内核态，不过当中断处理程序执行完之后，又会通过中断返回指令从内核态回到用户态。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689226620104/615eb9dcb00b0eee72b7e0fa76dcacdcc689cbbe.png" alt="640 (1)"></p>
+<h4 id="内核态与用户态的本质-特权级"><a href="#内核态与用户态的本质-特权级" class="headerlink" title="内核态与用户态的本质-特权级"></a><strong>内核态与用户态的本质-特权级</strong></h4><p>特权级检查主要是检查<strong>段选择子的特定结构</strong></p>
+<p>这一切都源于 CPU 的保护机制，CPU 为了配合操作系统完成保护机制这一特性，分别设计了<strong>分段保护机制</strong>与<strong>分页保护机制</strong>。</p>
+<p>将 cr0 寄存器的 PE 位开启时，就开启了保护模式，也即开启了<strong>分段保护机制</strong>；将 cr0 寄存器的 PG 位开启时，就开启了分页模式，也即开启了<strong>分页保护机制</strong>。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689594787849/05ebe1114ddafd78cdfb17b16c2d8d6332d7ba4a.png" alt="640 (2)"></p>
+<p>有关特权级的保护，实际上属于分段保护机制的一种。具体怎么保护的呢？</p>
+<p>举个简单的例子，我们正在执行一串跳转代码，也就是要跳到另一处内存地址执行，一般都会涉及到 jmp、call 和 中断。拿 jmp 跳转来举例。</p>
+<p>如果是短跳转，即 jmp xxx，这不会涉及到段的变换，也就没有特权级的检查。</p>
+<p>如果是长跳转，即 jmp yyy:xxx，yyy 表示会跳转到的另一个段选择子结构。此时就会触发特权级的检查：</p>
+<ul>
+<li>首先是正在执行的那一串跳转代码，是由 cs:eip 指向，cs 是代码段寄存器，存着段选择子。</li>
+</ul>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png" alt="640 (3)"></p>
+<p>这里面的低端两位，此时表示 <strong>CPL</strong>，也就是<strong>当前所处的特权级</strong>，假如我们现在这个时刻，CS 寄存器的后两位为 3，二进制就是 11，就表示是当前处理器处于用户态这个特权级。</p>
+<ul>
+<li>然后是要跳转到的内存地址，yyy:xxx，yyy 也是段选择子。</li>
+</ul>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png" alt="640 (3)"></p>
+<p>这个结构仍然是一样的段选择子结构，只不过这里的低端两位，表示 <strong>RPL</strong>，也就是<strong>请求特权级</strong>，表示我想请求的特权级是什么。同时，CPU 会拿这个段选择子去全局描述符表中寻找段描述符，从中找到段基址。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690525497475/ec8c16f2732116ed163c08ece9f0335f4844647c.png" alt="640 (4)"></p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690540771139/8468fb8fee33bc16efe53da1257b22f7359691a6.png" alt="640 (5)"></p>
+<ul>
+<li>这里的 <strong>DPL</strong>，表示<strong>目标代码段特权级</strong>，也就是即将要跳转过去的那个段的特权级。</li>
+</ul>
+<p>系统会将这三个特权级检查。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690637452053/ef706296266e46c2d3bf6c80144e03aa65a1b9a0.png" alt="640 (6)"></p>
+<p>检查的规则很多，但是绝大多数情况下，会<strong>要求 CPL 必须等于 DPL</strong>，才能实现跳转。说白了就是只能<strong>用户态跳用户态，内核态跳内核态</strong>。</p>
+<p>这只是代码段跳转的检查，还有数据段的特权级检查，最终效果是<strong>处于内核态的代码可以访问任何特权级的数据段，处于用户态的代码则只可以访问用户态的数据段</strong>，这也就实现了内存数据读写的保护。</p>
+<p><strong>总结一下就是：代码跳转只能同特权级跳转，数据访问只能高特权级访问低特权级。</strong></p>
+<h4 id="特权级转换的方式"><a href="#特权级转换的方式" class="headerlink" title="特权级转换的方式"></a><strong>特权级转换的方式</strong></h4><p>上面说代码跳转只能同特权级跳，但是如果现在处于内核态，又怎么会跳到用户态呢？</p>
+<p>Intel 设计了好多种特权级转换的方式，<strong>中断</strong>和<strong>中断返回</strong>就是其中的一种。</p>
+<p><strong>处于用户态的程序，通过触发中断，可以进入内核态，之后再通过中断返回，又可以恢复为用户态</strong>。</p>
+<p>也就是刚刚那幅图：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648689226620104/615eb9dcb00b0eee72b7e0fa76dcacdcc689cbbe.png" alt="640 (1)"></p>
+<p><strong>系统调用</strong>就是这样，用户通过 <strong>int 0x80</strong> 中断指令触发中断，CPU 切换至内核态，执行中断处理程序，之后中断程序返回，又从内核态切换回用户态。</p>
+<p>如果当前代码，本身就处在内核态，并不是由一个用户态程序通过中断而切换到的内核态，那怎么回到原来的用户态呢？答案还是，通过中断返回。</p>
+<p>没有中断也能中断返回，中断和中断返回既可以配套使用，又可以单独使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">void main(void) &#123;</span><br><span class="line">    ...    </span><br><span class="line">    move_to_user_mode();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#define move_to_user_mode() \</span><br><span class="line">_asm &#123; \</span><br><span class="line">    _asm mov eax,esp \</span><br><span class="line">    _asm push 00000017h \</span><br><span class="line">    _asm push eax \</span><br><span class="line">    _asm pushfd \</span><br><span class="line">    _asm push 0000000fh \</span><br><span class="line">    _asm push offset l1 \</span><br><span class="line">    _asm iretd &#x2F;* 执行中断返回指令*&#x2F; \</span><br><span class="line">_asm l1: mov eax,17h \</span><br><span class="line">    _asm mov ds,ax \</span><br><span class="line">    _asm mov es,ax \</span><br><span class="line">    _asm mov fs,ax \</span><br><span class="line">    _asm mov gs,ax \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，直接执行了中断返回指令 iretd。</p>
+<p>上面的五次压栈操作是为什么呢？因为中断返回理论上就是应该和中断配合使用的，而此时并不是真的发生了中断到这里，所以我们得<strong>假装发生了中断</strong>才行。</p>
+<p>中断发生时，CPU 会自动帮我们压栈；中断返回时，CPU 又会帮忙吧压栈的这些值<strong>反序</strong>赋值给相应的寄存器。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648693401023671/03fd28ed3881c1b332090ae726b95eb255f533e6.png" alt="640"></p>
+<p>执行 iretd 指令时，硬件会按顺序将刚刚压入栈中的数据，分别赋值给 SS、ESP、EFLAGS、CS、EIP 这几个寄存器，这就感觉像是正确返回了一样，让其<strong>误以为这是通过中断进来的</strong>。</p>
+<p>压入栈的 CS 和 EIP 代表中断发生前代码所处的位置，中断返回就能继续去那边执行。</p>
+<p>SS 和 ESP 表示中断发生前栈的位置，返回后恢复栈。</p>
+<p>再看看代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">#define move_to_user_mode() \</span><br><span class="line">_asm &#123; \</span><br><span class="line">    _asm mov eax,esp \</span><br><span class="line">    _asm push 00000017h \ ; 给 SS 赋值</span><br><span class="line">    _asm push eax \		  ; ESP</span><br><span class="line">    _asm pushfd \		  ; EFLAGS</span><br><span class="line">    _asm push 0000000fh \ ; 给 CS 赋值</span><br><span class="line">    _asm push offset l1 \ ; EIP</span><br><span class="line">    _asm iretd &#x2F;* 执行中断返回指令*&#x2F; \</span><br><span class="line">_asm l1: mov eax,17h \</span><br><span class="line">    _asm mov ds,ax \</span><br><span class="line">    _asm mov es,ax \</span><br><span class="line">    _asm mov fs,ax \</span><br><span class="line">    _asm mov gs,ax \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以 CS 为例，被赋值成了 0x0000000f，用二进制表示就是 <strong>0000000000001111</strong></p>
+<p>最后两位是 11 表示特权级为 3 ，用户态。而刚刚也说了，CS 寄存器里的特权级，表示 CPL，即处理器特权级。</p>
+<p>所以通过 iretd 返回后，CS 的值就变成了这个，当前处理器特权级，也就变成了用户态特权级。</p>
+<h4 id="除了改变特权级之外"><a href="#除了改变特权级之外" class="headerlink" title="除了改变特权级之外"></a><strong>除了改变特权级之外</strong></h4><p>除了改变特权级之外，还做了什么事呢？</p>
+<p>再来看看段选择子的结构：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648690375697415/fe57c42fd9f6978e0e816797f2b13b03aeb3e24f.png" alt="640 (3)"></p>
+<p>刚刚说了 CS 寄存器为 <strong>0000000000001111</strong>，最后两位表示用户态。</p>
+<p>倒数第三位 TI 表示，全面的描述符索引，是从 GDT(全局描述符表) 还是从 LDT(局部描述符表) 中取，1 表示 LDT，0 表示 GDT ，这里是从局部描述符表里取。</p>
+<p>而如今的 GDT 和 LDT 表被设计成了这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648695739362874/90250a7c9b635645920ba46ad55e23d300459707.png" alt="640 (1)"></p>
+<p>接着往下看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#define move_to_user_mode() \</span><br><span class="line">_asm &#123; \</span><br><span class="line">	...</span><br><span class="line">	_asm push 00000017h \ ; 给 SS 赋值</span><br><span class="line">	...</span><br><span class="line">    _asm push offset l1 \ ; EIP</span><br><span class="line">    _asm iretd &#x2F;* 执行中断返回指令*&#x2F; \</span><br><span class="line">_asm l1: mov eax,17h \</span><br><span class="line">    _asm mov ds,ax \</span><br><span class="line">    _asm mov es,ax \</span><br><span class="line">    _asm mov fs,ax \</span><br><span class="line">    _asm mov gs,ax \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将 EIP 赋值为 l1，使得 CPU 跳转到那，执行 l1 处的代码，这里 ss 和 ds 都被赋值成了 0x17 ，对应的二进制是 <strong>10111</strong>，可以发现是用户态特权级，对应的描述符是 LDT。</p>
+<p>兜兜转转记住一句话就行：<strong>数据访问只能高特权级访问低特权级，代码跳转只能同特权级跳转，要想实现特权级转换，可以通过中断和中断返回来实现。</strong></p>
+<p><strong>总结一下 move_to_user_mode() 干的事：通过伪造一个中断和中断返回，巧妙地从内核态切换到了用户态。</strong></p>
+<h3 id="进程调度"><a href="#进程调度" class="headerlink" title="进程调度"></a>进程调度</h3><p>先说说进程调度的本质是什么：</p>
+<p>假如有两段代码被加载在内存中，进程调度就是让 CPU 一会去程序 1 位置处运行一段时间，一会又去进程 2 位置处运行一段时间。</p>
+<p>怎么实现在几个程序之间来回切换呢？可以由一个不受任何程序控制的，第三方的不可抗力，每隔一段时间就中断一下 CPU 的运行，然后跳转到一个特殊的程序那里，这个程序通过某种方式获取到 CPU 下一个要运行的程序的地址，然后跳转过去。</p>
+<p>这个不受任何程序控制的，第三方的不可抗力，就是由定时器触发的<strong>时钟中断</strong>(sched_init)。</p>
+<p>而那个特殊的程序，就是<strong>进程调度函数</strong>了。</p>
+<p>我们用 <strong>tast_struct</strong> 结构来支持这个流程，用来记录各个流程的信息，比如 CPU 上一次执行到哪里了。</p>
+<h4 id="上下文环境"><a href="#上下文环境" class="headerlink" title="上下文环境"></a><strong>上下文环境</strong></h4><p>每个程序最终的本质就是执行指令。这个过程会涉及<strong>寄存器</strong>，<strong>内存</strong>和<strong>外设端口</strong>。</p>
+<p><strong>内存</strong>：内存还有可能设计成相互错开的，互不干扰，比如进程 1 你就用 0<del>1K 的内存空间，进程 2 就用 1K</del>2K 的内存空间，咱谁也别影响谁。</p>
+<p>虽然有点浪费空间，而且对程序员十分不友好，但起码还是能实现的。</p>
+<p><strong>寄存器</strong>：寄存器总共就那几个，肯定做不到互不干扰，有可能程序 1 往 eax 里写入了一个值，程序 2 又往 eax 里写值就会出错。</p>
+<p>所以最稳妥的做法就是，<strong>每次切换进程时，都把当前这些寄存器的值存到一个地方，以便之后切换回来的时候恢复。</strong></p>
+<p>Linux 0.11 就是这样做的，每个进程的结构 task_struct 里面，有一个叫 <strong>tss</strong> 的结构，存储的就是 CPU 这些<strong>寄存器</strong>的信息。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tss_struct</span> <span class="title">tss</span>;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tss_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">long</span>    back_link;  <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    esp0;</span><br><span class="line">    <span class="keyword">long</span>    ss0;        <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    esp1;</span><br><span class="line">    <span class="keyword">long</span>    ss1;        <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    esp2;</span><br><span class="line">    <span class="keyword">long</span>    ss2;        <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    cr3;</span><br><span class="line">    <span class="keyword">long</span>    eip;</span><br><span class="line">    <span class="keyword">long</span>    eflags;</span><br><span class="line">    <span class="keyword">long</span>    eax,ecx,edx,ebx;</span><br><span class="line">    <span class="keyword">long</span>    esp;</span><br><span class="line">    <span class="keyword">long</span>    ebp;</span><br><span class="line">    <span class="keyword">long</span>    esi;</span><br><span class="line">    <span class="keyword">long</span>    edi;</span><br><span class="line">    <span class="keyword">long</span>    es;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    cs;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    ss;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    ds;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    fs;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    gs;     <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    ldt;        <span class="comment">/* 16 high bits zero */</span></span><br><span class="line">    <span class="keyword">long</span>    trace_bitmap;   <span class="comment">/* bits: trace 0, bitmap 16-31 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">i387_struct</span> <span class="title">i387</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这里有个细节：</p>
+<p>tss 结构里有一个 <strong>cr3</strong>，表示 cr3 寄存器里存的值，而 cr3 寄存器又是指向页目录表首地址的。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648710491949143/1eb48617718a75062ee9e24b2181b4beaa9b3275.png" alt="640 (2)"></p>
+<p>当 cr3 不同，指向的页目录表就不同，整个页表结构也就不同，线性地址到物理地址的映射关系也就不同。</p>
+<p>也就是说，通过 cr3 就完全可以不需要之前所说的不同程序通过存储在不同的内存空间以互不干扰，而是建立不同的映射关系，由操作系统来建立不同的页目录表并替换 cr3 寄存器即可。</p>
+<p>这也可以理解为，保存了<strong>内存映射的上下文信息</strong>。</p>
+<p>当然 Linux 0.11 并不是通过替换 cr3 寄存器来实现内存互不干扰的，它的实现更为简单，这是后话了。</p>
+<p>所以保存上下文就可以理解成：app点击一个按钮进入一个新的界面，也要保存你是在哪个屏幕跳过来的等等信息，以便你点击返回的时候能正确跳回，如果不存肯定就无法正确跳回了。</p>
+<h4 id="运行时间信息"><a href="#运行时间信息" class="headerlink" title="运行时间信息"></a><strong>运行时间信息</strong></h4><p>如何判断一个进程该让出 CPU，切换到下一个进程呢？</p>
+<p>答案是给进程一个属性，叫<strong>剩余时间片</strong>，每触发一次时钟中断，都 <strong>-1</strong>，如果减到 0，就触发切换进程的操作。</p>
+<p>在 Linux 0.11 里，这个属性就是 <strong>counter</strong>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">long</span> counter;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而他的用法也非常简单，就是每次中断都判断一下是否到 0 了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_timer</span><span class="params">(<span class="keyword">long</span> cpl)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 当前线程还有剩余时间片，直接返回</span></span><br><span class="line">    <span class="keyword">if</span> ((--current-&gt;counter)&gt;<span class="number">0</span>) <span class="keyword">return</span>;</span><br><span class="line">    <span class="comment">// 若没有剩余时间片，调度</span></span><br><span class="line">    schedule();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果还没到 0，就直接返回，相当于这次时钟中断什么也没做，仅仅是给当前进程的时间片属性做了 -1 操作。</p>
+<p>如果已经到 0 了，就触发<strong>进程调度</strong>，选择下一个进程并使 CPU 跳转到那里运行。</p>
+<p>进程调度的逻辑就是在 <strong>schedule</strong> 函数里，怎么调，我们先不管。</p>
+<h4 id="“优先级”"><a href="#“优先级”" class="headerlink" title="“优先级”"></a><strong>“优先级”</strong></h4><p>counter 应该初始化为多少呢？</p>
+<p>需要有个属性来记录这个值，这个值越大，counter 就越大，那么每次轮到这个进程时，在 CPU 中运行的时间就越长，也就是这个进程比其他进程得到了更多 CPU 运行的时间。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">long</span> counter;</span><br><span class="line">    <span class="keyword">long</span> priority;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每次一个进程初始化时，都会把 counter 赋值为 priority。</p>
+<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a><strong>进程状态</strong></h4><p>我们总要不断优化以适应不同场景的用户需求。</p>
+<p>假设有这样一个场景，一个进程中有一个读取硬盘的操作，发起请求后，要等好久才能得到硬盘的终端信号。这个时候该进程占着 CPU 也没啥用，就会主动放弃 CPU 的执行权，把自己标记为等待中。把 CPU 的执行权限留给其他进程。</p>
+<p>这个等待中的状态用 <strong>state</strong> 属性记录，通俗一点就是 state 记录了<strong>进程的状态</strong>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">long</span> state;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个进程状态在 linux 0.11 里有五种</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TASK_RUNNING          0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TASK_INTERRUPTIBLE    1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TASK_UNINTERRUPTIBLE  2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TASK_ZOMBIE           3</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TASK_STOPPED          4</span></span><br></pre></td></tr></table></figure>
+<p>现在已经可以完成简单的进程调度任务了，有表示状态的 <strong>state</strong>，表示剩余时间片的 <strong>counter</strong>，表示优先级的 <strong>priority</strong>，和表示上下文信息的 <strong>tss</strong>。当然还有其他字段，到时候再说。</p>
+<p>看看 Linux 0.11 进程结构的全部</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line"><span class="comment">/* these are hardcoded - don&#x27;t touch */</span></span><br><span class="line">    <span class="keyword">long</span> state; <span class="comment">/* -1 unrunnable, 0 runnable, &gt;0 stopped */</span></span><br><span class="line">    <span class="keyword">long</span> counter;</span><br><span class="line">    <span class="keyword">long</span> priority;</span><br><span class="line">    <span class="keyword">long</span> signal;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> <span class="title">sigaction</span>[32];</span></span><br><span class="line">    <span class="keyword">long</span> blocked;   <span class="comment">/* bitmap of masked signals */</span></span><br><span class="line"><span class="comment">/* various fields */</span></span><br><span class="line">    <span class="keyword">int</span> exit_code;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> start_code,end_code,end_data,brk,start_stack;</span><br><span class="line">    <span class="keyword">long</span> pid,father,pgrp,session,leader;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> uid,euid,suid;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> gid,egid,sgid;</span><br><span class="line">    <span class="keyword">long</span> alarm;</span><br><span class="line">    <span class="keyword">long</span> utime,stime,cutime,cstime,start_time;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> used_math;</span><br><span class="line"><span class="comment">/* file system info */</span></span><br><span class="line">    <span class="keyword">int</span> tty;        <span class="comment">/* -1 if no tty, so it must be signed */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> umask;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">pwd</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">root</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">m_inode</span> * <span class="title">executable</span>;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> close_on_exec;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">filp</span>[<span class="title">NR_OPEN</span>];</span></span><br><span class="line"><span class="comment">/* ldt for this task 0 - zero 1 - cs 2 - ds&amp;ss */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> <span class="title">ldt</span>[3];</span></span><br><span class="line"><span class="comment">/* tss for this task */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">tss_struct</span> <span class="title">tss</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>这一节主要讲了创建新进程的过程，先补充了<strong>进程调度的本质</strong>是<strong>进程之间的来回切换</strong>，然后说了<strong>触发进程调度的方式</strong>是通过<strong>时钟中断</strong>，再通过<strong>进程调度函数</strong>跳至其他进程；进程调度的过程中，会用<strong>tast_struct</strong>结构来记录整个过程，之后的很多属性都会保存在这个结构体里；会通过 <strong>tss</strong> 来保存寄存器的值以保证上下文环境一致；会以<strong>counter</strong>减为 0 的条件触发切换进程的操作；会通过 <strong>priority</strong> 记录 <strong>counter</strong> 的初始值来表示多个进程之间的”优先级”(数越大说明占用CPU的时间越长，”优先级”也就越高)；会用 <strong>state</strong> 记录进程的状态。</p>
+<h4 id="进程调度的全过程"><a href="#进程调度的全过程" class="headerlink" title="进程调度的全过程"></a>进程调度的全过程</h4><p>在 <code>/kernel/sched.c</code>的 <strong>sched_init</strong> 中，程序开启了定时器，每隔一段时间就会给 CPU 发起一个中断信号。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LATCH (1193180/HZ)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sched_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    outb_p(<span class="number">0x36</span>,<span class="number">0x43</span>);      <span class="comment">/* binary, mode 3, LSB/MSB, ch 0 */</span></span><br><span class="line">    outb_p(LATCH &amp; <span class="number">0xff</span> , <span class="number">0x40</span>);    <span class="comment">/* LSB */</span></span><br><span class="line">    outb(LATCH &gt;&gt; <span class="number">8</span> , <span class="number">0x40</span>);    <span class="comment">/* MSB */</span></span><br><span class="line">    set_intr_gate(<span class="number">0x20</span>,&amp;timer_interrupt);</span><br><span class="line">    outb(inb_p(<span class="number">0x21</span>)&amp;~<span class="number">0x01</span>,<span class="number">0x21</span>);</span><br><span class="line">    set_system_gate(<span class="number">0x80</span>,&amp;system_call);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>时间间隔被设置成了 10 ms，也就是 100 Hz。</p>
+<p>中断号被设置成了 <strong>0x20</strong>，中断处理函数是 <strong>timer_interrupt</strong></p>
+<p>来看看 timer_interrupt 部分源码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#&#x2F;kernel&#x2F;system_call.s</span><br><span class="line"></span><br><span class="line">_timer_interrupt:</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; 增加系统滴答数</span><br><span class="line">    incl _jiffies ; 自增1</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; 调用函数 do_timer</span><br><span class="line">    call _do_timer</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>jiffies 自增1，调用函数 do_timer</p>
+<p>看看 do_timer 部分源码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#/kernel/sched.c</span><br><span class="line">    </span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_timer</span><span class="params">(<span class="keyword">long</span> cpl)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 当前线程还有剩余时间片，直接返回</span></span><br><span class="line">    <span class="keyword">if</span> ((--current-&gt;counter)&gt;<span class="number">0</span>) <span class="keyword">return</span>;</span><br><span class="line">    current-&gt;counter=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (!cpl) <span class="keyword">return</span>; <span class="comment">//判断特权级</span></span><br><span class="line">    <span class="comment">// 若没有剩余时间片，调度</span></span><br><span class="line">    schedule();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果上一个进程时间不为 0 ，直接返回，否则置当前进程 counter 为 0 ，然后判断当前特权级，为 0 (内核态)直接返回，不为 0 就调度</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">#/kernel/sched.c</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">schedule</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, next, c;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> ** <span class="title">p</span>;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        c = <span class="number">-1</span>;</span><br><span class="line">        next = <span class="number">0</span>;</span><br><span class="line">        i = NR_TASKS;</span><br><span class="line">        p = &amp;task[NR_TASKS];</span><br><span class="line">        <span class="keyword">while</span> (--i) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!*--p)</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            <span class="keyword">if</span> ((*p)-&gt;state == TASK_RUNNING &amp;&amp; (*p)-&gt;counter &gt; c)</span><br><span class="line">                c = (*p)-&gt;counter, next = i;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (c) <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">for</span>(p = &amp;LAST_TASK ; p &gt; &amp;FIRST_TASK ; --p)</span><br><span class="line">            <span class="keyword">if</span> (*p)</span><br><span class="line">                (*p)-&gt;counter = ((*p)-&gt;counter &gt;&gt; <span class="number">1</span>) +</span><br><span class="line">                        (*p)-&gt;priority;</span><br><span class="line">    &#125;</span><br><span class="line">    switch_to(next);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>分成几部分看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (--i) &#123;</span><br><span class="line">	<span class="keyword">if</span> (!*--p)</span><br><span class="line">		<span class="keyword">continue</span>;</span><br><span class="line">	<span class="keyword">if</span> ((*p)-&gt;state == TASK_RUNNING &amp;&amp; (*p)-&gt;counter &gt; c)</span><br><span class="line">		c = (*p)-&gt;counter, next = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这部分是遍历找出<strong>正在运行状态</strong>的且 <strong>counter 最大</strong>的进程号 next。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (c) <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">for</span>(p = &amp;LAST_TASK ; p &gt; &amp;FIRST_TASK ; --p)</span><br><span class="line">	<span class="keyword">if</span> (*p)</span><br><span class="line">		(*p)-&gt;counter = ((*p)-&gt;counter &gt;&gt; <span class="number">1</span>) +</span><br><span class="line">				(*p)-&gt;priority;</span><br></pre></td></tr></table></figure>
+<p>如果系统有正在运行状态的进程 counter 不为 0 ，或者系统中没有一个正在运行的任务存在(c = -1)，退出循环。</p>
+<p>如果系统所有正在运行状态的进程 counter 为 0，就将所有进程的 counter 重新赋值为 <code>counter/2 + priority</code>，然后再回到 while 循环。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">switch_to(next);</span><br></pre></td></tr></table></figure>
+<p>最后拿到一个进程号 next，调用函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#define switch_to(n) &#123;\</span><br><span class="line">struct &#123;long a,b;&#125; __tmp; \</span><br><span class="line">__asm__(&quot;cmpl %%ecx,_current\n\t&quot; \</span><br><span class="line">    &quot;je 1f\n\t&quot; \</span><br><span class="line">    &quot;movw %%dx,%1\n\t&quot; \</span><br><span class="line">    &quot;xchgl %%ecx,_current\n\t&quot; \</span><br><span class="line">    &quot;ljmp %0\n\t&quot; \</span><br><span class="line">    &quot;cmpl %%ecx,_last_task_used_math\n\t&quot; \</span><br><span class="line">    &quot;jne 1f\n\t&quot; \</span><br><span class="line">    &quot;clts\n&quot; \</span><br><span class="line">    &quot;1:&quot; \</span><br><span class="line">    ::&quot;m&quot; (*&amp;__tmp.a),&quot;m&quot; (*&amp;__tmp.b), \</span><br><span class="line">    &quot;d&quot; (_TSS(n)),&quot;c&quot; ((long) task[n])); \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是进程切换最最底层的代码，看不懂没关系，只要知道最终主要干了一件事：ljmp 到新进程的 tss 段处。</p>
+<p>什么意思？</p>
+<p>CPU 规定，如果 ljmp 指令后面跟的是 tss 段，会由硬件将当前各个寄存器的值保存在当前进程的 tss 中，并将<strong>新进程</strong>的 tss 信息加载到各个寄存器。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648783950536952/ed8a3ec9b87a2d57ac9004408823bd0f61fb2bf7.png" alt="640"></p>
+<p>简单来说就是：<strong>保存当前进程上下文，恢复下一个进程的上下文，跳过去</strong></p>
+<p>总结：定时器每 10 ms会触发一次时钟中断信号，这个信号会使 CPU 查找中断向量表，触发中断处理函数 <strong>timer_interrupt</strong>，timer_interrupt 又会调用函数 do_timer，do_timer 函数会判断上一个进程 counter 是否为 0 ，如果不为 0 ，直接返回，反之设置当前进程 counter 为 0 ，且如果特权级不在内核态，调用 schedule ，进行进程调度。schedule 函数会找到<strong>正在运行</strong>的且 <strong>counter 最大</strong>的进程号，并将其放入 switch_to 函数，switch_to 会保存当前进程的上下文，同时使 CPU 跳转到这个进程的偏移地址处。</p>
+<h3 id="fork"><a href="#fork" class="headerlink" title="fork()"></a>fork()</h3><h4 id="系统调用"><a href="#系统调用" class="headerlink" title="系统调用"></a>系统调用</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">static _inline _syscall0(int,fork)</span><br><span class="line"></span><br><span class="line">#define _syscall0(type,name) \</span><br><span class="line">type name(void) \</span><br><span class="line">&#123; \</span><br><span class="line">long __res; \</span><br><span class="line">__asm__ volatile (&quot;int $0x80&quot; \</span><br><span class="line">    : &quot;&#x3D;a&quot; (__res) \</span><br><span class="line">    : &quot;0&quot; (__NR_##name)); \</span><br><span class="line">if (__res &gt;&#x3D; 0) \</span><br><span class="line">    return (type) __res; \</span><br><span class="line">errno &#x3D; -__res; \</span><br><span class="line">return -1; \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 把它转换成稍微能看得懂的样子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#define _syscall0(type,name) \</span><br><span class="line">type name(void) \</span><br><span class="line">&#123; \</span><br><span class="line">    volatile long __res; \</span><br><span class="line">    _asm &#123; \</span><br><span class="line">        _asm mov eax,__NR_##name \</span><br><span class="line">        _asm int 80h \</span><br><span class="line">        _asm mov __res,eax \</span><br><span class="line">    &#125; \</span><br><span class="line">    if (__res &gt;&#x3D; 0) \</span><br><span class="line">        return (type) __res; \</span><br><span class="line">    errno &#x3D; -__res; \</span><br><span class="line">    return -1; \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把宏定义都展开，其实就相当于<strong>定义了一个函数</strong>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int fork(void) &#123;</span><br><span class="line">     volatile long __res;</span><br><span class="line">    _asm &#123;</span><br><span class="line">        _asm mov eax,__NR_fork</span><br><span class="line">        _asm int 80h</span><br><span class="line">        _asm mov __res,eax</span><br><span class="line">    &#125;</span><br><span class="line">    if (__res &gt;&#x3D; 0)</span><br><span class="line">        return (void) __res;</span><br><span class="line">    errno &#x3D; -__res;</span><br><span class="line">    return -1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内敛汇编看不懂，关注结果就行</p>
+<p>最关键的是这里触发了 int 0x80 的系统调用，eax 参数是 __NR_fork，值为 2 </p>
+<p>之前在 <strong>sched_init</strong> 有定义 int 0x80 的系统中断</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set_system_gate(0x80, &amp;system_call);</span><br></pre></td></tr></table></figure>
+<p>再看看 system_call </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#&#x2F;kernel&#x2F;system_call.s</span><br><span class="line">_system_call:</span><br><span class="line">    ...</span><br><span class="line">    call [_sys_call_table + eax*4]</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>eax 被赋值为 2 ，也就是找到 <strong>sys_call_table</strong> 里下标为 2 的函数，然后跳过去。</p>
+<p>接着看 sys_call_table 有啥</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">#&#x2F;include&#x2F;linux&#x2F;sys.h</span><br><span class="line">fn_ptr sys_call_table[] &#x3D; &#123; sys_setup, sys_exit, sys_fork, sys_read,</span><br><span class="line">  sys_write, sys_open, sys_close, sys_waitpid, sys_creat, sys_link,</span><br><span class="line">  sys_unlink, sys_execve, sys_chdir, sys_time, sys_mknod, sys_chmod,</span><br><span class="line">  sys_chown, sys_break, sys_stat, sys_lseek, sys_getpid, sys_mount,</span><br><span class="line">  sys_umount, sys_setuid, sys_getuid, sys_stime, sys_ptrace, sys_alarm,</span><br><span class="line">  sys_fstat, sys_pause, sys_utime, sys_stty, sys_gtty, sys_access,</span><br><span class="line">  sys_nice, sys_ftime, sys_sync, sys_kill, sys_rename, sys_mkdir,</span><br><span class="line">  sys_rmdir, sys_dup, sys_pipe, sys_times, sys_prof, sys_brk, sys_setgid,</span><br><span class="line">  sys_getgid, sys_signal, sys_geteuid, sys_getegid, sys_acct, sys_phys,</span><br><span class="line">  sys_lock, sys_ioctl, sys_fcntl, sys_mpx, sys_setpgid, sys_ulimit,</span><br><span class="line">  sys_uname, sys_umask, sys_chroot, sys_ustat, sys_dup2, sys_getppid,</span><br><span class="line">  sys_getpgrp, sys_setsid, sys_sigaction, sys_sgetmask, sys_ssetmask,</span><br><span class="line">  sys_setreuid, sys_setregid</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以看到第二项对应的就是 sys_fork，这也印证了为啥做 pwn 题时要把 eax 改成对应的值就能调用对应的函数，是为了去 sys_call_table[] 里找下标，然后对应函数。</p>
+<p>收回，再看看 sys_fork，具体干了啥，之后再讲</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#&#x2F;kernel&#x2F;system_call.s</span><br><span class="line">_sys_fork:</span><br><span class="line">    call _find_empty_process</span><br><span class="line">    testl %eax,%eax</span><br><span class="line">    js 1f</span><br><span class="line">    push %gs</span><br><span class="line">    pushl %esi</span><br><span class="line">    pushl %edi</span><br><span class="line">    pushl %ebp</span><br><span class="line">    pushl %eax</span><br><span class="line">    call _copy_process</span><br><span class="line">    addl $20,%esp</span><br><span class="line">1:  ret</span><br></pre></td></tr></table></figure>
+<hr>
+<p>再补充一些，刚刚定义 fork 函数的系统调用模板函数中，用的是 <strong>syscall0</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">static _inline _syscall0(int,fork)</span><br><span class="line"></span><br><span class="line">#define _syscall0(type,name) \</span><br><span class="line">type name(void) \</span><br><span class="line">&#123; \</span><br><span class="line">long __res; \</span><br><span class="line">__asm__ volatile (&quot;int $0x80&quot; \</span><br><span class="line">    : &quot;&#x3D;a&quot; (__res) \</span><br><span class="line">    : &quot;0&quot; (__NR_##name)); \</span><br><span class="line">if (__res &gt;&#x3D; 0) \</span><br><span class="line">    return (type) __res; \</span><br><span class="line">errno &#x3D; -__res; \</span><br><span class="line">return -1; \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个 0 其实表示的就是参数的个数，也就是 sys_fork 函数是不需要任何参数的。</p>
+<p>可以在<code>/include/unistd.h</code>中找到定义，简化如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#define _syscall0(type,name)</span><br><span class="line">#define _syscall1(type,name,atype,a)</span><br><span class="line">#define _syscall2(type,name,atype,a,btype,b)</span><br><span class="line">#define _syscall3(type,name,atype,a,btype,b,ctype,c)</span><br></pre></td></tr></table></figure>
+<p>这些参数会放在哪里呢？</p>
+<p>答案是 <strong>execve</strong>，在之后创建进程 1 和进程 2 的过程中，execve 都会和 fork 函数一起出现。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//main.c</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (!(pid=fork())) &#123;</span><br><span class="line">        ...</span><br><span class="line">        execve(<span class="string">&quot;/bin/sh&quot;</span>,argv_rc,envp_rc);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后我们再来细看一下 syscall3</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">execve(&quot;&#x2F;bin&#x2F;sh&quot;,argv_rc,envp_rc);</span><br><span class="line"></span><br><span class="line">_syscall3(int,execve,const char *,file,char **,argv,char **,envp)</span><br><span class="line"></span><br><span class="line">#define _syscall3(type,name,atype,a,btype,b,ctype,c) \</span><br><span class="line">type name(atype a,btype b,ctype c) &#123; \</span><br><span class="line">    volatile long __res; \</span><br><span class="line">    _asm &#123; \</span><br><span class="line">        _asm mov eax,__NR_##name \</span><br><span class="line">        _asm mov ebx,a \</span><br><span class="line">        _asm mov ecx,b \</span><br><span class="line">        _asm mov edx,c \</span><br><span class="line">        _asm int 80h \</span><br><span class="line">        _asm mov __res,eax\</span><br><span class="line">    &#125; \</span><br><span class="line">    if (__res &gt;&#x3D; 0) \</span><br><span class="line">        return (type) __res; \</span><br><span class="line">    errno &#x3D; -__res; \</span><br><span class="line">    return -1; \</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看出，a 放入了 ebx，b 放入了 ecx，c 放入了 edx。</p>
+<p>再细看一下 system_call</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">_system_call:</span><br><span class="line">    cmpl $nr_system_calls-1,%eax</span><br><span class="line">    ja bad_sys_call</span><br><span class="line">    push %ds</span><br><span class="line">    push %es</span><br><span class="line">    push %fs</span><br><span class="line">    pushl %edx</span><br><span class="line">    pushl %ecx      # push %ebx,%ecx,%edx as parameters</span><br><span class="line">    pushl %ebx      # to the system call</span><br><span class="line">    movl $0x10,%edx     # set up ds,es to kernel space</span><br><span class="line">    mov %dx,%ds</span><br><span class="line">    mov %dx,%es</span><br><span class="line">    movl $0x17,%edx     # fs points to local data space</span><br><span class="line">    mov %dx,%fs</span><br><span class="line">    call _sys_call_table(,%eax,4)</span><br><span class="line">    pushl %eax</span><br><span class="line">    movl _current,%eax</span><br><span class="line">    cmpl $0,state(%eax)     # state</span><br><span class="line">    jne reschedule</span><br><span class="line">    cmpl $0,counter(%eax)       # counter</span><br><span class="line">    je reschedule</span><br><span class="line">ret_from_sys_call:</span><br><span class="line">    movl _current,%eax      # task[0] cannot have signals</span><br><span class="line">    cmpl _task,%eax</span><br><span class="line">    je 3f</span><br><span class="line">    cmpw $0x0f,CS(%esp)     # was old code segment supervisor ?</span><br><span class="line">    jne 3f</span><br><span class="line">    cmpw $0x17,OLDSS(%esp)      # was stack segment &#x3D; 0x17 ?</span><br><span class="line">    jne 3f</span><br><span class="line">    movl signal(%eax),%ebx</span><br><span class="line">    movl blocked(%eax),%ecx</span><br><span class="line">    notl %ecx</span><br><span class="line">    andl %ebx,%ecx</span><br><span class="line">    bsfl %ecx,%ecx</span><br><span class="line">    je 3f</span><br><span class="line">    btrl %ecx,%ebx</span><br><span class="line">    movl %ebx,signal(%eax)</span><br><span class="line">    incl %ecx</span><br><span class="line">    pushl %ecx</span><br><span class="line">    call _do_signal</span><br><span class="line">    popl %eax</span><br><span class="line">3:  popl %eax</span><br><span class="line">    popl %ebx</span><br><span class="line">    popl %ecx</span><br><span class="line">    popl %edx</span><br><span class="line">    pop %fs</span><br><span class="line">    pop %es</span><br><span class="line">    pop %ds</span><br><span class="line">    iret</span><br></pre></td></tr></table></figure>
+<p>我们只关注压栈的情况，之前有说过，触发中断时，CPU 会往栈中压入一些数据</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648693401023671/03fd28ed3881c1b332090ae726b95eb255f533e6.png" alt="640"></p>
+<p>system_call 是通过 int 0x80 这个软中断实现的，属于特权级发生变化，且没有错误码情况的中断，所以栈会被提前压入 <strong>SS、ESP、EFLAGS、CS、EIP</strong>。</p>
+<p>之后 system_call 函数本身也会压入一些值，<strong>ds、es、fs、edx、ecx、ebx、eax</strong>。</p>
+<p>现在来看一下栈中寄存器的位置，作者也很贴心的给出了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*</span><br><span class="line"> * Stack layout in &#39;ret_from_system_call&#39;:</span><br><span class="line"> *</span><br><span class="line"> *   0(%esp) - %eax</span><br><span class="line"> *   4(%esp) - %ebx</span><br><span class="line"> *   8(%esp) - %ecx</span><br><span class="line"> *   C(%esp) - %edx</span><br><span class="line"> *  10(%esp) - %fs</span><br><span class="line"> *  14(%esp) - %es</span><br><span class="line"> *  18(%esp) - %ds</span><br><span class="line"> *  1C(%esp) - %eip</span><br><span class="line"> *  20(%esp) - %cs</span><br><span class="line"> *  24(%esp) - %eflags</span><br><span class="line"> *  28(%esp) - %oldesp</span><br><span class="line"> *  2C(%esp) - %oldss</span><br><span class="line"> *&#x2F;</span><br></pre></td></tr></table></figure>
+<p>之后，中断处理程序如果有需要，就可以从这里取出它想要的值。</p>
+<p>比如 <strong>sys_execve</strong> 这个中断处理程序，就取走了位于 0x1c 处的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">EIP &#x3D; 0x1C</span><br><span class="line">_sys_execve:</span><br><span class="line">    lea EIP(%esp),%eax</span><br><span class="line">    pushl %eax</span><br><span class="line">    call _do_execve</span><br><span class="line">    addl $4,%esp</span><br><span class="line">    ret</span><br></pre></td></tr></table></figure>
+<p>之后的 <strong>do_execve</strong> 函数，又取走了 <strong>filename，argv，envp</strong> 等参数，这个之后再说。</p>
+<hr>
+<p><strong>总结：最重要的是调用了 int 0x80 的系统调用，将 eax 赋成特定的值，就能调用特定的函数</strong></p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648869110129721/ced2ad2a82fbc6d6463ec5868f15744219039a1d.png" alt="640"></p>
+<h4 id="sys-fork"><a href="#sys-fork" class="headerlink" title="sys_fork()"></a>sys_fork()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#&#x2F;kernel&#x2F;sysctem_call.s</span><br><span class="line">_sys_fork:</span><br><span class="line">    call _find_empty_process</span><br><span class="line">    testl %eax,%eax</span><br><span class="line">    js 1f</span><br><span class="line">    push %gs</span><br><span class="line">    pushl %esi</span><br><span class="line">    pushl %edi</span><br><span class="line">    pushl %ebp</span><br><span class="line">    pushl %eax</span><br><span class="line">    call _copy_process</span><br><span class="line">    addl $20,%esp</span><br><span class="line">1:  ret</span><br></pre></td></tr></table></figure>
+<p>调用了两个函数：find_empty_process、copy_process</p>
+<h5 id="find-empty-process"><a href="#find-empty-process" class="headerlink" title="find_empty_process"></a>find_empty_process</h5><p>之前有说过，进程是以 <strong>task_struct</strong> 的结构存储在数组 <strong>task[64]</strong> 中</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1648448883390142/33cef6c48ae10c3e9e402b9cb81584b292f54551.png" alt="640 (2)"></p>
+<p>这个函数就是为了找到空闲的进程槽位，然后在槽位准备存一个新的进程的结构 <strong>task_struct</strong></p>
+<p>来具体看看代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#/kernel/fork.c</span><br><span class="line"><span class="keyword">long</span> last_pid = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">find_empty_process</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    repeat:</span><br><span class="line">        <span class="keyword">if</span> ((++last_pid)&lt;<span class="number">0</span>) last_pid=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">for</span>(i=<span class="number">0</span> ; i&lt;<span class="number">64</span> ; i++)</span><br><span class="line">            <span class="keyword">if</span> (task[i] &amp;&amp; task[i]-&gt;pid == last_pid) <span class="keyword">goto</span> repeat;</span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">1</span> ; i&lt;<span class="number">64</span>; i++)  <span class="comment">//进程0排除</span></span><br><span class="line">        <span class="keyword">if</span> (!task[i])</span><br><span class="line">            <span class="keyword">return</span> i;</span><br><span class="line">    <span class="keyword">return</span> -EAGAIN;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>逻辑很清楚了，首先判断 last_pid +1 是否小于0，小于 0 说明超出了进程号的整数表示范围，并重新赋值为 1；第一个 for 循环遍历整个进程数组，判断 last_pid 是否被占用，被占用了就回去重新找下一个，没被占用就返回这个进程号；下一个 for 循环，再次遍历找到这个 task 中的空闲项并返回。</p>
+<p>最终，这个函数会返回 <strong>task[] 数组的索引，表示找到了一个空闲项</strong>，并在里面加入新进程。</p>
+<p>由于我们现在只有 0 号进程，且 task[] 除了 0 号索引位置，其他地方都是空的，所以这个函数运行完，<strong>last_pid 就是 1，也就是新进程被分配的 pid 就是 1，即将要加入的 task[] 数组的索引位置，也是 1。</strong></p>
+<p>怎么构造新的进程结构，并塞入 task[1] 中呢？就要看下一个函数了</p>
+<h5 id="copy-process"><a href="#copy-process" class="headerlink" title="copy_process"></a>copy_process</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">#/kernel/fork.c</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_process</span><span class="params">(<span class="keyword">int</span> nr,<span class="keyword">long</span> ebp,<span class="keyword">long</span> edi,<span class="keyword">long</span> esi,<span class="keyword">long</span> gs,<span class="keyword">long</span> none,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">long</span> ebx,<span class="keyword">long</span> ecx,<span class="keyword">long</span> edx,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">long</span> fs,<span class="keyword">long</span> es,<span class="keyword">long</span> ds,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">long</span> eip,<span class="keyword">long</span> cs,<span class="keyword">long</span> eflags,<span class="keyword">long</span> esp,<span class="keyword">long</span> ss)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> *<span class="title">p</span>;</span></span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> *<span class="title">f</span>;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    p = (struct task_struct *) get_free_page();</span><br><span class="line">    <span class="keyword">if</span> (!p)</span><br><span class="line">        <span class="keyword">return</span> -EAGAIN;</span><br><span class="line">    task[nr] = p;</span><br><span class="line">    *p = *current;  <span class="comment">/* NOTE! this doesn&#x27;t copy the supervisor stack */</span></span><br><span class="line">    p-&gt;state = TASK_UNINTERRUPTIBLE;</span><br><span class="line">    p-&gt;pid = last_pid;</span><br><span class="line">    p-&gt;father = current-&gt;pid;</span><br><span class="line">    p-&gt;counter = p-&gt;priority;</span><br><span class="line">    p-&gt;signal = <span class="number">0</span>;</span><br><span class="line">    p-&gt;alarm = <span class="number">0</span>;</span><br><span class="line">    p-&gt;leader = <span class="number">0</span>;      <span class="comment">/* process leadership doesn&#x27;t inherit */</span></span><br><span class="line">    p-&gt;utime = p-&gt;stime = <span class="number">0</span>;</span><br><span class="line">    p-&gt;cutime = p-&gt;cstime = <span class="number">0</span>;</span><br><span class="line">    p-&gt;start_time = jiffies;</span><br><span class="line">    p-&gt;tss.back_link = <span class="number">0</span>;</span><br><span class="line">    p-&gt;tss.esp0 = PAGE_SIZE + (<span class="keyword">long</span>) p;</span><br><span class="line">    p-&gt;tss.ss0 = <span class="number">0x10</span>;</span><br><span class="line">    p-&gt;tss.eip = eip;</span><br><span class="line">    p-&gt;tss.eflags = eflags;</span><br><span class="line">    p-&gt;tss.eax = <span class="number">0</span>;</span><br><span class="line">    p-&gt;tss.ecx = ecx;</span><br><span class="line">    p-&gt;tss.edx = edx;</span><br><span class="line">    p-&gt;tss.ebx = ebx;</span><br><span class="line">    p-&gt;tss.esp = esp;</span><br><span class="line">    p-&gt;tss.ebp = ebp;</span><br><span class="line">    p-&gt;tss.esi = esi;</span><br><span class="line">    p-&gt;tss.edi = edi;</span><br><span class="line">    p-&gt;tss.es = es &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.cs = cs &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.ss = ss &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.ds = ds &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.fs = fs &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.gs = gs &amp; <span class="number">0xffff</span>;</span><br><span class="line">    p-&gt;tss.ldt = _LDT(nr);</span><br><span class="line">    p-&gt;tss.trace_bitmap = <span class="number">0x80000000</span>;</span><br><span class="line">    <span class="keyword">if</span> (last_task_used_math == current)</span><br><span class="line">        __asm__(<span class="string">&quot;clts ; fnsave %0&quot;</span>::<span class="string">&quot;m&quot;</span> (p-&gt;tss.i387));</span><br><span class="line">    <span class="keyword">if</span> (copy_mem(nr,p)) &#123;</span><br><span class="line">        task[nr] = <span class="literal">NULL</span>;</span><br><span class="line">        free_page((<span class="keyword">long</span>) p);</span><br><span class="line">        <span class="keyword">return</span> -EAGAIN;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;NR_OPEN;i++)</span><br><span class="line">        <span class="keyword">if</span> (f=p-&gt;filp[i])</span><br><span class="line">            f-&gt;f_count++;</span><br><span class="line">    <span class="keyword">if</span> (current-&gt;pwd)</span><br><span class="line">        current-&gt;pwd-&gt;i_count++;</span><br><span class="line">    <span class="keyword">if</span> (current-&gt;root)</span><br><span class="line">        current-&gt;root-&gt;i_count++;</span><br><span class="line">    <span class="keyword">if</span> (current-&gt;executable)</span><br><span class="line">        current-&gt;executable-&gt;i_count++;</span><br><span class="line">    set_tss_desc(gdt+(nr&lt;&lt;<span class="number">1</span>)+FIRST_TSS_ENTRY,&amp;(p-&gt;tss));</span><br><span class="line">    set_ldt_desc(gdt+(nr&lt;&lt;<span class="number">1</span>)+FIRST_LDT_ENTRY,&amp;(p-&gt;ldt));</span><br><span class="line">    p-&gt;state = TASK_RUNNING;    <span class="comment">/* do this last, just in case */</span></span><br><span class="line">    <span class="keyword">return</span> last_pid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之前说过，在内存初始化时，mem_init 会用一个 mem_map[] 数组来记录内存的使用次数</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-2/1647998568100717/6f87e9989e63b9e4439b63967df034230bf26555.png" alt="640"></p>
+<p>首先 get_free_page 会在主内存申请一个空闲页面，就是遍历 mem_map[] 这个数组，找出值为 0 的项，就表示找到了空闲的一页内存。然后把该项置为 1，表示该页已经被使用一次。最后，算出这个页的内存起始地址，返回给 task_struct 结构的 p 。</p>
+<p>这样，一个新的进程就有了属于自己的内存空间。</p>
+<p>然后会把这个 p 放入进程管理结构 task[] 中。</p>
+<p><code>*p = *current</code>，<strong>就是把当前进程，也就是 0 号进程的 task_struct 的全部值都复制给即将创建的进程 p</strong>，目前它们两者就完全一样了。</p>
+<p>最后内存的布局效果就是这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648950992137847/36d135e49cbd0845e5fc658b09355deb60dc3f61.png" alt="640"></p>
+<p>现在进程 1 和进程 0 是完全复制的状态，但后面的赋值操作是将一些值个性化处理，这里列举一部分</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_process</span><span class="params">(<span class="keyword">int</span> nr, ...)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    p-&gt;state = TASK_UNINTERRUPTIBLE;</span><br><span class="line">    p-&gt;pid = last_pid;</span><br><span class="line">    p-&gt;counter = p-&gt;priority;</span><br><span class="line">    ..</span><br><span class="line">    p-&gt;tss.edx = edx;</span><br><span class="line">    p-&gt;tss.ebx = ebx;</span><br><span class="line">    p-&gt;tss.esp = esp;</span><br><span class="line">    ...</span><br><span class="line">    p-&gt;tss.esp0 = PAGE_SIZE + (<span class="keyword">long</span>) p;</span><br><span class="line">    p-&gt;tss.ss0 = <span class="number">0x10</span>;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不一样的值，一部分是 <strong>state</strong>，<strong>pid</strong>，<strong>counter</strong> 这种<strong>进程的元信息</strong>，另一部分是 <strong>tss</strong> 里面保存的各种寄存器的信息，即<strong>上下文</strong>。</p>
+<p>这里有两个寄存器的值的赋值有些特殊，就是 ss0 和 esp0，表示 0 特权级也就是内核态时的 ss:esp</p>
+<p><code> p-&gt;tss.esp0 = PAGE_SIZE + (long) p</code> 指的是将内核态的栈顶指针 esp 指向新分配的这 1 页内存的顶端，之后的每个进程都会这样设置</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648951866867898/88bbee672c08a2ad73f38a684099f291e526acd3.png" alt="640 (1)"></p>
+<p>总结一下 find_empty_process 和 copy_process 前半部分干了啥</p>
+<p>调用了两个函数，首先会在 task 数组中找到空闲项，然后再在内存中找到空闲的一页内存，返回指针 p 并存入 task 数组的这个空闲项，再将进程 0 的结构都复制给新进程 p，再对 p 的值进行个性化修改。</p>
+<p>接着往下看(后半部分)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_mem</span><span class="params">(<span class="keyword">int</span> nr,struct task_struct * p)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 局部描述符表 LDT 赋值</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> old_data_base,new_data_base,data_limit;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> old_code_base,new_code_base,code_limit;</span><br><span class="line">    code_limit = get_limit(<span class="number">0x0f</span>);</span><br><span class="line">    data_limit = get_limit(<span class="number">0x17</span>);</span><br><span class="line">    new_code_base = nr * <span class="number">0x4000000</span>;</span><br><span class="line">    new_data_base = nr * <span class="number">0x4000000</span>;</span><br><span class="line">    set_base(p-&gt;ldt[<span class="number">1</span>],new_code_base);</span><br><span class="line">    set_base(p-&gt;ldt[<span class="number">2</span>],new_data_base);</span><br><span class="line">    <span class="comment">// 拷贝页表</span></span><br><span class="line">    old_code_base = get_base(current-&gt;ldt[<span class="number">1</span>]);</span><br><span class="line">    old_data_base = get_base(current-&gt;ldt[<span class="number">2</span>]);</span><br><span class="line">    copy_page_tables(old_data_base,new_data_base,data_limit);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实就是<strong>新进程 LDT 表项的赋值，以及页表的拷贝</strong>。</p>
+<h6 id="LDT-的赋值"><a href="#LDT-的赋值" class="headerlink" title="LDT 的赋值"></a>LDT 的赋值</h6><p>之前有说过，程序员给出的逻辑地址转换成物理地址要经过几个步骤：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649032750984256/607473eb2b9535abba2b66def59b1b8add5d4c2b.png" alt="640"></p>
+<p>现在已经开启了分页，分页的具体转化如下(感觉图中应该是 13 M)</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649033074101612/c64b56c662e33a389d175d046ac504d16f73d7b8.png" alt="640 (1)"></p>
+<p>再将这个图简化和 GDT 表一起看</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649035058708990/2549d0ea2e98dea26801814b40e7ca4ab1347585.png" alt="640 (2)"></p>
+<p>可以看到进程 0 的 LDT 的代码段和数据段，段基址都是 0 ，段限长时 640k 。而进程 1 ，也就是我们现在正在 fork 的进程，其代码段和数据段还没有设置。</p>
+<p>所以第一步，局部描述符表 LDT 的赋值，就是给上图中两个未设置的代码段和数据段赋值。</p>
+<p>其中的<strong>段限长</strong>，直接取自进程 0 设置好的，即 640 k。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">code_limit = get_limit(<span class="number">0x0f</span>);</span><br><span class="line">data_limit = get_limit(<span class="number">0x17</span>);</span><br></pre></td></tr></table></figure>
+<p>段基址，取决于当前是几号进程，也就是 nr 的值</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">new_data_base = new_code_base = nr * <span class="number">0x4000000</span></span><br></pre></td></tr></table></figure>
+<p>0x4000000 等于 64M，也就是说今后每个进程都会在线性地址空间中占用 64M 的空间，且相邻。</p>
+<p>接着设置新进程局部描述符表中段描述符中的基地址。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set_base(p-&gt;ldt[<span class="number">1</span>],new_code_base);</span><br><span class="line">set_base(p-&gt;ldt[<span class="number">2</span>],new_data_base);</span><br></pre></td></tr></table></figure>
+<p>设置完成后的效果图</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649036338518275/ced162022a106cdc58008ffae57b5f4fc6a2a6fc.png" alt="640 (3)"></p>
+<p>这即是段表的设置。</p>
+<h6 id="页表的复制"><a href="#页表的复制" class="headerlink" title="页表的复制"></a>页表的复制</h6><p>刚刚讲完了段表的赋值，现在来讲讲页表的复制，也就是最后的 copy_page_tables 函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_mem</span><span class="params">(<span class="keyword">int</span> nr,struct task_struct * p)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// old=0, new=64M, limit=640K</span></span><br><span class="line">    copy_page_tables(old_data_base,new_data_base,data_limit)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>进程 0 有一个页目录表和四个页表，将线性地址空间的 0-16M 原封不动映射到了物理地址空间的 0-16M。新的进程，也需要一套映射关系的页表。来看看页表是怎么建立的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">#mm&#x2F;memory.c</span><br><span class="line">&#x2F;*</span><br><span class="line"> *  Well, here is one of the most complicated functions in mm. It</span><br><span class="line"> * copies a range of linerar addresses by copying only the pages.</span><br><span class="line"> * Let&#39;s hope this is bug-free, &#39;cause this one I don&#39;t want to debug :-)</span><br><span class="line"> *&#x2F;</span><br><span class="line">int copy_page_tables(unsigned long from,unsigned long to,long size)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned long * from_page_table;</span><br><span class="line">    unsigned long * to_page_table;</span><br><span class="line">    unsigned long this_page;</span><br><span class="line">    unsigned long * from_dir, * to_dir;</span><br><span class="line">    unsigned long nr;</span><br><span class="line"></span><br><span class="line">    from_dir &#x3D; (unsigned long *) ((from&gt;&gt;20) &amp; 0xffc);</span><br><span class="line">    to_dir &#x3D; (unsigned long *) ((to&gt;&gt;20) &amp; 0xffc);</span><br><span class="line">    size &#x3D; ((unsigned) (size+0x3fffff)) &gt;&gt; 22;</span><br><span class="line">    for( ; size--&gt;0 ; from_dir++,to_dir++) &#123;</span><br><span class="line">        if (!(1 &amp; *from_dir))</span><br><span class="line">            continue;</span><br><span class="line">        from_page_table &#x3D; (unsigned long *) (0xfffff000 &amp; *from_dir);</span><br><span class="line">        to_page_table &#x3D; (unsigned long *) get_free_page()</span><br><span class="line">        *to_dir &#x3D; ((unsigned long) to_page_table) | 7;</span><br><span class="line">        nr &#x3D; (from&#x3D;&#x3D;0)?0xA0:1024;</span><br><span class="line">        for ( ; nr-- &gt; 0 ; from_page_table++,to_page_table++) &#123;</span><br><span class="line">            this_page &#x3D; *from_page_table;</span><br><span class="line">            if (!(1 &amp; this_page))</span><br><span class="line">                continue;</span><br><span class="line">            this_page &amp;&#x3D; ~2;</span><br><span class="line">            *to_page_table &#x3D; this_page;</span><br><span class="line">            if (this_page &gt; LOW_MEM) &#123;</span><br><span class="line">                *from_page_table &#x3D; this_page;</span><br><span class="line">                this_page -&#x3D; LOW_MEM;</span><br><span class="line">                this_page &gt;&gt;&#x3D; 12;</span><br><span class="line">                mem_map[this_page]++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    invalidate();</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在进程 0 的线性地址空间是 0<del>64M，进程 1 的线性地址空间是 64M</del>128M。我们现在要<strong>造一个进程 1 的页表，使得进程 1 和进程 0 最终被映射到的物理空间都是 0 - 64M</strong>，这样进程 1 才能顺利运行起来。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058587201738/c0d13e59d768303b9a8fdb32c127f74460f1c367.png" alt="640"></p>
+<p>总之，最终的效果就是：</p>
+<p>假设现在正在运行进程 0，代码中给出一个虚拟地址 0x03，由于进程 0 的 LDT 中代码段基址是 0，所以线性地址也是 0x03，最终由进程 0 页表映射到物理地址 0x03 处。</p>
+<p>假设现在正在运行进程 1，代码中给出一个虚拟地址 0x03，由于进程 1 的 LDT 中代码段基址是 64M，所以线性地址是 64M + 3，最终由进程 1 页表映射到物理地址也同样是 0x03 处。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058699631611/e3541df09abfdf203a6f3400505052850f133c00.png" alt="640 (1)"></p>
+<p>即<strong>进程 0 和进程 1 目前共同映射物理内存的前 640K 的空间。</strong></p>
+<p>如何将不同地址通过不同页表映射到相同物理地址空间？举个例子</p>
+<p>刚刚的进程 0 的线性地址 0x03 用二进制表示是：</p>
+<p>0000000000_0000000000_000000000011</p>
+<p>刚刚的进程 1 的线性地址 64M + 0x03 用二进制表示是：</p>
+<p>0000010000_0000000000_000000000011</p>
+<p>根据分页机制的转化规则，<strong>前 10 位表示页目录项，中间 10 位表示页表项，后 12 位表页内偏移。</strong></p>
+<p>进程 0 要找的是页目录项 0 中的第 0 号页表</p>
+<p>进程 1 要找的是页目录项 16 中的第 0 号页表</p>
+<p>那只要让这俩最终找到的两个页表里的数据一模一样即可。</p>
+<p>由于代码非常绕，所以我们只要知道结果就行。</p>
+<hr>
+<p>这里做一个小补充，先放一张页表结构图</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649059769511895/497437165bd4765e3191234a6abf74af7cac22a3.png" alt="640 (2)"></p>
+<p>其中 RW 位表示读写状态，0 表示只读(或可执行)，1表示可读写(或可执行）。当然，在内核态也就是 0 特权级时，这个标志位是没用的。</p>
+<p>然后我们看看下面的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_page_tables</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">long</span> from,<span class="keyword">unsigned</span> <span class="keyword">long</span> to,<span class="keyword">long</span> size)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span>( ; size--&gt;<span class="number">0</span> ; from_dir++,to_dir++) &#123;</span><br><span class="line">        ...</span><br><span class="line">        <span class="keyword">for</span> ( ; nr-- &gt; <span class="number">0</span> ; from_page_table++,to_page_table++) &#123;</span><br><span class="line">            ...</span><br><span class="line">            this_page &amp;= ~<span class="number">2</span>;</span><br><span class="line">            ...</span><br><span class="line">            <span class="keyword">if</span> (this_page &gt; LOW_MEM) &#123;</span><br><span class="line">                *from_page_table = this_page;</span><br><span class="line">                ...</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>~2 表示取反，2 用二进制表示是 10，取反就是 01，其目的是把 this_page 也就是当前的页表的 RW 位置零，也就是是<strong>把该页变成只读</strong>。</p>
+<p>而 *from_page_table = this_page 表示<strong>又把源页表也变成只读</strong>。</p>
+<p>也就是说，经过 fork 创建出的新进程，其页表项都是只读的，而且页表项的只读，导致源进程的页表项也是只读。</p>
+<p>这个就是<strong>写时复制</strong>的基础，新老进程一开始共享同一个物理内存空间，如果只有读，那就相安无事，但如果任何一方有写操作，由于页面是只读的，将触发缺页中断，然后就会分配一块新的物理内存给产生写操作的那个进程，此时这一块内存就不再共享了。</p>
+<hr>
+<h6 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h6><p>总结一下 <strong>copy_process</strong> 函数做的三件事，把整个进程的数据结构个性化的从进程 0 复制给了进程 1。</p>
+<ul>
+<li> 复制了 task_struct ，并对一些值做了个性化修改。</li>
+</ul>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-3/1648950992137847/36d135e49cbd0845e5fc658b09355deb60dc3f61.png" alt="640"></p>
+<ul>
+<li>LDT 的复制和改造，使得进程 0 和进程 1 分别映射到了不同的线性地址空间。</li>
+</ul>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649036338518275/ced162022a106cdc58008ffae57b5f4fc6a2a6fc.png" alt="640 (3)"></p>
+<ul>
+<li><p>页表的复制，使得进程 0 和进程 1 又从不同的线性地址空间，被映射到了相同的物理地址空间。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1649058587201738/c0d13e59d768303b9a8fdb32c127f74460f1c367.png" alt="640"></p>
+</li>
+</ul>
+<h2 id="死循环"><a href="#死循环" class="headerlink" title="死循环"></a>死循环</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span>(;;) pause();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果没有任何任务可以运行，操作系统会一直陷入这个死循环。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">home</a></li>
+         
+          <li><a href="/about/">about</a></li>
+         
+          <li><a href="/archives/">articles</a></li>
+         
+          <li><a href="/categories/">category</a></li>
+         
+          <li><a href="/link/">link</a></li>
+         
+          <li><a href="/search/">search</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%87%E6%8D%A2%E5%88%B0%E7%94%A8%E6%88%B7%E6%80%81%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">切换到用户态模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#move-to-user-mode"><span class="toc-number">1.1.</span> <span class="toc-text">move_to_user_mode()</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E6%80%81%E4%B8%8E%E7%94%A8%E6%88%B7%E6%80%81%E7%9A%84%E6%9C%AC%E8%B4%A8-%E7%89%B9%E6%9D%83%E7%BA%A7"><span class="toc-number">1.1.1.</span> <span class="toc-text">内核态与用户态的本质-特权级</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%89%B9%E6%9D%83%E7%BA%A7%E8%BD%AC%E6%8D%A2%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.2.</span> <span class="toc-text">特权级转换的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%99%A4%E4%BA%86%E6%94%B9%E5%8F%98%E7%89%B9%E6%9D%83%E7%BA%A7%E4%B9%8B%E5%A4%96"><span class="toc-number">1.1.3.</span> <span class="toc-text">除了改变特权级之外</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-number">1.2.</span> <span class="toc-text">进程调度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%8E%AF%E5%A2%83"><span class="toc-number">1.2.1.</span> <span class="toc-text">上下文环境</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E9%97%B4%E4%BF%A1%E6%81%AF"><span class="toc-number">1.2.2.</span> <span class="toc-text">运行时间信息</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%80%9C%E4%BC%98%E5%85%88%E7%BA%A7%E2%80%9D"><span class="toc-number">1.2.3.</span> <span class="toc-text">“优先级”</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81"><span class="toc-number">1.2.4.</span> <span class="toc-text">进程状态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.2.5.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%9A%84%E5%85%A8%E8%BF%87%E7%A8%8B"><span class="toc-number">1.2.6.</span> <span class="toc-text">进程调度的全过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fork"><span class="toc-number">1.3.</span> <span class="toc-text">fork()</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-number">1.3.1.</span> <span class="toc-text">系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sys-fork"><span class="toc-number">1.3.2.</span> <span class="toc-text">sys_fork()</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#find-empty-process"><span class="toc-number">1.3.2.1.</span> <span class="toc-text">find_empty_process</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#copy-process"><span class="toc-number">1.3.2.2.</span> <span class="toc-text">copy_process</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#LDT-%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.3.2.2.1.</span> <span class="toc-text">LDT 的赋值</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%A1%B5%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B6"><span class="toc-number">1.3.2.2.2.</span> <span class="toc-text">页表的复制</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-1"><span class="toc-number">1.3.2.2.3.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%BB%E5%BE%AA%E7%8E%AF"><span class="toc-number">2.</span> <span class="toc-text">死循环</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&text=操作系统之内核后"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&is_video=false&description=操作系统之内核后"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=操作系统之内核后&body=Check out this article: http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&title=操作系统之内核后"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&name=操作系统之内核后&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://makabaka-yyds.github.io/2022/03/30/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%86%85%E6%A0%B8%E5%90%8E/&t=操作系统之内核后"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2020-2022
+    Xu4n
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">home</a></li><!--
+     --><!--
+       --><li><a href="/about/">about</a></li><!--
+     --><!--
+       --><li><a href="/archives/">articles</a></li><!--
+     --><!--
+       --><li><a href="/categories/">category</a></li><!--
+     --><!--
+       --><li><a href="/link/">link</a></li><!--
+     --><!--
+       --><li><a href="/search/">search</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/makabaka-yyds/makabaka-yyds.github.io">projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
