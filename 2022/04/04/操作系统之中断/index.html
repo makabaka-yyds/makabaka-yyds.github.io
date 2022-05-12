@@ -6,16 +6,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta property="og:type" content="article">
+    <meta name="description" content="中断概念整个操作系统是中断驱动的死循环，其他事情都是由操作系统提前注册的中断机制和其对应的中断处理函数完成的。 说人话就是当我们点一下鼠标、敲一下键盘、执行一个程序，都是通过中断的方式来通知操作系统帮我们处理这些问题，当没有任何需要操作系统处理的事件时，它就老老实实的呆在死循环里。 中断分类中断可以分为中断和异常，异常又可以分为故障、陷阱和中止。 中断：异步事件，通常由 IO 设备触发。 异常：同">
+<meta property="og:type" content="article">
 <meta property="og:title" content="操作系统之中断">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2022/04/04/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%B8%AD%E6%96%AD/index.html">
 <meta property="og:site_name" content="Xu4n">
+<meta property="og:description" content="中断概念整个操作系统是中断驱动的死循环，其他事情都是由操作系统提前注册的中断机制和其对应的中断处理函数完成的。 说人话就是当我们点一下鼠标、敲一下键盘、执行一个程序，都是通过中断的方式来通知操作系统帮我们处理这些问题，当没有任何需要操作系统处理的事件时，它就老老实实的呆在死循环里。 中断分类中断可以分为中断和异常，异常又可以分为故障、陷阱和中止。 中断：异步事件，通常由 IO 设备触发。 异常：同">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652345660829161/eaa3a19ae1c1098aa0216c3fc4e6ad3aa01e344c.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652360090795166/42f46bcc16a68da1fc677c11097bb1f6b46d5182.png">
+<meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652360293372656/4064c5ab2040cd873674f41974719b38cf26b300.png">
 <meta property="article:published_time" content="2022-04-04T07:33:47.000Z">
-<meta property="article:modified_time" content="2022-04-04T08:28:02.308Z">
+<meta property="article:modified_time" content="2022-05-12T13:00:02.556Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652345660829161/eaa3a19ae1c1098aa0216c3fc4e6ad3aa01e344c.png">
     
     
       
@@ -79,7 +85,7 @@
     <span id="actions">
       <ul>
         
-        <li><a class="icon" aria-label="上一篇" href="/2022/04/06/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%96%B0%E5%A7%BF%E5%8A%BF/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="上一篇" href="/2022/04/12/%E5%86%85%E6%A0%B8pwn%E5%88%9D%E6%8E%A2%E4%B9%8B%E6%A0%88/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
         
         
         <li><a class="icon" aria-label="下一篇" href="/2022/03/31/MIT6-828-Lab1/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
@@ -110,7 +116,7 @@
 
     </div>
     <div id="toc">
-      
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%96%AD%E6%A6%82%E5%BF%B5"><span class="toc-number">1.</span> <span class="toc-text">中断概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%96%AD%E5%88%86%E7%B1%BB"><span class="toc-number">2.</span> <span class="toc-text">中断分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-number">3.</span> <span class="toc-text">具体实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B6%E5%88%B0%E4%B8%AD%E6%96%AD%E5%8F%B7%E5%90%8E-CPU-%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">4.</span> <span class="toc-text">收到中断号后 CPU 的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-%E6%80%8E%E4%B9%88%E6%89%BE%E5%88%B0%E4%B8%AD%E6%96%AD%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8"><span class="toc-number">5.</span> <span class="toc-text">CPU 怎么找到中断描述符表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%98%AF%E8%B0%81%E6%8A%8A%E4%B8%AD%E6%96%AD%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8%E5%86%99%E5%9C%A8%E5%86%85%E5%AD%98%E7%9A%84%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">是谁把中断描述符表写在内存的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-%E5%AF%B9%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%9C%B0%E5%9D%80%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">7.</span> <span class="toc-text">CPU 对中断处理程序地址的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85"><span class="toc-number">8.</span> <span class="toc-text">补充</span></a></li></ol>
     </div>
   </span>
 </div>
@@ -136,7 +142,7 @@
       
         <time datetime="2022-04-04T07:33:47.000Z" itemprop="datePublished">2022-04-04</time>
         
-        (Updated: <time datetime="2022-04-04T08:28:02.308Z" itemprop="dateModified">2022-04-04</time>)
+        (Updated: <time datetime="2022-05-12T13:00:02.556Z" itemprop="dateModified">2022-05-12</time>)
         
       
     </div>
@@ -161,7 +167,67 @@
   
 
   <div class="content" itemprop="articleBody">
-    
+    <h2 id="中断概念"><a href="#中断概念" class="headerlink" title="中断概念"></a>中断概念</h2><p>整个操作系统是中断驱动的死循环，其他事情都是由操作系统提前注册的中断机制和其对应的中断处理函数完成的。</p>
+<p>说人话就是当我们点一下鼠标、敲一下键盘、执行一个程序，都是通过中断的方式来通知操作系统帮我们处理这些问题，当没有任何需要操作系统处理的事件时，它就老老实实的呆在死循环里。</p>
+<h2 id="中断分类"><a href="#中断分类" class="headerlink" title="中断分类"></a>中断分类</h2><p>中断可以分为<strong>中断</strong>和<strong>异常</strong>，异常又可以分为<strong>故障</strong>、<strong>陷阱</strong>和<strong>中止</strong>。</p>
+<p>中断：异步事件，通常由 IO 设备触发。</p>
+<p>异常：同步事件，是 CPU 在执行指令时检测到的反常条件。</p>
+<p>本质：都是让 CPU 收到一个中断号。</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><ul>
+<li>先来讲讲<strong>中断</strong>具体是怎么实现的：</li>
+</ul>
+<p>是由一个叫<strong>可编程中断控制器</strong>的设备，它有很多 IRQ 引脚线，并接入了一些能发出中断请求的硬件设备，可编程中断控制器设置了 IRQ 和中断号的对应关系。当硬件设备发出中断请求，可编程中断控制器就会找到对应的中断号，并存在自己的一个端口上，然后给 CPU 的 INTR 引脚发送信号。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652345660829161/eaa3a19ae1c1098aa0216c3fc4e6ad3aa01e344c.png" alt="未命名图片"></p>
+<ul>
+<li>再讲讲<strong>异常</strong>是怎么实现的：</li>
+</ul>
+<p>异常顾名思义，就是 CPU 自己执行指令的时候检测到一些反常情况，然后自己给自己一个中断号。</p>
+<p>还有一种方式可以给 CPU 一个中断号，那就是 INT 指令(注：它不是中断！而是越过中断这个方式直接给系统中断号)：</p>
+<p>就比如最常见的 INT 0x80，就是告诉 CPU 中断号是 0x80，CPU 将其翻译成系统调用。</p>
+<p>所以总结一下 CPU 获取中断号的三种方式就是：</p>
+<ul>
+<li>通过可编程中断控制器给 CPU 的 INTR 引脚发送信号</li>
+<li>CPU 执行过程中自己发现了异常</li>
+<li>执行 INT 指令</li>
+</ul>
+<h2 id="收到中断号后-CPU-的处理"><a href="#收到中断号后-CPU-的处理" class="headerlink" title="收到中断号后 CPU 的处理"></a><strong>收到中断号后</strong> <strong>CPU</strong> 的处理</h2><p>CPU 收到一个中断号n，会去中断描述符表中寻找第 n 个中断描述符，从中断描述符中找到中断处理程序的地址，再跳过去。</p>
+<p>补充一下中断描述符中找到中断处理程序的地址的过程，从中断描述符里找到的不直接是程序的地址，而是<strong>段选择子</strong>和<strong>段内偏移地址</strong>。段选择子又会去<strong>全局描述符表</strong>中寻找<strong>段描述符</strong>，从中取出<strong>基地址</strong>。最后再利用段基址+段内偏移地址的方式找到真正的地址。</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652360090795166/42f46bcc16a68da1fc677c11097bb1f6b46d5182.png" alt="未命名图片"></p>
+<p>中断描述符表：内存中的数组，一般表都是数组</p>
+<p>例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> <span class="title">idt_table</span>[256] =</span> &#123; &#123;<span class="number">0</span>, <span class="number">0</span>&#125;, &#125;;</span><br></pre></td></tr></table></figure>
+<p>中断描述符：中断描述符表这个数组里的存储的数据结构，分为任意门描述符、中断门描述符、陷阱门描述符</p>
+<p>例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">desc_struct</span> &#123;</span></span><br><span class="line">		    <span class="keyword">unsigned</span> <span class="keyword">long</span> a,b;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="CPU-怎么找到中断描述符表"><a href="#CPU-怎么找到中断描述符表" class="headerlink" title="CPU 怎么找到中断描述符表"></a><strong>CPU</strong> 怎么找到中断描述符表</h2><p>中断描述符表想放哪放哪，只需要告诉CPU位置即可。</p>
+<p>怎么告诉呢？操作系统的代码可以通过 <strong>LIDT</strong> <strong>指令</strong>，将中断描述符表的起始地址，和中断描述符表的大小存放在 <strong>IDTR</strong> <strong>寄存器</strong> 中。IDTR 寄存器前 16 位存放了表的大小，后 32 位存放的就是 表的起始地址。</p>
+<h2 id="是谁把中断描述符表写在内存的？"><a href="#是谁把中断描述符表写在内存的？" class="headerlink" title="是谁把中断描述符表写在内存的？"></a>是谁把中断描述符表写在内存的？</h2><p>答：操作系统</p>
+<p>例如 Linux-2.6.0 的 traps.c </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> __init <span class="title">trap_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    set_trap_gate(<span class="number">0</span>, &amp;divide_error);<span class="comment">//除法异常</span></span><br><span class="line">    ...</span><br><span class="line">    set_trap_gate(<span class="number">6</span>, &amp;invalid_op);<span class="comment">//非法指令异常</span></span><br><span class="line">    ...</span><br><span class="line">    set_intr_gate(<span class="number">14</span>, &amp;page_fault);<span class="comment">//缺页异常</span></span><br><span class="line">    ...</span><br><span class="line">    set_system_gate(<span class="number">0x80</span>, &amp;system_call);<span class="comment">// INT 0x80 的系统调用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="CPU-对中断处理程序地址的处理"><a href="#CPU-对中断处理程序地址的处理" class="headerlink" title="CPU 对中断处理程序地址的处理"></a><strong>CPU</strong> 对中断处理程序地址的处理</h2><p>之前有说，CPU 在接收到中断号的地址后会去找中断处理程序地址，然后跳过去。那么找到地址后<strong>跳过去</strong>的这个过程具体是怎么实现的呢？</p>
+<p>并不是像想象中的，直接把地址取出来然后放入 CS:IP 寄存器中。而是额外做了很多压栈操作：</p>
+<ul>
+<li>如果发生了特权级转移，压入中断前的 SS 和 ESP，将堆栈切换为 TSS(不懂这个切换)</li>
+<li>压入EFLAGS(标志寄存器)</li>
+<li>压入中断前的 CS 和 EIP，</li>
+<li>如果中断有错误码，压入错误码 ERROR_CODE</li>
+<li>结束(跳转到中断程序)</li>
+</ul>
+<p>压栈的目的就是为了保护现场(原来的程序地址、原来的程序堆栈、原来的标志位)和传递信息(错误码)</p>
+<p>整个操作结束后就会变成这样：</p>
+<p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt-zd/1652360293372656/4064c5ab2040cd873674f41974719b38cf26b300.png" alt="未命名图片"></p>
+<p>压栈之后配合程序中写入的 IRET 或 IRETD 指令返回</p>
+<hr>
+<p>以 Linux-0.11 版源码中的 除法异常的中断处理函数 asm.s 为例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">_divide_error:</span><br><span class="line"> push dword ptr _do_divide_error ;</span><br><span class="line">no_error_code: ;</span><br><span class="line"> xchg [esp],eax ;</span><br><span class="line"> push ebx</span><br><span class="line"> push ecx</span><br><span class="line"> push edx</span><br><span class="line"> push edi</span><br><span class="line"> push esi</span><br><span class="line"> push ebp</span><br><span class="line"> push ds ;</span><br><span class="line"> push es</span><br><span class="line"> push fs</span><br><span class="line"> push 0 ;</span><br><span class="line"> lea edx,[esp+44] ;</span><br><span class="line"> push edx</span><br><span class="line"> mov edx,10h ;</span><br><span class="line"> mov ds,dx</span><br><span class="line"> mov es,dx</span><br><span class="line"> mov fs,dx</span><br><span class="line"> call eax ;</span><br><span class="line"> add esp,8 ;</span><br><span class="line"> pop fs</span><br><span class="line"> pop es</span><br><span class="line"> pop ds</span><br><span class="line"> pop ebp</span><br><span class="line"> pop esi</span><br><span class="line"> pop edi</span><br><span class="line"> pop edx</span><br><span class="line"> pop ecx</span><br><span class="line"> pop ebx</span><br><span class="line"> pop eax ;&#x2F;&#x2F; 弹出原来eax 中的内容。</span><br><span class="line"> iretd</span><br></pre></td></tr></table></figure>
+<p>可以看到最后一行确实用了 iretd 指令</p>
+<p>这个指令会依次弹出栈顶的三个元素，把它们分别赋值给 EIP，CS 和 EFLAGS，也恰好符合了之前讲到的栈顶的前三个元素。</p>
+<hr>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>中断大体可以分为硬中断和软中断。之前讲的这些其实都是硬中断。</p>
+<p>硬中断：并不是指硬件中断，而是指 CPU 这个硬件<strong>实现</strong>的中断机制(注意不是触发机制)。</p>
+<p>软中断：纯粹由软件实现的一种类似中断的机制，实际上就是模仿硬件，在内存中存储着软中断的标志位，然后由内核的一个线程不断轮询这些标志位，哪个有效，就再去别的地方找这个软中断对应的中断处理程序。</p>
+<p>软中断要和 INT n 这种<strong>软件中断</strong>区分开来，软件中断最好称其为，由软件<strong>触发</strong>的中断，而软中断称其为软件<strong>实现</strong>的中断。</p>
+
   </div>
 </article>
 
@@ -192,7 +258,7 @@
     </div>
 
     <div id="toc-footer" style="display: none">
-      
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%96%AD%E6%A6%82%E5%BF%B5"><span class="toc-number">1.</span> <span class="toc-text">中断概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%96%AD%E5%88%86%E7%B1%BB"><span class="toc-number">2.</span> <span class="toc-text">中断分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-number">3.</span> <span class="toc-text">具体实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B6%E5%88%B0%E4%B8%AD%E6%96%AD%E5%8F%B7%E5%90%8E-CPU-%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">4.</span> <span class="toc-text">收到中断号后 CPU 的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-%E6%80%8E%E4%B9%88%E6%89%BE%E5%88%B0%E4%B8%AD%E6%96%AD%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8"><span class="toc-number">5.</span> <span class="toc-text">CPU 怎么找到中断描述符表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%98%AF%E8%B0%81%E6%8A%8A%E4%B8%AD%E6%96%AD%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8%E5%86%99%E5%9C%A8%E5%86%85%E5%AD%98%E7%9A%84%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">是谁把中断描述符表写在内存的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-%E5%AF%B9%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%9C%B0%E5%9D%80%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">7.</span> <span class="toc-text">CPU 对中断处理程序地址的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85"><span class="toc-number">8.</span> <span class="toc-text">补充</span></a></li></ol>
     </div>
 
     <div id="share-footer" style="display: none">
