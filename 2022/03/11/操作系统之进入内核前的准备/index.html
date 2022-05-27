@@ -38,7 +38,7 @@
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387860825455/c64b56c662e33a389d175d046ac504d16f73d7b8.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649419637391002/a3361bab535cc3bc4f325cf7934ac5bc5400a590.png">
 <meta property="article:published_time" content="2022-03-11T13:34:56.000Z">
-<meta property="article:modified_time" content="2022-04-08T12:09:02.458Z">
+<meta property="article:modified_time" content="2022-05-16T03:53:31.961Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
@@ -163,7 +163,7 @@
       
         <time datetime="2022-03-11T13:34:56.000Z" itemprop="datePublished">2022-03-11</time>
         
-        (Updated: <time datetime="2022-04-08T12:09:02.458Z" itemprop="dateModified">2022-04-08</time>)
+        (Updated: <time datetime="2022-05-16T03:53:31.961Z" itemprop="dateModified">2022-05-16</time>)
         
       
     </div>
@@ -283,7 +283,7 @@
 <p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647585565732944/cc5d52e70fcac8af64b60263edaeb11a22f78b5e.png" alt="未命名图片"></p>
 <p>总结一下前面，操作系统又给自己移了下位置：从 0 开始存放着操作系统的所有代码，即 system，0x90000 之后的几十个字节存放了一些设备信息。</p>
 <hr>
-<h2 id="模式转换"><a href="#模式转换" class="headerlink" title="模式转换"></a>模式转换</h2><p>接着会进行一项大工程，模式转换，即把现在 16 位的实模式转换从 32 位的保护模式。先别急着纠结什么是实模式和保护模式，等会就说。</p>
+<h2 id="模式转换"><a href="#模式转换" class="headerlink" title="模式转换"></a>模式转换</h2><p>接着会进行一项大工程，模式转换，即把现在 16 位的实模式转换成 32 位的保护模式。先别急着纠结什么是实模式和保护模式，等会就说。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">lidt  idt_48      ; load idt with 0,0</span><br><span class="line">lgdt  gdt_48      ; load gdt with whatever appropriate</span><br></pre></td></tr></table></figure>
 <p>要读懂这些指令，得先清楚实模式和保护模式寻址的区别：</p>
 <p>实模式：物理地址=段基址左移四位+偏移地址。</p>
@@ -311,14 +311,14 @@
 <p>功能和 lgdt gdt_48 差不多</p>
 <p>之前有说过 gdtr 寄存器存储着<strong>全局描述符表gdt</strong>的地址</p>
 <p>idtr 寄存器存储的是<strong>中断描述符表idt</strong>的地址，当发生中断时，CPU 就会通过中断号去中断描述符表中找到中断处理程序的地址，然后跳过去执行。</p>
-<p>总结一下前面，进行了一项大工程——模式转化，把16位的实模式转变成了32位的保护模式，利用两个指令将全局描述符表和中断描述符表地址放入相应的寄存器中，也讲了描述表的地址要怎么看。</p>
+<p>总结一下前面，利用两个指令将全局描述符表和中断描述符表地址放入相应的寄存器中，也讲了描述表的地址要怎么看。</p>
 <p>现在内存结构：</p>
 <p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1649387124416308/ac8334a059eefd075d21f2eb4790e20b66d79eec.png" alt="640"></p>
 <hr>
 <h2 id="正式开启保护模式，跳至system处执行"><a href="#正式开启保护模式，跳至system处执行" class="headerlink" title="正式开启保护模式，跳至system处执行"></a>正式开启保护模式，跳至system处执行</h2><p>上面说的只是进入保护模式前准备工作的一部分，接着往下看。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mov al,#0xD1        ; command write</span><br><span class="line">out #0x64,al</span><br><span class="line">mov al,#0xDF        ; A20 on</span><br><span class="line">out #0x60,al</span><br></pre></td></tr></table></figure>
 <p>这段代码的意思是：打开 A20 地址线</p>
-<p>我们知道的是 8086 的 CPU 地址总线是 20位，所以如果程序给出 21 位的 内存地址，多出来的一位就会被忽略，举个例子就是：<code>1 0000 00000000 00000000</code></p>
+<p>我们知道的是 8086 的 CPU 地址总线是 20 位，所以如果程序给出 21 位的内存地址，多出来的一位就会被忽略，举个例子就是：<code>1 0000 00000000 00000000</code></p>
 <p>那个 1 因为处在第 21 位，所以会被忽略，整个内存地址算下来就是 0，如今 CPU 已经有 32位 和 64位，但是因为兼容性，还是要保持只能用 20 位地址线的模式，所以打开 A20 地址线就相当于让地址总线突破 20 位变为 32位。</p>
 <p>接着往下就是一大坨代码，不需要特别了解，就是对可编程中断控制器 8259 芯片进行的编程，然后引脚和中断号关系对应如下：</p>
 <p><img src="https://api.lemonprefect.cn/image/hdslb/archive/czxt/1647586298118237/4ed2e437187e104401fab5e32bdb6a24dd428ac5.png" alt="未命名图片"></p>
@@ -330,10 +330,11 @@
 <p>对应着表的结构图可以发现，描述符索引就是1，再根据这个索引去全局描述符表里找段描述符，从而取出地址。</p>
 <p>之前有说过，全局描述符表中0对应的空，1对应的代码段描述符(可读可执行)，2对应的数据段描述符(可读可写)，所以这里对应的就是代码段描述符，段基址都为0。又因为偏移也是0，所以整个地址就是0。也就是跳到内存地址为0处。</p>
 <p>内存地址为 0 处之前也说过是system，system 可以理解为操作系统的全部，是除 bootsect 和 setup 之外全部程序链接在一起的结果。现在 bootsect 和 setup 两个文件都分析过了，所以盲猜 head.s 就是 system 的一部分，我们接下来就分析它。</p>
+<p>总结一下之前的，开启了保护模式，并跳转到了 system 处执行。</p>
 <hr>
-<h2 id="再次设置-idt-和-gdt"><a href="#再次设置-idt-和-gdt" class="headerlink" title="再次设置 idt 和 gdt"></a>再次设置 idt 和 gdt</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov fs,ax</span><br><span class="line">    mov gs,ax</span><br><span class="line">    lss esp,_stack_start</span><br></pre></td></tr></table></figure>
+<h2 id="再次设置-idt-和-gdt"><a href="#再次设置-idt-和-gdt" class="headerlink" title="再次设置 idt 和 gdt"></a>再次设置 idt 和 gdt</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">.globl startup_32</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    mov es,ax</span><br><span class="line">    mov fs,ax</span><br><span class="line">    mov gs,ax</span><br><span class="line">    lss esp,_stack_start</span><br></pre></td></tr></table></figure>
 <p>_pg_dir 表示页目录，之后设置分页机制，页目录会存放在这。</p>
-<p>之后就是把 ds、es、fs、gs 段寄存器赋值为 0x10，0x10对应的二进制数是10000，对应全局描述符表里的数据段描述符。</p>
+<p>之后就是把 ds、es、fs、gs 段寄存器赋值为 0x10，0x10对应的二进制数是10000，对应全局描述符表里的数据段描述符。(描述符索引里是 10，转换成十进制就是 2 )</p>
 <p>lss 指令表示把 esp 指向 _stack_start(之前在 0x9FF00)</p>
 <hr>
 <p>这里补充一下 _stack_start，它被定义在 sched.c 里</p>
@@ -344,7 +345,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">call setup_idt ;设置中断描述符表</span><br><span class="line">call setup_gdt ;设置全局描述符表</span><br><span class="line">mov eax,10h</span><br><span class="line">mov ds,ax</span><br><span class="line">mov es,ax</span><br><span class="line">mov fs,ax</span><br><span class="line">mov gs,ax</span><br><span class="line">lss esp,_stack_start</span><br></pre></td></tr></table></figure>
 <p>设置了 idt 和 gdt ，然后又重新执行了一次之前的操作</p>
 <p>重新再执行一次的原因是因为上面修改了 gdt</p>
-<p>设置 idt 的具体代码：</p>
+<p>先来看看 setup_idt ，即设置 idt 的具体代码：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">setup_idt:</span><br><span class="line">    lea edx,ignore_int</span><br><span class="line">    mov eax,00080000h</span><br><span class="line">    mov ax,dx</span><br><span class="line">    mov dx,8E00h</span><br><span class="line">    lea edi,_idt</span><br><span class="line">    mov ecx,256</span><br><span class="line">rp_sidt:</span><br><span class="line">    mov [edi],eax</span><br><span class="line">    mov [edi+4],edx</span><br><span class="line">    add edi,8</span><br><span class="line">    dec ecx</span><br><span class="line">    jne rp_sidt</span><br><span class="line">    lidt fword ptr idt_descr</span><br><span class="line">    ret</span><br><span class="line"></span><br><span class="line">idt_descr:</span><br><span class="line">    dw 256*8-1</span><br><span class="line">    dd _idt</span><br><span class="line"></span><br><span class="line">_idt:</span><br><span class="line">    DQ 256 dup(0)</span><br></pre></td></tr></table></figure>
 <p>这段代码的作用就是，设置了 256 个中断描述符，每个中断描述符都指向 ignore_int 的函数地址，ignore_int 是一个默认的中断处理程序，之后会被具体的中断程序覆盖。就比如你现在敲键盘是没什么反应的，因为键盘模块的中断程序还没覆盖掉它，任何中断都是调用 ignore_int 程序。</p>
 <p>setup_gdt 也是同理就不多说了，直接看设置好了的结果吧</p>
@@ -380,7 +381,7 @@
 <p>当时 linux-0.11 认为，总共可以使用的内存不会超过 16M，即最大地址空间为 0xFFFFFF。</p>
 <p>而对应分页机制，1 个页目录表最多包含 1024 个页目录项(页表)，1 个页目录项最多包含 1024 个页表项(页)，1 个页表项位 4 kb(因为偏移有 12 位)，所以 16 M 的地址空间可以用 1 个页目录表 + 4 个页表搞定：<code>4（页表数）* 1024（页表项数） * 4KB（一页大小）= 16MB</code></p>
 <p>所以，上面这段代码，会将页目录表放在内存地址的最开头，也就是 head.s 的最开头的 <code>_pg_dir</code></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">_pg_dir:</span><br><span class="line">.globl startup_32</span><br><span class="line">_startup_32:</span><br><span class="line">    mov eax,0x10</span><br><span class="line">    mov ds,ax</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
 <p>之后紧挨着这个页目录表，放置 4 个页表</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.org 0x1000 pg0:</span><br><span class="line">.org 0x2000 pg1:</span><br><span class="line">.org 0x3000 pg2:</span><br><span class="line">.org 0x4000 pg3:</span><br><span class="line">.org 0x5000</span><br></pre></td></tr></table></figure>
 <p>最终布局如下：</p>

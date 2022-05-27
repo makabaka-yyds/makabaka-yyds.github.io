@@ -6,12 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的 通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size,">
+    <meta name="description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的·：是通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size">
 <meta property="og:type" content="article">
 <meta property="og:title" content="glibc2.29以上的off-by-null">
 <meta property="og:url" content="http://makabaka-yyds.github.io/2022/05/09/glibc2-29%E4%BB%A5%E4%B8%8A%E7%9A%84off-by-null/index.html">
 <meta property="og:site_name" content="Xu4n">
-<meta property="og:description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的 通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size,">
+<meta property="og:description" content="前言其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。 off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。 一些宏定义首先得知道 ptmalloc 是如何对 chunk 进行操作的·：是通过定义各种功能的宏 获取 chunk 的大小 12345&#x2F;* Get size">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652087148840540/41e85725119c7e839b8b08e5943d160c6b4ca856.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652150079940592/ffc3972106c60951a3bc6ce35ed926af813438ae.png">
@@ -20,7 +20,7 @@
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652156856039246/9b40ea06fe4c3ed7065a6d0c74fbddd6551196da.png">
 <meta property="og:image" content="https://api.lemonprefect.cn/image/hdslb/archive/off-by-null/1652158174869327/bde938f08181fbcf64ff18b68eb589a579b3c481.png">
 <meta property="article:published_time" content="2022-05-09T08:56:46.000Z">
-<meta property="article:modified_time" content="2022-05-10T06:57:27.826Z">
+<meta property="article:modified_time" content="2022-05-21T07:45:49.083Z">
 <meta property="article:author" content="Xu4n">
 <meta property="article:tag" content="PWN">
 <meta property="article:tag" content="堆">
@@ -89,6 +89,8 @@
     <span id="actions">
       <ul>
         
+        <li><a class="icon" aria-label="上一篇" href="/2022/05/27/dddd/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
         
         <li><a class="icon" aria-label="下一篇" href="/2022/04/27/Linux%E9%AB%98%E5%8D%B1%E6%BC%8F%E6%B4%9EDirtycow%E5%A4%8D%E7%8E%B0/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
         
@@ -144,7 +146,7 @@
       
         <time datetime="2022-05-09T08:56:46.000Z" itemprop="datePublished">2022-05-09</time>
         
-        (Updated: <time datetime="2022-05-10T06:57:27.826Z" itemprop="dateModified">2022-05-10</time>)
+        (Updated: <time datetime="2022-05-21T07:45:49.083Z" itemprop="dateModified">2022-05-21</time>)
         
       
     </div>
@@ -171,8 +173,7 @@
   <div class="content" itemprop="articleBody">
     <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>其实网上已经有很多类似的文章，我本着复习的态度就再写一下，回顾一下整个流程。</p>
 <p>off-by-null 说白了就是一个 chunk overlap 的过程，这个过程分为向上合并和向下合并，接下来就结合源码具体分析一下这个过程是怎么实现的。</p>
-<h2 id="一些宏定义"><a href="#一些宏定义" class="headerlink" title="一些宏定义"></a>一些宏定义</h2><p>首先得知道 ptmalloc 是如何对 chunk 进行操作的</p>
-<p>通过定义各种功能的宏</p>
+<h2 id="一些宏定义"><a href="#一些宏定义" class="headerlink" title="一些宏定义"></a>一些宏定义</h2><p>首先得知道 ptmalloc 是如何对 chunk 进行操作的·：是通过定义各种功能的宏</p>
 <p>获取 chunk 的大小</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Get size, ignoring use bits */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Like chunksize, but do not mask SIZE_BITS.  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> chunksize_nomask(p) ((p)-&gt;mchunk_size)</span></span><br></pre></td></tr></table></figure>
 <p><strong>获取下一 chunk 块地址</strong></p>
